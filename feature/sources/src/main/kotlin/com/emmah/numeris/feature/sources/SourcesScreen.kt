@@ -29,13 +29,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.emmah.numeris.core.designsystem.NumerisColors
 import com.emmah.numeris.core.designsystem.NumerisSpacing
 import com.emmah.numeris.core.model.Connection
 import com.emmah.numeris.core.model.ConnectionId
+import com.emmah.numeris.core.model.ConnectionRepository
 import com.emmah.numeris.core.model.SaveConnectionCommand
 import com.emmah.numeris.core.model.SecretKey
 import com.emmah.numeris.core.model.SourceId
+import com.emmah.numeris.data.AndroidImportRepository
 
 private data class ConnectionSetup(
     val source: SourceId,
@@ -60,9 +63,12 @@ private val connectionSetups =
 @Composable
 @Suppress("FunctionNaming", "LongMethod")
 fun SourcesScreen(
-    viewModel: SourcesViewModel,
+    connections: ConnectionRepository,
+    imports: AndroidImportRepository,
     requireBiometric: (() -> Unit) -> Unit,
     authorizeGoogle: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: SourcesViewModel = viewModel(factory = SourcesViewModel.factory(connections, imports)),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var selectedUri by remember { mutableStateOf<android.net.Uri?>(null) }
@@ -73,7 +79,7 @@ fun SourcesScreen(
     var deleteTarget by remember { mutableStateOf<Connection?>(null) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> selectedUri = uri }
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         contentPadding =
             androidx.compose.foundation.layout
                 .PaddingValues(NumerisSpacing.Lg),

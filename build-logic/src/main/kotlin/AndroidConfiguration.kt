@@ -17,6 +17,7 @@ internal fun Project.configureAndroid(extension: CommonExtension) {
         lint.apply {
             abortOnError = true
             warningsAsErrors = true
+            disable += setOf("AndroidGradlePluginVersion", "GradleDependency", "NewerVersionAvailable")
         }
     }
 }

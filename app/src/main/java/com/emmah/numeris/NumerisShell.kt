@@ -30,7 +30,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavEntry
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
@@ -44,7 +43,6 @@ import com.emmah.numeris.data.AppPreferences
 import com.emmah.numeris.data.OverviewSnapshot
 import com.emmah.numeris.feature.overview.OverviewScreen
 import com.emmah.numeris.feature.sources.SourcesScreen
-import com.emmah.numeris.feature.sources.SourcesViewModel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import com.emmah.numeris.core.designsystem.R as DesignSystemR
@@ -86,6 +84,7 @@ fun NumerisShell(
     container: AppContainer,
     requireBiometric: (() -> Unit) -> Unit,
     authorizeGoogle: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val backStack = rememberNavBackStack(OverviewRoute)
     val selected = backStack.lastOrNull()
@@ -98,13 +97,6 @@ fun NumerisShell(
     val syncState by container.syncOrchestrator.observeState().collectAsStateWithLifecycle(SyncState.Idle)
     val domains by container.reportRepository.observeDomains().collectAsStateWithLifecycle(emptyList())
     val scope = rememberCoroutineScope()
-    val sourcesViewModel: SourcesViewModel =
-        viewModel(
-            factory =
-                remember(container) {
-                    SourcesViewModel.factory(container.connectionRepository, container.importRepository)
-                },
-        )
     val refreshGroup: (ReportingGroup) -> Unit = { group ->
         scope.launch {
             container.syncOrchestrator.syncReportingGroup(
@@ -117,6 +109,7 @@ fun NumerisShell(
         }
     }
     NavigationSuiteScaffold(
+        modifier = modifier,
         navigationSuiteItems = {
             primaryDestinations.forEach { destination ->
                 item(
@@ -270,7 +263,8 @@ fun NumerisShell(
                     SourcesRoute ->
                         NavEntry(route) {
                             SourcesScreen(
-                                viewModel = sourcesViewModel,
+                                connections = container.connectionRepository,
+                                imports = container.importRepository,
                                 requireBiometric = requireBiometric,
                                 authorizeGoogle = authorizeGoogle,
                             )

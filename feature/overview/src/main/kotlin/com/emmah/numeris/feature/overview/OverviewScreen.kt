@@ -52,6 +52,7 @@ fun OverviewScreen(
     onSelectDomain: (String) -> Unit,
     onRefresh: () -> Unit,
     onOpenSources: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val numberFormat = NumberFormat.getIntegerInstance(Locale.US)
     val kpis =
@@ -68,7 +69,7 @@ fun OverviewScreen(
             ),
         )
     LazyColumn(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(NumerisSpacing.Lg),
         verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Lg),
     ) {
@@ -188,7 +189,7 @@ private fun GetStartedCard(
 @Suppress("FunctionNaming")
 private fun KpiCard(
     kpi: KpiValue,
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
 ) {
     Card(
         modifier =

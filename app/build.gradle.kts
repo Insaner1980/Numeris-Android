@@ -38,8 +38,12 @@ dependencyCheck {
         directory =
             providers
                 .environmentVariable("DEPENDENCY_CHECK_DATA_DIRECTORY")
-                .orElse(rootProject.layout.projectDirectory.dir(".gradle/dependency-check-data").asFile.absolutePath)
-                .get()
+                .orElse(
+                    rootProject.layout.projectDirectory
+                        .dir(".gradle/dependency-check-data")
+                        .asFile
+                        .absolutePath,
+                ).get()
     }
     autoUpdate =
         providers
