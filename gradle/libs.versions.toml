@@ -9,6 +9,8 @@ coroutines = "1.11.0"
 junit = "4.13.2"
 detekt = "2.0.0-alpha.5"
 ktlint-plugin = "14.2.0"
+composeRules = "0.6.3"
+owasp-dependency-check = "12.2.2"
 room3 = "3.0.0"
 sqlite = "2.7.0"
 ksp = "2.3.9"
@@ -22,6 +24,8 @@ datastore = "1.2.1"
 play-services-auth = "21.6.0"
 vico = "3.2.3"
 fragment = "1.8.9"
+composeStabilityAnalyzer = "0.12.0"
+androidSecurityLints = "1.0.4"
 
 [libraries]
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activity-compose" }
@@ -51,6 +55,9 @@ play-services-auth = { module = "com.google.android.gms:play-services-auth", ver
 androidx-fragment = { module = "androidx.fragment:fragment", version.ref = "fragment" }
 vico-compose = { module = "com.patrykandpatrick.vico:compose", version.ref = "vico" }
 vico-compose-m3 = { module = "com.patrykandpatrick.vico:compose-m3", version.ref = "vico" }
+compose-rules-detekt = { module = "io.nlopez.compose.rules:detekt", version.ref = "composeRules" }
+compose-rules-ktlint = { module = "io.nlopez.compose.rules:ktlint", version.ref = "composeRules" }
+android-security-lints = { module = "com.android.security.lint:lint", version.ref = "androidSecurityLints" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -61,5 +68,7 @@ kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "ko
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 detekt = { id = "dev.detekt", version.ref = "detekt" }
 ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlint-plugin" }
+owasp-dependency-check = { id = "org.owasp.dependencycheck", version.ref = "owasp-dependency-check" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room3 = { id = "androidx.room3", version.ref = "room3" }
+stability-analyzer = { id = "com.github.skydoves.compose.stability.analyzer", version.ref = "composeStabilityAnalyzer" }

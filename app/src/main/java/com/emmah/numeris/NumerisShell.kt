@@ -4,24 +4,31 @@ package com.emmah.numeris
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.painterResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavEntry
@@ -40,6 +47,7 @@ import com.emmah.numeris.feature.sources.SourcesScreen
 import com.emmah.numeris.feature.sources.SourcesViewModel
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import com.emmah.numeris.core.designsystem.R as DesignSystemR
 
 @Serializable private data object OverviewRoute : NavKey
 
@@ -58,16 +66,16 @@ import kotlinx.serialization.Serializable
 private data class PrimaryDestination(
     val route: NavKey,
     val label: String,
-    val symbol: String,
+    val icon: Int,
 )
 
 private val primaryDestinations =
     listOf(
-        PrimaryDestination(OverviewRoute, "Overview", "O"),
-        PrimaryDestination(TrafficRoute, "Traffic", "T"),
-        PrimaryDestination(SearchRoute, "Search", "S"),
-        PrimaryDestination(PerformanceRoute, "Performance", "P"),
-        PrimaryDestination(MoreRoute, "More", "M"),
+        PrimaryDestination(OverviewRoute, "Overview", DesignSystemR.drawable.ic_numeris_dashboard),
+        PrimaryDestination(TrafficRoute, "Traffic", DesignSystemR.drawable.ic_numeris_monitoring),
+        PrimaryDestination(SearchRoute, "Search", DesignSystemR.drawable.ic_numeris_search),
+        PrimaryDestination(PerformanceRoute, "Vitals", DesignSystemR.drawable.ic_numeris_speed),
+        PrimaryDestination(MoreRoute, "More", DesignSystemR.drawable.ic_numeris_more),
     )
 
 private val backgroundSyncIntervals = listOf(6, 12, 24)
@@ -119,14 +127,24 @@ fun NumerisShell(
                         backStack.clear()
                         backStack.add(destination.route)
                     },
-                    icon = { Text(destination.symbol, fontWeight = FontWeight.Bold) },
+                    icon = {
+                        Icon(
+                            painter = painterResource(destination.icon),
+                            contentDescription = null,
+                        )
+                    },
                     label = { Text(destination.label) },
                 )
             }
         },
     ) {
         NavDisplay(
-            modifier = Modifier.fillMaxSize(),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
+                    ),
             backStack = backStack,
             onBack = { backStack.removeLastOrNull() },
             entryProvider = { route ->
@@ -155,6 +173,7 @@ fun NumerisShell(
                                         )
                                     }
                                 },
+                                onOpenSources = { backStack.add(SourcesRoute) },
                             )
                         }
                     TrafficRoute ->
@@ -167,6 +186,9 @@ fun NumerisShell(
                                 syncing = syncState is SyncState.Running,
                                 onSelectDomain = { domain ->
                                     scope.launch { container.preferences.selectDomain(domain) }
+                                },
+                                onSelectPeriod = { period ->
+                                    scope.launch { container.preferences.selectPeriod(period) }
                                 },
                                 onRefresh = { refreshGroup(ReportingGroup.Traffic) },
                             )
@@ -181,6 +203,9 @@ fun NumerisShell(
                                 syncing = syncState is SyncState.Running,
                                 onSelectDomain = { domain ->
                                     scope.launch { container.preferences.selectDomain(domain) }
+                                },
+                                onSelectPeriod = { period ->
+                                    scope.launch { container.preferences.selectPeriod(period) }
                                 },
                                 onRefreshIndexing = { domain ->
                                     scope.launch {
@@ -204,6 +229,9 @@ fun NumerisShell(
                                 syncing = syncState is SyncState.Running,
                                 onSelectDomain = { domain ->
                                     scope.launch { container.preferences.selectDomain(domain) }
+                                },
+                                onSelectPeriod = { period ->
+                                    scope.launch { container.preferences.selectPeriod(period) }
                                 },
                                 onRefresh = { refreshGroup(ReportingGroup.Performance) },
                             )
@@ -233,6 +261,9 @@ fun NumerisShell(
                                 onSelectDomain = { domain ->
                                     scope.launch { container.preferences.selectDomain(domain) }
                                 },
+                                onSelectPeriod = { period ->
+                                    scope.launch { container.preferences.selectPeriod(period) }
+                                },
                                 onRefresh = { refreshGroup(ReportingGroup.Health) },
                             )
                         }
@@ -260,35 +291,62 @@ private fun MoreScreen(
     openHealth: () -> Unit,
     openSources: () -> Unit,
 ) {
-    Column(
-        modifier = Modifier.fillMaxSize().padding(NumerisSpacing.Lg),
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(NumerisSpacing.Lg),
         verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Md),
     ) {
-        Text("More", fontSize = 28.sp, fontWeight = FontWeight.SemiBold)
-        MoreCard("Health", "Uptime, incidents, and sitemap coverage", openHealth)
-        MoreCard("Sources", "Connections, credentials, sync, and Windows import", openSources)
-        Card(colors = CardDefaults.cardColors(containerColor = NumerisColors.Card)) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Lg),
-                verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Md),
-            ) {
-                Text("Privacy and background sync", fontWeight = FontWeight.SemiBold)
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Biometric app lock")
-                    Switch(
-                        checked = preferences.biometricLockEnabled,
-                        onCheckedChange = onSetBiometricLock,
-                    )
-                }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Text("Periodic sync")
-                    Switch(
-                        checked = preferences.backgroundSyncEnabled,
-                        onCheckedChange = { enabled ->
-                            onSetBackgroundSync(enabled, preferences.backgroundSyncHours)
-                        },
-                    )
-                }
+        item {
+            Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Xs)) {
+                Text("More", style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    "Settings and data connections",
+                    color = NumerisColors.SecondaryText,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        }
+        item { MoreCard("Health", "Uptime, incidents, and sitemap coverage", openHealth) }
+        item { MoreCard("Sources", "Connections, credentials, sync, and Windows import", openSources) }
+        item {
+            PrivacySyncCard(preferences, onSetBackgroundSync, onSetBiometricLock)
+        }
+    }
+}
+
+@Composable
+@Suppress("FunctionNaming")
+private fun PrivacySyncCard(
+    preferences: AppPreferences,
+    onSetBackgroundSync: (Boolean, Int) -> Unit,
+    onSetBiometricLock: (Boolean) -> Unit,
+) {
+    Card(colors = CardDefaults.cardColors(containerColor = NumerisColors.Card)) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Xl),
+            verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Lg),
+        ) {
+            Text("Privacy and sync", style = MaterialTheme.typography.titleLarge)
+            SettingSwitchRow(
+                title = "Biometric app lock",
+                detail = "Require your fingerprint or device credential after leaving the app.",
+                checked = preferences.biometricLockEnabled,
+                onCheckedChange = onSetBiometricLock,
+            )
+            SettingSwitchRow(
+                title = "Periodic sync",
+                detail = "Refresh configured sources in the background.",
+                checked = preferences.backgroundSyncEnabled,
+                onCheckedChange = { enabled ->
+                    onSetBackgroundSync(enabled, preferences.backgroundSyncHours)
+                },
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm)) {
+                Text(
+                    "Sync interval",
+                    color = NumerisColors.SecondaryText,
+                    style = MaterialTheme.typography.labelLarge,
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm)) {
                     backgroundSyncIntervals.forEach { hours ->
                         FilterChip(
@@ -317,14 +375,38 @@ private fun MoreCard(
         onClick = onClick,
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Lg),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Xl),
+            horizontalArrangement = Arrangement.spacedBy(NumerisSpacing.Lg),
         ) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Xs)) {
-                Text(title, fontWeight = FontWeight.SemiBold)
-                Text(detail, color = NumerisColors.SecondaryText)
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                Text(detail, color = NumerisColors.SecondaryText, style = MaterialTheme.typography.bodyMedium)
             }
-            TextButton(onClick = onClick) { Text("Open") }
+            Icon(
+                painter = painterResource(DesignSystemR.drawable.ic_numeris_chevron_right),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+            )
         }
+    }
+}
+
+@Composable
+@Suppress("FunctionNaming")
+private fun SettingSwitchRow(
+    title: String,
+    detail: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(NumerisSpacing.Lg),
+    ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Xs)) {
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(detail, color = NumerisColors.SecondaryText, style = MaterialTheme.typography.bodyMedium)
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
 }

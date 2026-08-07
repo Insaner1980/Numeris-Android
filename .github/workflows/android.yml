@@ -7,13 +7,22 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
         with:
           distribution: temurin
           java-version: "17"
           cache: gradle
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@40fd30fb8d7440372e1316f5d1809ec01dcd3699 # v4.0.1
       - run: sdkmanager "platforms;android-37" "build-tools;36.0.0"
-      - run: ./gradlew test lint detektCheck ktlintCheck assembleRelease --stacktrace
+      - name: Build all declared modules
+        run: ./gradlew assembleDebug build --no-daemon --console=plain
+      - name: Run unit tests and static checks
+        run: ./gradlew test lint detektCheck ktlintCheck --no-daemon --console=plain
+      - name: Verify included build logic
+        run: ./gradlew -p build-logic build test --no-daemon --console=plain

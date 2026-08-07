@@ -16,6 +16,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -25,9 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emmah.numeris.core.designsystem.NumerisColors
 import com.emmah.numeris.core.designsystem.NumerisSpacing
@@ -81,9 +81,32 @@ fun SourcesScreen(
     ) {
         item {
             Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Xs)) {
-                Text("Sources", fontSize = 28.sp, fontWeight = FontWeight.SemiBold)
-                Text("Connections, credentials, and one-time Windows import", color = NumerisColors.SecondaryText)
-                state.message?.let { Text(it, color = NumerisColors.Copper) }
+                Text("Sources", style = MaterialTheme.typography.headlineMedium)
+                Text(
+                    "Connections, credentials, and one-time Windows import",
+                    color = NumerisColors.SecondaryText,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                state.message?.let {
+                    Text(it, color = NumerisColors.Copper, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+        if (state.connections.isEmpty()) {
+            item {
+                Card(colors = CardDefaults.cardColors(containerColor = NumerisColors.Card)) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Xl),
+                        verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm),
+                    ) {
+                        Text("No sources connected", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            "Choose a provider below or import an existing Numeris setup.",
+                            color = NumerisColors.SecondaryText,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+                }
             }
         }
         items(state.connections, key = { it.id.value }) { connection ->
@@ -97,19 +120,27 @@ fun SourcesScreen(
         item {
             Card(colors = CardDefaults.cardColors(containerColor = NumerisColors.Card)) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Lg),
+                    modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Xl),
                     verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm),
                 ) {
-                    Text("Add or update a source", fontWeight = FontWeight.SemiBold)
-                    Text("Secrets are encrypted with Android Keystore and never stored in Room.", color = NumerisColors.SecondaryText)
-                    connectionSetups.forEach { item ->
+                    Text("Add or update a source", style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        "Secrets are encrypted with Android Keystore and never stored in Room.",
+                        color = NumerisColors.SecondaryText,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    connectionSetups.forEachIndexed { index, item ->
+                        if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                         TextButton(
+                            modifier = Modifier.fillMaxWidth(),
                             onClick = {
                                 setup = item
                                 setupValues = emptyMap()
                                 setupSecret = ""
                             },
-                        ) { Text("Configure ${item.title}") }
+                        ) {
+                            Text("Configure ${item.title}", modifier = Modifier.weight(1f))
+                        }
                     }
                 }
             }
@@ -117,13 +148,14 @@ fun SourcesScreen(
         item {
             Card(colors = CardDefaults.cardColors(containerColor = NumerisColors.Card)) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Lg),
+                    modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Xl),
                     verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Md),
                 ) {
-                    Text("Google", fontWeight = FontWeight.SemiBold)
+                    Text("Google authorization", style = MaterialTheme.typography.titleLarge)
                     Text(
                         "Authorize Search Console and Analytics with read-only access. No client secret is stored.",
                         color = NumerisColors.SecondaryText,
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                     Button(onClick = authorizeGoogle) { Text("Authorize Google") }
                 }
@@ -132,13 +164,14 @@ fun SourcesScreen(
         item {
             Card(colors = CardDefaults.cardColors(containerColor = NumerisColors.Card)) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Lg),
+                    modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Xl),
                     verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Md),
                 ) {
-                    Text("Import from Windows", fontWeight = FontWeight.SemiBold)
+                    Text("Import from Windows", style = MaterialTheme.typography.titleLarge)
                     Text(
                         "Choose a .numeris-export file. Existing Android data is changed only after preview and confirmation.",
                         color = NumerisColors.SecondaryText,
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                     Button(onClick = { picker.launch(arrayOf("application/octet-stream", "application/zip")) }) {
                         Text("Choose export file")
@@ -272,20 +305,27 @@ private fun ConnectionCard(
     onDelete: () -> Unit,
 ) {
     Card(colors = CardDefaults.cardColors(containerColor = NumerisColors.Card)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Lg),
-            horizontalArrangement = Arrangement.spacedBy(NumerisSpacing.Md),
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Xl),
+            verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Md),
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(connection.displayName, fontWeight = FontWeight.SemiBold)
-                Text(if (connection.configured) "Configured" else "Disconnected", color = NumerisColors.SecondaryText)
+            Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Xs)) {
+                Text(connection.displayName, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    if (connection.configured) "Configured" else "Disconnected",
+                    color = NumerisColors.SecondaryText,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
                 Text(
                     connection.lastSuccessfulSync?.let { "Last sync $it" } ?: "Not synced yet",
                     color = NumerisColors.TertiaryText,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
-                connection.lastError?.let { Text(it, color = NumerisColors.Copper) }
+                connection.lastError?.let {
+                    Text(it, color = NumerisColors.Copper, style = MaterialTheme.typography.bodyMedium)
+                }
             }
-            Column {
+            Row(horizontalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm)) {
                 TextButton(enabled = !busy, onClick = onTest) { Text(if (busy) "Testing…" else "Test") }
                 TextButton(enabled = !busy, onClick = onDelete) { Text("Disconnect") }
             }

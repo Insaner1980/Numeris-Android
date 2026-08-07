@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.serialization) apply false
+    alias(libs.plugins.owasp.dependency.check) apply false
 }
 
 tasks.register("detektCheck") {

@@ -11,20 +11,21 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.emmah.numeris.core.designsystem.NumerisColors
+import com.emmah.numeris.core.designsystem.NumerisDropdownSelector
+import com.emmah.numeris.core.designsystem.NumerisEqualChoiceRow
+import com.emmah.numeris.core.designsystem.NumerisScreenHeader
 import com.emmah.numeris.core.designsystem.NumerisSpacing
 import com.emmah.numeris.core.model.Period
 import com.emmah.numeris.data.OverviewSnapshot
@@ -50,6 +51,7 @@ fun OverviewScreen(
     onSelectPeriod: (Period) -> Unit,
     onSelectDomain: (String) -> Unit,
     onRefresh: () -> Unit,
+    onOpenSources: () -> Unit,
 ) {
     val numberFormat = NumberFormat.getIntegerInstance(Locale.US)
     val kpis =
@@ -71,67 +73,114 @@ fun OverviewScreen(
         verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Lg),
     ) {
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text("Numeris", fontSize = 30.sp, fontWeight = FontWeight.SemiBold)
-                        Text("Private site intelligence", color = NumerisColors.SecondaryText)
-                    }
-                    Button(onClick = onRefresh, enabled = !syncing) {
-                        Text(if (syncing) "Refreshing…" else "Refresh")
-                    }
-                }
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm)) {
-                    items(domains.size + 1) { index ->
-                        val option = if (index == 0) "all" else domains[index - 1]
-                        FilterChip(
-                            selected = domain == option,
-                            onClick = { onSelectDomain(option) },
-                            label = { Text(if (option == "all") "All domains" else option) },
-                        )
-                    }
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm)) {
-                    Period.entries.forEach { option ->
-                        FilterChip(
-                            selected = period == option,
-                            onClick = { onSelectPeriod(option) },
-                            label = { Text(option.shortLabel) },
-                        )
-                    }
-                }
+            Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Lg)) {
+                NumerisScreenHeader(
+                    title = "Numeris",
+                    subtitle = "Private site intelligence",
+                    syncing = syncing,
+                    onRefresh = onRefresh,
+                )
+                NumerisDropdownSelector(
+                    selected = domain,
+                    options = listOf("all") + domains,
+                    onSelect = onSelectDomain,
+                    label = { value -> if (value == "all") "All domains" else value },
+                )
+                NumerisEqualChoiceRow(
+                    options = Period.entries.map(Period::shortLabel),
+                    selected = period.shortLabel,
+                    onSelect = { label -> Period.entries.firstOrNull { it.shortLabel == label }?.let(onSelectPeriod) },
+                )
                 Text(
                     snapshot.latestSuccessfulSync?.let { "Last successful sync $it" } ?: "No successful sync yet",
                     color = NumerisColors.TertiaryText,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             }
         }
-        item {
-            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                val columns =
-                    if (maxWidth >= 700.dp) {
-                        3
-                    } else if (maxWidth >= 420.dp) {
-                        2
-                    } else {
-                        1
-                    }
-                Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Md)) {
-                    kpis.chunked(columns).forEach { rowItems ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(NumerisSpacing.Md),
-                        ) {
-                            rowItems.forEach { kpi -> KpiCard(kpi, Modifier.weight(1f)) }
-                            repeat(columns - rowItems.size) { Column(modifier = Modifier.weight(1f)) {} }
+        if (snapshot.latestSuccessfulSync == null) {
+            item {
+                GetStartedCard(
+                    configuredSources = snapshot.configuredSources,
+                    syncing = syncing,
+                    onRefresh = onRefresh,
+                    onOpenSources = onOpenSources,
+                )
+            }
+        } else {
+            item {
+                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                    val columns =
+                        if (maxWidth >= 700.dp) {
+                            3
+                        } else if (maxWidth >= 320.dp) {
+                            2
+                        } else {
+                            1
+                        }
+                    Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Md)) {
+                        kpis.chunked(columns).forEach { rowItems ->
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(NumerisSpacing.Md),
+                            ) {
+                                rowItems.forEach { kpi -> KpiCard(kpi, Modifier.weight(1f)) }
+                                repeat(columns - rowItems.size) { Column(modifier = Modifier.weight(1f)) {} }
+                            }
                         }
                     }
                 }
             }
+            item { SummaryCard("Traffic trend", "Trend data appears after a successful provider sync.") }
+            item { SummaryCard("Search trend", "Google and Bing history remains available offline.") }
+            item { SummaryCard("Insights", "No deterministic issues were found in the cached data.") }
         }
-        item { SummaryCard("Traffic trend", "Trend data appears after a successful provider sync.") }
-        item { SummaryCard("Search trend", "Google and Bing history remains available offline.") }
-        item { SummaryCard("Insights", "No deterministic issues were found in the cached data.") }
+    }
+}
+
+@Composable
+@Suppress("FunctionNaming")
+private fun GetStartedCard(
+    configuredSources: Int,
+    syncing: Boolean,
+    onRefresh: () -> Unit,
+    onOpenSources: () -> Unit,
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = NumerisColors.Card),
+    ) {
+        Column(
+            modifier = Modifier.padding(NumerisSpacing.Xl),
+            verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Md),
+        ) {
+            Text("Build your first dashboard", style = MaterialTheme.typography.titleLarge)
+            Text(
+                if (configuredSources == 0) {
+                    "Connect a data source, then refresh to cache your first private report."
+                } else {
+                    "$configuredSources sources are ready. Refresh to download your first private report."
+                },
+                color = NumerisColors.SecondaryText,
+                style = MaterialTheme.typography.bodyLarge,
+            )
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm),
+            ) {
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onRefresh,
+                    enabled = !syncing,
+                ) {
+                    Text(if (syncing) "Refreshing…" else "Refresh now")
+                }
+                FilledTonalButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = onOpenSources,
+                ) { Text("Set up sources") }
+            }
+        }
     }
 }
 
@@ -152,9 +201,9 @@ private fun KpiCard(
             modifier = Modifier.padding(NumerisSpacing.Lg),
             verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm),
         ) {
-            Text(kpi.label, color = NumerisColors.SecondaryText)
-            Text(kpi.value, fontSize = 28.sp, fontWeight = FontWeight.SemiBold)
-            Text(kpi.detail, color = NumerisColors.TertiaryText)
+            Text(kpi.label, color = NumerisColors.SecondaryText, style = MaterialTheme.typography.bodyMedium)
+            Text(kpi.value, style = MaterialTheme.typography.headlineSmall)
+            Text(kpi.detail, color = NumerisColors.TertiaryText, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }
@@ -170,8 +219,8 @@ private fun SummaryCard(
         colors = CardDefaults.cardColors(containerColor = NumerisColors.Card),
     ) {
         Column(modifier = Modifier.padding(NumerisSpacing.Lg)) {
-            Text(title, fontWeight = FontWeight.SemiBold)
-            Text(detail, color = NumerisColors.SecondaryText)
+            Text(title, style = MaterialTheme.typography.titleMedium)
+            Text(detail, color = NumerisColors.SecondaryText, style = MaterialTheme.typography.bodyMedium)
         }
     }
 }

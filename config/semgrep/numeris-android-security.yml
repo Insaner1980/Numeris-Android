@@ -1,0 +1,43 @@
+rules:
+  - id: numeris-android-backup-enabled
+    languages:
+      - xml
+    severity: ERROR
+    message: Numeriksen provider-dataa ja yhteysmetadataa ei saa sallia Android-varmuuskopioihin.
+    patterns:
+      - pattern: |
+          <application ... android:allowBackup="true" ...>
+
+  - id: numeris-android-cleartext-enabled
+    languages:
+      - xml
+    severity: ERROR
+    message: android:usesCleartextTraffic="true" sallii salaamattoman provider-liikenteen.
+    patterns:
+      - pattern: |
+          <application ... android:usesCleartextTraffic="true" ...>
+
+  - id: numeris-android-provider-secret-in-buildconfig
+    languages:
+      - kotlin
+    severity: ERROR
+    message: Provider-salaisuus ei saa tulla Android BuildConfigista.
+    patterns:
+      - pattern-either:
+          - pattern: BuildConfig.API_KEY
+          - pattern: BuildConfig.API_TOKEN
+          - pattern: BuildConfig.CLIENT_SECRET
+          - pattern: BuildConfig.PROVIDER_SECRET
+
+  - id: numeris-android-forbidden-telemetry-dependency
+    languages:
+      - generic
+    severity: ERROR
+    message: Numeris Android ei salli telemetria-, mainos- tai Firebase-riippuvuuksia.
+    paths:
+      include:
+        - build.gradle.kts
+        - app/build.gradle.kts
+        - gradle/libs.versions.toml
+    patterns:
+      - pattern-regex: '(?i)(firebase-analytics|firebase-crashlytics|sentry-android|appcenter|amplitude|mixpanel|google-mobile-ads)'

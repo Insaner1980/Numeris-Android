@@ -31,6 +31,7 @@
 - Raakadatan rajaus ja redaktointi: `:core:network` yhteinen policy.
 - Salaisuudet: `SecretStore`; yhteysmetadata kuuluu Roomiin.
 - Release-avain ja DPAPI-salasanatiedosto: `%USERPROFILE%\.numeris\signing`; niitä ei saa kopioida repoon.
+- Release-allekirjoituksen prosessi-, stdin-, verifiointi- ja atominen julkaisulogiikka: `tools/SignRelease.psm1`; `tools/sign-release.ps1` on vain komentorivin entrypoint.
 
 ## Tarkistuskomennot
 

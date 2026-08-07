@@ -1,3 +1,5 @@
+@file:Suppress("ktlint:standard:function-naming")
+
 package com.emmah.numeris
 
 import android.app.Activity
@@ -11,14 +13,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
@@ -48,6 +55,10 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            isAppearanceLightStatusBars = false
+            isAppearanceLightNavigationBars = false
+        }
         appLock =
             BiometricAppLock(this, ContextCompat.getMainExecutor(this)) { state ->
                 lockState = state
@@ -74,32 +85,12 @@ class MainActivity : FragmentActivity() {
                 }
         }
         setContent {
-            NumerisTheme {
-                if (lockState == AppLockState.Unlocked) {
-                    NumerisShell(
-                        container = (application as NumerisApplication).container,
-                        requireBiometric = { action -> appLock.authenticate("Confirm data import", action) },
-                        authorizeGoogle = ::authorizeGoogle,
-                    )
-                } else {
-                    Column(
-                        modifier = Modifier.fillMaxSize().padding(NumerisSpacing.Xl),
-                        verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Lg, Alignment.CenterVertically),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Text(
-                            when (val state = lockState) {
-                                AppLockState.Authenticating -> "Waiting for authentication…"
-                                is AppLockState.Unavailable -> state.safeMessage
-                                else -> "Numeris is locked"
-                            },
-                        )
-                        Button(onClick = appLock::authenticate, enabled = lockState != AppLockState.Authenticating) {
-                            Text("Unlock")
-                        }
-                    }
-                }
-            }
+            NumerisContent(
+                lockState = lockState,
+                appLock = appLock,
+                container = (application as NumerisApplication).container,
+                authorizeGoogle = ::authorizeGoogle,
+            )
         }
     }
 
@@ -126,6 +117,50 @@ class MainActivity : FragmentActivity() {
     }
 }
 
-private class LockViewModel : ViewModel() {
+@Composable
+@Suppress("FunctionNaming")
+private fun NumerisContent(
+    lockState: AppLockState,
+    appLock: BiometricAppLock,
+    container: AppContainer,
+    authorizeGoogle: () -> Unit,
+) {
+    NumerisTheme {
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = MaterialTheme.colorScheme.background,
+        ) {
+            if (lockState == AppLockState.Unlocked) {
+                NumerisShell(
+                    container = container,
+                    requireBiometric = { action -> appLock.authenticate("Confirm data import", action) },
+                    authorizeGoogle = authorizeGoogle,
+                )
+            } else {
+                Column(
+                    modifier = Modifier.fillMaxSize().safeDrawingPadding().padding(NumerisSpacing.Xl),
+                    verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Lg, Alignment.CenterVertically),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        when (lockState) {
+                            AppLockState.Authenticating -> "Waiting for authentication…"
+                            is AppLockState.Unavailable -> lockState.safeMessage
+                            else -> "Numeris is locked"
+                        },
+                    )
+                    Button(
+                        onClick = appLock::authenticate,
+                        enabled = lockState != AppLockState.Authenticating,
+                    ) {
+                        Text("Unlock")
+                    }
+                }
+            }
+        }
+    }
+}
+
+internal class LockViewModel : ViewModel() {
     var unlocked: Boolean = false
 }

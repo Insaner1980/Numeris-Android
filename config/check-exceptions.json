@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "exceptions": [
+    {
+      "id": "numeris-mobsf-target-sdk",
+      "tool": "mobsfscan",
+      "rule": "android_task_hijacking2",
+      "scope": "app/src/main/AndroidManifest.xml targetSdk inference",
+      "reason": "mobsfscan reads the source manifest and does not resolve the convention plugin targetSdk value.",
+      "owner": "project-maintainers",
+      "added": "2026-07-29",
+      "expires": "2026-10-31",
+      "tracking": "local-review:numeris-mobsf-target-sdk",
+      "sourcePath": "build-logic/src/main/kotlin/AndroidApplicationConventionPlugin.kt",
+      "selector": "defaultConfig.targetSdk = 36",
+      "findingPath": "app/src/main/AndroidManifest.xml"
+    },
+    {
+      "id": "numeris-mobsf-report-row-key",
+      "tool": "mobsfscan",
+      "rule": "android_kotlin_hardcoded",
+      "scope": "Report row identity in ReportScreens.kt",
+      "reason": "The exact MobSF match is a stable UI row identity assembled from report fields, not a credential or secret.",
+      "owner": "project-maintainers",
+      "added": "2026-07-29",
+      "expires": "2026-10-31",
+      "tracking": "local-review:numeris-mobsf-report-row-key",
+      "sourcePath": "app/src/main/java/com/emmah/numeris/ReportScreens.kt",
+      "selector": "key = \"$date:$kind:$query:${page.orEmpty()}\"",
+      "findingPath": "app/src/main/java/com/emmah/numeris/ReportScreens.kt"
+    },
+    {
+      "id": "numeris-mobsf-import-validation-sql",
+      "tool": "mobsfscan",
+      "rule": "android_kotlin_sql_raw_query",
+      "scope": "read-only import validation queries in WindowsDatabaseImporter.kt",
+      "reason": "The exact MobSF matches are fixed validation queries or a table-name query guarded by the importedTables allowlist before execution.",
+      "owner": "project-maintainers",
+      "added": "2026-07-29",
+      "expires": "2026-10-31",
+      "tracking": "local-review:numeris-mobsf-import-validation-sql",
+      "sourcePath": "data/src/main/kotlin/com/emmah/numeris/data/WindowsDatabaseImporter.kt",
+      "selector": "db.rawQuery(\"PRAGMA user_version\"",
+      "findingPath": "data/src/main/kotlin/com/emmah/numeris/data/WindowsDatabaseImporter.kt"
+    }
+  ]
+}

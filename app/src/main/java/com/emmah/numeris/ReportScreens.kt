@@ -11,13 +11,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,10 +33,13 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.emmah.numeris.core.database.PerformanceUrlEntity
+import com.emmah.numeris.core.designsystem.NumerisChoiceRow
 import com.emmah.numeris.core.designsystem.NumerisColors
+import com.emmah.numeris.core.designsystem.NumerisDropdownSelector
+import com.emmah.numeris.core.designsystem.NumerisEqualChoiceRow
+import com.emmah.numeris.core.designsystem.NumerisScreenHeader
 import com.emmah.numeris.core.designsystem.NumerisSpacing
 import com.emmah.numeris.core.model.Period
 import com.emmah.numeris.core.model.SiteIdentity
@@ -75,6 +77,7 @@ fun TrafficReportScreen(
     period: Period,
     syncing: Boolean,
     onSelectDomain: (String) -> Unit,
+    onSelectPeriod: (Period) -> Unit,
     onRefresh: () -> Unit,
 ) {
     val range = period.toDateRange()
@@ -220,6 +223,7 @@ fun TrafficReportScreen(
         onRefresh = onRefresh,
         domains = domains,
         onSelectDomain = onSelectDomain,
+        onSelectPeriod = onSelectPeriod,
     )
 }
 
@@ -232,6 +236,7 @@ fun SearchReportScreen(
     period: Period,
     syncing: Boolean,
     onSelectDomain: (String) -> Unit,
+    onSelectPeriod: (Period) -> Unit,
     onRefreshIndexing: (String) -> Unit,
     onRefresh: () -> Unit,
 ) {
@@ -352,6 +357,7 @@ fun SearchReportScreen(
         },
         domains = domains,
         onSelectDomain = onSelectDomain,
+        onSelectPeriod = onSelectPeriod,
     )
 }
 
@@ -364,6 +370,7 @@ fun PerformanceReportScreen(
     period: Period,
     syncing: Boolean,
     onSelectDomain: (String) -> Unit,
+    onSelectPeriod: (Period) -> Unit,
     onRefresh: () -> Unit,
 ) {
     val urls by remember(dao, domain) { dao.observePerformanceUrls(domain) }.collectAsStateWithLifecycle(emptyList())
@@ -476,6 +483,7 @@ fun PerformanceReportScreen(
             },
         domains = domains,
         onSelectDomain = onSelectDomain,
+        onSelectPeriod = onSelectPeriod,
     )
 }
 
@@ -487,6 +495,7 @@ fun HealthReportScreen(
     period: Period,
     syncing: Boolean,
     onSelectDomain: (String) -> Unit,
+    onSelectPeriod: (Period) -> Unit,
     onRefresh: () -> Unit,
 ) {
     val uptime by remember(dao, domain) { dao.observeAllUptime(domain) }.collectAsStateWithLifecycle(emptyList())
@@ -528,6 +537,7 @@ fun HealthReportScreen(
         onRefresh,
         domains = domains,
         onSelectDomain = onSelectDomain,
+        onSelectPeriod = onSelectPeriod,
     )
 }
 
@@ -549,6 +559,7 @@ private fun OfflineReport(
     management: (@Composable () -> Unit)? = null,
     domains: List<String> = emptyList(),
     onSelectDomain: (String) -> Unit = {},
+    onSelectPeriod: (Period) -> Unit = {},
 ) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -556,28 +567,45 @@ private fun OfflineReport(
         verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Md),
     ) {
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(title, fontSize = 28.sp, fontWeight = FontWeight.SemiBold)
-                        Text(period.displayLabel, color = NumerisColors.SecondaryText)
+            Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Lg)) {
+                NumerisScreenHeader(
+                    title = title,
+                    subtitle = period.displayLabel,
+                    syncing = syncing,
+                    onRefresh = onRefresh,
+                )
+                NumerisDropdownSelector(
+                    selected = domain,
+                    options = listOf("all") + domains,
+                    onSelect = onSelectDomain,
+                    label = { value -> if (value == "all") "All domains" else value },
+                )
+                NumerisEqualChoiceRow(
+                    options = Period.entries.map(Period::shortLabel),
+                    selected = period.shortLabel,
+                    onSelect = { label -> Period.entries.firstOrNull { it.shortLabel == label }?.let(onSelectPeriod) },
+                )
+                if (sources.isNotEmpty()) {
+                    ReportChoiceGroup("Data source") {
+                        NumerisChoiceRow(sources, selectedSource, onSelectSource)
                     }
-                    Button(enabled = !syncing, onClick = onRefresh) { Text(if (syncing) "Refreshing…" else "Refresh") }
                 }
-                ChipRow(listOf("all") + domains, domain, onSelectDomain) { value ->
-                    if (value == "all") "All domains" else value
+                ReportChoiceGroup("View") {
+                    NumerisChoiceRow(tabs, selectedTab, onSelectTab)
                 }
-                if (sources.isNotEmpty()) ChipRow(sources, selectedSource, onSelectSource)
-                ChipRow(tabs, selectedTab, onSelectTab)
             }
         }
-        item { TrendCard(title = "$selectedTab trend", values = trend, period = period.displayLabel) }
+        if (trend.isNotEmpty()) {
+            item { TrendCard(title = "$selectedTab trend", values = trend, period = period.displayLabel) }
+        }
         management?.let { content -> item { content() } }
-        if (rows.isEmpty()) {
+        if (rows.isEmpty() && management == null) {
             item {
                 EmptyCard(
                     "No cached $selectedTab data",
-                    "Connect the source or refresh when a network is available.",
+                    "Connect the source, then refresh when a network connection is available.",
+                    syncing,
+                    onRefresh,
                 )
             }
         } else {
@@ -627,16 +655,13 @@ private fun UrlManagement(
 }
 
 @Composable
-private fun ChipRow(
-    values: List<String>,
-    selected: String,
-    onSelect: (String) -> Unit,
-    label: (String) -> String = { it },
+private fun ReportChoiceGroup(
+    label: String,
+    content: @Composable () -> Unit,
 ) {
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm)) {
-        items(values, key = { it }) { value ->
-            FilterChip(selected = value == selected, onClick = { onSelect(value) }, label = { Text(label(value)) })
-        }
+    Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Xs)) {
+        Text(label, color = NumerisColors.TertiaryText, style = MaterialTheme.typography.labelMedium)
+        content()
     }
 }
 
@@ -711,11 +736,19 @@ private fun ReportListRow(row: ReportRow) {
 private fun EmptyCard(
     title: String,
     detail: String,
+    syncing: Boolean,
+    onRefresh: () -> Unit,
 ) {
     Card(colors = CardDefaults.cardColors(containerColor = NumerisColors.Card)) {
-        Column(modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Xl)) {
-            Text(title, fontWeight = FontWeight.SemiBold)
-            Text(detail, color = NumerisColors.SecondaryText)
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Xl),
+            verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Md),
+        ) {
+            Text(title, style = MaterialTheme.typography.titleLarge)
+            Text(detail, color = NumerisColors.SecondaryText, style = MaterialTheme.typography.bodyLarge)
+            Button(enabled = !syncing, onClick = onRefresh) {
+                Text(if (syncing) "Refreshing…" else "Refresh data")
+            }
         }
     }
 }

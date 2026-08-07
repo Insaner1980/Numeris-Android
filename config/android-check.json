@@ -1,0 +1,98 @@
+{
+  "schemaVersion": 1,
+  "exceptionsFile": "config/check-exceptions.json",
+  "projectId": "numeris-android",
+  "modules": [
+    { "path": ":app", "relativePath": "app", "kind": "android-application", "required": true, "variants": ["debug", "release"], "sourceSets": ["main"] },
+    { "path": ":core:model", "relativePath": "core/model", "kind": "kotlin-library", "required": true, "variants": [], "sourceSets": ["main", "test"] },
+    { "path": ":core:common", "relativePath": "core/common", "kind": "kotlin-library", "required": true, "variants": [], "sourceSets": ["main"] },
+    { "path": ":core:designsystem", "relativePath": "core/designsystem", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main"] },
+    { "path": ":core:database", "relativePath": "core/database", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main"] },
+    { "path": ":core:network", "relativePath": "core/network", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main", "test"] },
+    { "path": ":core:security", "relativePath": "core/security", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main", "test"] },
+    { "path": ":core:testing", "relativePath": "core/testing", "kind": "kotlin-library", "required": true, "variants": [], "sourceSets": ["main"] },
+    { "path": ":data", "relativePath": "data", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main"] },
+    { "path": ":feature:overview", "relativePath": "feature/overview", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main"] },
+    { "path": ":feature:traffic", "relativePath": "feature/traffic", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main"] },
+    { "path": ":feature:search", "relativePath": "feature/search", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main"] },
+    { "path": ":feature:performance", "relativePath": "feature/performance", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main"] },
+    { "path": ":feature:health", "relativePath": "feature/health", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main"] },
+    { "path": ":feature:sources", "relativePath": "feature/sources", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main"] }
+  ],
+  "buildTasks": [
+    ":app:assembleDebug",
+    ":core:model:build",
+    ":core:common:build",
+    ":core:designsystem:assembleDebug",
+    ":core:database:assembleDebug",
+    ":core:network:assembleDebug",
+    ":core:security:assembleDebug",
+    ":core:testing:build",
+    ":data:assembleDebug",
+    ":feature:overview:assembleDebug",
+    ":feature:traffic:assembleDebug",
+    ":feature:search:assembleDebug",
+    ":feature:performance:assembleDebug",
+    ":feature:health:assembleDebug",
+    ":feature:sources:assembleDebug"
+  ],
+  "testTasks": [
+    ":app:testDebugUnitTest",
+    ":core:model:test",
+    ":core:common:test",
+    ":core:designsystem:testDebugUnitTest",
+    ":core:database:testDebugUnitTest",
+    ":core:network:testDebugUnitTest",
+    ":core:security:testDebugUnitTest",
+    ":core:testing:test",
+    ":data:testDebugUnitTest",
+    ":feature:overview:testDebugUnitTest",
+    ":feature:traffic:testDebugUnitTest",
+    ":feature:search:testDebugUnitTest",
+    ":feature:performance:testDebugUnitTest",
+    ":feature:health:testDebugUnitTest",
+    ":feature:sources:testDebugUnitTest"
+  ],
+  "includedBuilds": [
+    {
+      "path": "build-logic",
+      "required": true,
+      "sourceSets": ["main"],
+      "dependencyTasks": [":build-logic:dependencies"],
+      "buildTasks": ["build"],
+      "testTasks": ["test"]
+    }
+  ],
+  "checks": {
+    "dependabotEnabled": false,
+    "ktlintTasks": ["ktlintCheck"],
+    "detektTasks": ["detektCheck"],
+    "lintTasks": [
+      ":app:lintDebug",
+      ":core:designsystem:lintDebug",
+      ":core:database:lintDebug",
+      ":core:network:lintDebug",
+      ":core:security:lintDebug",
+      ":data:lintDebug",
+      ":feature:overview:lintDebug",
+      ":feature:traffic:lintDebug",
+      ":feature:search:lintDebug",
+      ":feature:performance:lintDebug",
+      ":feature:health:lintDebug",
+      ":feature:sources:lintDebug"
+    ],
+    "stabilityTasks": [
+      ":app:stabilityCheck",
+      ":core:designsystem:stabilityCheck",
+      ":feature:health:stabilityCheck",
+      ":feature:overview:stabilityCheck",
+      ":feature:performance:stabilityCheck",
+      ":feature:search:stabilityCheck",
+      ":feature:sources:stabilityCheck",
+      ":feature:traffic:stabilityCheck"
+    ],
+    "dependencyConfigurations": ["debugRuntimeClasspath", "releaseRuntimeClasspath"],
+    "dependencyCheckTasks": [":app:dependencyCheckAggregate"],
+    "semgrepConfig": "config/semgrep/numeris-android-security.yml"
+  }
+}

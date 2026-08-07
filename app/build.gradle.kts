@@ -2,6 +2,7 @@ plugins {
     id("numeris.android.application")
     id("numeris.quality")
     id("org.jetbrains.kotlin.plugin.serialization")
+    alias(libs.plugins.owasp.dependency.check)
 }
 
 android {
@@ -24,9 +25,56 @@ android {
             )
         }
     }
+
+    lint {
+        checkDependencies = true
+    }
+}
+
+dependencyCheck {
+    formats = listOf("HTML", "JSON", "SARIF")
+    outputDirectory = rootProject.layout.projectDirectory.dir("reports")
+    data {
+        directory =
+            providers
+                .environmentVariable("DEPENDENCY_CHECK_DATA_DIRECTORY")
+                .orElse(rootProject.layout.projectDirectory.dir(".gradle/dependency-check-data").asFile.absolutePath)
+                .get()
+    }
+    autoUpdate =
+        providers
+            .environmentVariable("DEPENDENCY_CHECK_AUTO_UPDATE")
+            .map { it.equals("true", ignoreCase = true) || it == "1" || it.equals("yes", ignoreCase = true) }
+            .getOrElse(true)
+    failBuildOnCVSS =
+        providers
+            .environmentVariable("DEPENDENCY_CHECK_FAIL_BUILD_ON_CVSS")
+            .map { it.toFloatOrNull() ?: 7f }
+            .getOrElse(7f)
+    scanConfigurations = listOf("debugRuntimeClasspath", "releaseRuntimeClasspath")
+    skipTestGroups = true
+    analyzers {
+        ossIndex {
+            enabled = false
+        }
+    }
+    nvd {
+        providers.environmentVariable("NVD_API_KEY").orNull?.let { apiKey = it }
+        delay =
+            providers
+                .environmentVariable("NVD_API_DELAY_MS")
+                .map { it.toIntOrNull() ?: 6_000 }
+                .getOrElse(6_000)
+        maxRetryCount =
+            providers
+                .environmentVariable("NVD_API_MAX_RETRY_COUNT")
+                .map { it.toIntOrNull() ?: 5 }
+                .getOrElse(5)
+    }
 }
 
 dependencies {
+    lintChecks(libs.android.security.lints)
     implementation(project(":core:model"))
     implementation(project(":core:database"))
     implementation(project(":core:designsystem"))

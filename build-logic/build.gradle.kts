@@ -11,6 +11,7 @@ dependencies {
     implementation(libs.plugins.ktlint.toDependency())
     implementation(libs.plugins.ksp.toDependency())
     implementation(libs.plugins.room3.toDependency())
+    implementation(libs.plugins.stability.analyzer.toDependency())
 }
 
 fun Provider<PluginDependency>.toDependency(): Provider<String> = map {

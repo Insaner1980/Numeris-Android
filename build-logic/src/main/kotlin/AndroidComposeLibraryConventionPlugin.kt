@@ -7,6 +7,7 @@ class AndroidComposeLibraryConventionPlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
         pluginManager.apply("com.android.library")
         pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
+        pluginManager.apply("com.github.skydoves.compose.stability.analyzer")
         extensions.configure<LibraryExtension> {
             configureAndroid(this)
             buildFeatures.compose = true
