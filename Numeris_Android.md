@@ -658,8 +658,6 @@ WorkManager on Androidin suositeltu ratkaisu prosessin ja uudelleenkäynnistykse
   - `ConfirmDangerDialog`.
 - Toteuta Navigation 3 ja adaptive navigation.
 - Avaa sovellus ilman cold-start- tai resume-lukkoa.
-- Automaattinen uudelleenlukitus tapahtuu viiden minuutin background-ajan jälkeen.
-- Configuration change ei laukaise uudelleenlukitusta.
 
 Valmis, kun shell toimii kompaktissa, medium- ja expanded-koossa ja kaikki komponentit näkyvät Compose Previewissä oikeilla tokeneilla.
 

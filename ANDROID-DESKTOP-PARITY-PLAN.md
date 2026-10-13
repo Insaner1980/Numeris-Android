@@ -807,7 +807,7 @@ Include empty, sparse, full and partially failed data; long domains/queries/URLs
 | J12 | 401/403/429/5xx/offline with multiple configured targets | Correct safe per-target outcome; successful siblings and failed-target cache retained |
 | J13 | Manual refresh while periodic work is eligible | Serialized/coalesced work; no overlapping replacement or stale success status |
 | J14 | Upgrade schema-1 installation with GA4 history and stored settings | No silent data/credential loss; retired-source status and current reports usable |
-| J15 | Enable lock -> background/resume -> cold start | Existing lock behavior preserved; sensitive forms/credentials do not leak through restoration |
+| J15 | Background/resume -> cold start without authentication | App stays unlocked; sensitive forms/credentials do not leak through restoration |
 
 Run J01–J08 and relevant forms/details at M01–M04; use the same reusable screen cases rather than four unrelated partial smoke tests. Run lifecycle/import/network journeys on suitable representative configurations plus narrow/large-text error/confirmation screens.
 

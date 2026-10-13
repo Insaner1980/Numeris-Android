@@ -42,7 +42,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.Instant
 
-class NumerisApplication :
+open class NumerisApplication :
     Application(),
     Configuration.Provider {
     val container: AppContainer by lazy { AppContainer(this) }

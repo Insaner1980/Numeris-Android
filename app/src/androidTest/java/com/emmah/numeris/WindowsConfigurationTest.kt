@@ -8,23 +8,59 @@ import com.emmah.numeris.core.database.CloudflareTrafficEntity
 import com.emmah.numeris.core.database.ConnectionEntity
 import com.emmah.numeris.core.model.Period
 import com.emmah.numeris.core.model.SecretKey
+import com.emmah.numeris.core.model.SecretStore
 import com.emmah.numeris.data.AndroidImportRepository
 import com.emmah.numeris.data.AppPreferencesRepository
 import com.emmah.numeris.data.DefaultSyncOrchestrator
 import com.emmah.numeris.data.WindowsConfigurationTransfer
 import com.emmah.numeris.data.WindowsDatabaseImporter
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 import java.util.UUID
+import java.util.concurrent.Executors
 
 class WindowsConfigurationTest {
+    @Test fun interruptedTransferRecoveryUsesIoDispatcher() =
+        runBlocking {
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val database = testDatabase()
+            var ioThread: Thread? = null
+            Executors
+                .newSingleThreadExecutor { runnable -> Thread(runnable, "import-recovery-io").also { ioThread = it } }
+                .asCoroutineDispatcher()
+                .use { dispatcher ->
+                    var recoveryThread: Thread? = null
+                    val secrets =
+                        object : SecretStore by MemorySecrets() {
+                            override suspend fun get(key: SecretKey): CharArray? {
+                                recoveryThread = Thread.currentThread()
+                                return null
+                            }
+                        }
+                    try {
+                        AndroidImportRepository(
+                            context,
+                            WindowsDatabaseImporter(database),
+                            DefaultSyncOrchestrator(emptyList()),
+                            WindowsConfigurationTransfer(database, secrets, AppPreferencesRepository(context)),
+                            dispatcher,
+                        ).recoverInterruptedTransfer()
+                        assertSame(ioThread, recoveryThread)
+                    } finally {
+                        database.close()
+                    }
+                }
+        }
+
     @Test fun fullExportImportsConnectionsKeysAndPreferencesWithoutPlaintextSecretFiles() = checkTransfer("success")
 
     @Test fun failedReportCommitRestoresKeysPreferencesAndNonemptyCache() = checkTransfer("database-failure")

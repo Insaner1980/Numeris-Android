@@ -13,7 +13,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -27,14 +26,15 @@ class AppUnlockedHostTest {
     @Config(qualifiers = "w320dp-h800dp-mdpi")
     fun opensAt320DpWithoutAuthentication() = verifyUnlockedShell()
 
-    @Test fun opensWith200PercentFontWithoutAuthentication() = verifyUnlockedShell(2f)
+    @Test
+    @Config(fontScale = 2f)
+    fun opensWith200PercentFontWithoutAuthentication() = verifyUnlockedShell()
 
     @Test
-    @Config(qualifiers = "w320dp-h800dp-mdpi")
-    fun opensAt320DpWith200PercentFontWithoutAuthentication() = verifyUnlockedShell(2f)
+    @Config(qualifiers = "w320dp-h800dp-mdpi", fontScale = 2f)
+    fun opensAt320DpWith200PercentFontWithoutAuthentication() = verifyUnlockedShell()
 
-    private fun verifyUnlockedShell(fontScale: Float = 1f) {
-        RuntimeEnvironment.setFontScale(fontScale)
+    private fun verifyUnlockedShell() {
         val overview = hasText("Overview") or hasContentDescription("Overview")
         val more = hasText("More") or hasContentDescription("More")
         compose.waitUntil(10_000) {

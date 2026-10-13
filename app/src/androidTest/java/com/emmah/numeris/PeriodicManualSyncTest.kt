@@ -28,7 +28,7 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-class PeriodicManualSyncTest {
+open class PeriodicManualSyncTest {
     @Test fun actualPeriodicWorkerCoalescesMatchingManualAndSerializesDifferentPeriod() =
         runBlocking {
             val app = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as NumerisApplication

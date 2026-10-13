@@ -150,6 +150,7 @@ dependencies {
 }
 
 tasks.withType<Test>().configureEach {
+    // App unit tests use *HostTest entry points; shared androidTest classes run through AndroidHostSuite.
     include("**/*HostTest.class")
     maxParallelForks = 1
     maxHeapSize = "1g"

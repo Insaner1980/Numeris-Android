@@ -140,7 +140,9 @@ class AndroidImportRepository(
     suspend fun cancel() = withContext(ioDispatcher) { mutex.withLock { clearPending() } }
 
     suspend fun recoverInterruptedTransfer() {
-        mutex.withLock { syncOrchestrator.exclusive { configurationTransfer?.recover() } }
+        withContext(ioDispatcher) {
+            mutex.withLock { syncOrchestrator.exclusive { configurationTransfer?.recover() } }
+        }
     }
 
     private fun readPackage(uri: Uri): ByteArray {
