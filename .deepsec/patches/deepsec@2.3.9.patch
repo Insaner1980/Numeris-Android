@@ -1,0 +1,385 @@
+diff --git a/dist/cli.mjs b/dist/cli.mjs
+index 6245781287e188a088b157764e3b450923c4d1bf..07a61819c039c3ff86063bfa88718ff10a09c777 100644
+--- a/dist/cli.mjs
++++ b/dist/cli.mjs
+@@ -48361,169 +48361,7 @@ var range = (a, b2, str) => {
+   return result;
+ };
+ 
+-// ../../node_modules/.pnpm/brace-expansion@5.0.7/node_modules/brace-expansion/dist/esm/index.js
+-var escSlash = "\0SLASH" + Math.random() + "\0";
+-var escOpen = "\0OPEN" + Math.random() + "\0";
+-var escClose = "\0CLOSE" + Math.random() + "\0";
+-var escComma = "\0COMMA" + Math.random() + "\0";
+-var escPeriod = "\0PERIOD" + Math.random() + "\0";
+-var escSlashPattern = new RegExp(escSlash, "g");
+-var escOpenPattern = new RegExp(escOpen, "g");
+-var escClosePattern = new RegExp(escClose, "g");
+-var escCommaPattern = new RegExp(escComma, "g");
+-var escPeriodPattern = new RegExp(escPeriod, "g");
+-var slashPattern = /\\\\/g;
+-var openPattern = /\\{/g;
+-var closePattern = /\\}/g;
+-var commaPattern = /\\,/g;
+-var periodPattern = /\\\./g;
+-var EXPANSION_MAX = 1e5;
+-function numeric(str) {
+-  return !isNaN(str) ? parseInt(str, 10) : str.charCodeAt(0);
+-}
+-function escapeBraces(str) {
+-  return str.replace(slashPattern, escSlash).replace(openPattern, escOpen).replace(closePattern, escClose).replace(commaPattern, escComma).replace(periodPattern, escPeriod);
+-}
+-function unescapeBraces(str) {
+-  return str.replace(escSlashPattern, "\\").replace(escOpenPattern, "{").replace(escClosePattern, "}").replace(escCommaPattern, ",").replace(escPeriodPattern, ".");
+-}
+-function parseCommaParts(str) {
+-  if (!str) {
+-    return [""];
+-  }
+-  const parts = [];
+-  const m2 = balanced("{", "}", str);
+-  if (!m2) {
+-    return str.split(",");
+-  }
+-  const { pre, body, post } = m2;
+-  const p2 = pre.split(",");
+-  p2[p2.length - 1] += "{" + body + "}";
+-  const postParts = parseCommaParts(post);
+-  if (post.length) {
+-    ;
+-    p2[p2.length - 1] += postParts.shift();
+-    p2.push.apply(p2, postParts);
+-  }
+-  parts.push.apply(parts, p2);
+-  return parts;
+-}
+-function expand(str, options = {}) {
+-  if (!str) {
+-    return [];
+-  }
+-  const { max = EXPANSION_MAX } = options;
+-  if (str.slice(0, 2) === "{}") {
+-    str = "\\{\\}" + str.slice(2);
+-  }
+-  return expand_(escapeBraces(str), max, true).map(unescapeBraces);
+-}
+-function embrace(str) {
+-  return "{" + str + "}";
+-}
+-function isPadded(el) {
+-  return /^-?0\d/.test(el);
+-}
+-function lte(i, y) {
+-  return i <= y;
+-}
+-function gte(i, y) {
+-  return i >= y;
+-}
+-function expand_(str, max, isTop) {
+-  const expansions = [];
+-  for (; ; ) {
+-    const m2 = balanced("{", "}", str);
+-    if (!m2)
+-      return [str];
+-    const pre = m2.pre;
+-    if (/\$$/.test(m2.pre)) {
+-      const post2 = m2.post.length ? expand_(m2.post, max, false) : [""];
+-      for (let k2 = 0; k2 < post2.length && k2 < max; k2++) {
+-        const expansion = pre + "{" + m2.body + "}" + post2[k2];
+-        expansions.push(expansion);
+-      }
+-      return expansions;
+-    }
+-    const isNumericSequence = /^-?\d+\.\.-?\d+(?:\.\.-?\d+)?$/.test(m2.body);
+-    const isAlphaSequence = /^[a-zA-Z]\.\.[a-zA-Z](?:\.\.-?\d+)?$/.test(m2.body);
+-    const isSequence = isNumericSequence || isAlphaSequence;
+-    const isOptions = m2.body.indexOf(",") >= 0;
+-    if (!isSequence && !isOptions) {
+-      if (m2.post.match(/,(?!,).*\}/)) {
+-        str = m2.pre + "{" + m2.body + escClose + m2.post;
+-        isTop = true;
+-        continue;
+-      }
+-      return [str];
+-    }
+-    const post = m2.post.length ? expand_(m2.post, max, false) : [""];
+-    let n;
+-    if (isSequence) {
+-      n = m2.body.split(/\.\./);
+-    } else {
+-      n = parseCommaParts(m2.body);
+-      if (n.length === 1 && n[0] !== void 0) {
+-        n = expand_(n[0], max, false).map(embrace);
+-        if (n.length === 1) {
+-          return post.map((p2) => m2.pre + n[0] + p2);
+-        }
+-      }
+-    }
+-    let N2;
+-    if (isSequence && n[0] !== void 0 && n[1] !== void 0) {
+-      const x = numeric(n[0]);
+-      const y = numeric(n[1]);
+-      const width = Math.max(n[0].length, n[1].length);
+-      let incr = n.length === 3 && n[2] !== void 0 ? Math.max(Math.abs(numeric(n[2])), 1) : 1;
+-      let test = lte;
+-      const reverse = y < x;
+-      if (reverse) {
+-        incr *= -1;
+-        test = gte;
+-      }
+-      const pad2 = n.some(isPadded);
+-      N2 = [];
+-      for (let i = x; test(i, y) && N2.length < max; i += incr) {
+-        let c;
+-        if (isAlphaSequence) {
+-          c = String.fromCharCode(i);
+-          if (c === "\\") {
+-            c = "";
+-          }
+-        } else {
+-          c = String(i);
+-          if (pad2) {
+-            const need = width - c.length;
+-            if (need > 0) {
+-              const z2 = new Array(need + 1).join("0");
+-              if (i < 0) {
+-                c = "-" + z2 + c.slice(1);
+-              } else {
+-                c = z2 + c;
+-              }
+-            }
+-          }
+-        }
+-        N2.push(c);
+-      }
+-    } else {
+-      N2 = [];
+-      for (let j3 = 0; j3 < n.length; j3++) {
+-        N2.push.apply(N2, expand_(n[j3], max, false));
+-      }
+-    }
+-    for (let j3 = 0; j3 < N2.length; j3++) {
+-      for (let k2 = 0; k2 < post.length && expansions.length < max; k2++) {
+-        const expansion = pre + N2[j3] + post[k2];
+-        if (!isTop || isSequence || expansion) {
+-          expansions.push(expansion);
+-        }
+-      }
+-    }
+-    return expansions;
+-  }
+-}
++import { expand } from "brace-expansion";
+ 
+ // ../../node_modules/.pnpm/minimatch@10.2.5/node_modules/minimatch/dist/esm/assert-valid-pattern.js
+ var MAX_PATTERN_LENGTH = 1024 * 64;
+@@ -69024,6 +68862,17 @@ function resolveCodexPaths() {
+   }
+ }
+ var CODEX_ENV_ALLOWLIST = /* @__PURE__ */ new Set([
++  ...(process.platform === "win32" ? [
++    "SYSTEMROOT",
++    "WINDIR",
++    "COMSPEC",
++    "PATHEXT",
++    "USERPROFILE",
++    "HOMEDRIVE",
++    "HOMEPATH",
++    "APPDATA",
++    "LOCALAPPDATA"
++  ] : []),
+   // Shell + locale
+   "PATH",
+   "HOME",
+@@ -69064,7 +68913,7 @@ function buildCodexEnv(extras) {
+   const env3 = {};
+   for (const [k2, v2] of Object.entries(process.env)) {
+     if (typeof v2 !== "string") continue;
+-    if (CODEX_ENV_ALLOWLIST.has(k2) || CODEX_ENV_ALLOWLIST_PREFIXES.some((p2) => k2.startsWith(p2))) {
++    if (CODEX_ENV_ALLOWLIST.has(process.platform === "win32" ? k2.toUpperCase() : k2) || CODEX_ENV_ALLOWLIST_PREFIXES.some((p2) => k2.startsWith(p2))) {
+       env3[k2] = v2;
+     }
+   }
+@@ -69106,6 +68955,7 @@ function buildCodexInvocation() {
+     if (!process.env.RUST_LOG) extras.RUST_LOG = "info";
+   }
+   const pluginLockdown = {
++    ...(process.platform === "win32" ? { windows: { sandbox: "mxc" } } : {}),
+     features: {
+       plugins: false,
+       remote_plugin: false
+diff --git a/dist/config.mjs b/dist/config.mjs
+index 2e876f0b1187449a1bf1c70dd108c935a76ed0f0..6e7fba51e85262f7d761c6cd3cd7b135a9873dd7 100644
+--- a/dist/config.mjs
++++ b/dist/config.mjs
+@@ -4365,169 +4365,7 @@ var range = (a, b, str) => {
+   return result;
+ };
+ 
+-// ../../node_modules/.pnpm/brace-expansion@5.0.7/node_modules/brace-expansion/dist/esm/index.js
+-var escSlash = "\0SLASH" + Math.random() + "\0";
+-var escOpen = "\0OPEN" + Math.random() + "\0";
+-var escClose = "\0CLOSE" + Math.random() + "\0";
+-var escComma = "\0COMMA" + Math.random() + "\0";
+-var escPeriod = "\0PERIOD" + Math.random() + "\0";
+-var escSlashPattern = new RegExp(escSlash, "g");
+-var escOpenPattern = new RegExp(escOpen, "g");
+-var escClosePattern = new RegExp(escClose, "g");
+-var escCommaPattern = new RegExp(escComma, "g");
+-var escPeriodPattern = new RegExp(escPeriod, "g");
+-var slashPattern = /\\\\/g;
+-var openPattern = /\\{/g;
+-var closePattern = /\\}/g;
+-var commaPattern = /\\,/g;
+-var periodPattern = /\\\./g;
+-var EXPANSION_MAX = 1e5;
+-function numeric(str) {
+-  return !isNaN(str) ? parseInt(str, 10) : str.charCodeAt(0);
+-}
+-function escapeBraces(str) {
+-  return str.replace(slashPattern, escSlash).replace(openPattern, escOpen).replace(closePattern, escClose).replace(commaPattern, escComma).replace(periodPattern, escPeriod);
+-}
+-function unescapeBraces(str) {
+-  return str.replace(escSlashPattern, "\\").replace(escOpenPattern, "{").replace(escClosePattern, "}").replace(escCommaPattern, ",").replace(escPeriodPattern, ".");
+-}
+-function parseCommaParts(str) {
+-  if (!str) {
+-    return [""];
+-  }
+-  const parts = [];
+-  const m = balanced("{", "}", str);
+-  if (!m) {
+-    return str.split(",");
+-  }
+-  const { pre, body, post } = m;
+-  const p = pre.split(",");
+-  p[p.length - 1] += "{" + body + "}";
+-  const postParts = parseCommaParts(post);
+-  if (post.length) {
+-    ;
+-    p[p.length - 1] += postParts.shift();
+-    p.push.apply(p, postParts);
+-  }
+-  parts.push.apply(parts, p);
+-  return parts;
+-}
+-function expand(str, options = {}) {
+-  if (!str) {
+-    return [];
+-  }
+-  const { max = EXPANSION_MAX } = options;
+-  if (str.slice(0, 2) === "{}") {
+-    str = "\\{\\}" + str.slice(2);
+-  }
+-  return expand_(escapeBraces(str), max, true).map(unescapeBraces);
+-}
+-function embrace(str) {
+-  return "{" + str + "}";
+-}
+-function isPadded(el) {
+-  return /^-?0\d/.test(el);
+-}
+-function lte(i, y) {
+-  return i <= y;
+-}
+-function gte(i, y) {
+-  return i >= y;
+-}
+-function expand_(str, max, isTop) {
+-  const expansions = [];
+-  for (; ; ) {
+-    const m = balanced("{", "}", str);
+-    if (!m)
+-      return [str];
+-    const pre = m.pre;
+-    if (/\$$/.test(m.pre)) {
+-      const post2 = m.post.length ? expand_(m.post, max, false) : [""];
+-      for (let k = 0; k < post2.length && k < max; k++) {
+-        const expansion = pre + "{" + m.body + "}" + post2[k];
+-        expansions.push(expansion);
+-      }
+-      return expansions;
+-    }
+-    const isNumericSequence = /^-?\d+\.\.-?\d+(?:\.\.-?\d+)?$/.test(m.body);
+-    const isAlphaSequence = /^[a-zA-Z]\.\.[a-zA-Z](?:\.\.-?\d+)?$/.test(m.body);
+-    const isSequence = isNumericSequence || isAlphaSequence;
+-    const isOptions = m.body.indexOf(",") >= 0;
+-    if (!isSequence && !isOptions) {
+-      if (m.post.match(/,(?!,).*\}/)) {
+-        str = m.pre + "{" + m.body + escClose + m.post;
+-        isTop = true;
+-        continue;
+-      }
+-      return [str];
+-    }
+-    const post = m.post.length ? expand_(m.post, max, false) : [""];
+-    let n;
+-    if (isSequence) {
+-      n = m.body.split(/\.\./);
+-    } else {
+-      n = parseCommaParts(m.body);
+-      if (n.length === 1 && n[0] !== void 0) {
+-        n = expand_(n[0], max, false).map(embrace);
+-        if (n.length === 1) {
+-          return post.map((p) => m.pre + n[0] + p);
+-        }
+-      }
+-    }
+-    let N;
+-    if (isSequence && n[0] !== void 0 && n[1] !== void 0) {
+-      const x = numeric(n[0]);
+-      const y = numeric(n[1]);
+-      const width = Math.max(n[0].length, n[1].length);
+-      let incr = n.length === 3 && n[2] !== void 0 ? Math.max(Math.abs(numeric(n[2])), 1) : 1;
+-      let test = lte;
+-      const reverse = y < x;
+-      if (reverse) {
+-        incr *= -1;
+-        test = gte;
+-      }
+-      const pad = n.some(isPadded);
+-      N = [];
+-      for (let i = x; test(i, y) && N.length < max; i += incr) {
+-        let c;
+-        if (isAlphaSequence) {
+-          c = String.fromCharCode(i);
+-          if (c === "\\") {
+-            c = "";
+-          }
+-        } else {
+-          c = String(i);
+-          if (pad) {
+-            const need = width - c.length;
+-            if (need > 0) {
+-              const z = new Array(need + 1).join("0");
+-              if (i < 0) {
+-                c = "-" + z + c.slice(1);
+-              } else {
+-                c = z + c;
+-              }
+-            }
+-          }
+-        }
+-        N.push(c);
+-      }
+-    } else {
+-      N = [];
+-      for (let j2 = 0; j2 < n.length; j2++) {
+-        N.push.apply(N, expand_(n[j2], max, false));
+-      }
+-    }
+-    for (let j2 = 0; j2 < N.length; j2++) {
+-      for (let k = 0; k < post.length && expansions.length < max; k++) {
+-        const expansion = pre + N[j2] + post[k];
+-        if (!isTop || isSequence || expansion) {
+-          expansions.push(expansion);
+-        }
+-      }
+-    }
+-    return expansions;
+-  }
+-}
++import { expand } from "brace-expansion";
+ 
+ // ../../node_modules/.pnpm/minimatch@10.2.5/node_modules/minimatch/dist/esm/assert-valid-pattern.js
+ var MAX_PATTERN_LENGTH = 1024 * 64;
