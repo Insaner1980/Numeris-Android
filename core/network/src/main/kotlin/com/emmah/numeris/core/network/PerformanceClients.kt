@@ -2,6 +2,7 @@
 
 package com.emmah.numeris.core.network
 
+import com.emmah.numeris.core.common.NumerisFailure
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -79,14 +80,19 @@ class CruxApiClient(
                 .addQueryParameter("key", apiKey.concatToString())
                 .build()
         val response =
-            http.execute(
-                "CrUX",
-                Request
-                    .Builder()
-                    .url(requestUrl)
-                    .post(body.toRequestBody(JSON_MEDIA_TYPE))
-                    .build(),
-            )
+            try {
+                http.execute(
+                    "CrUX",
+                    Request
+                        .Builder()
+                        .url(requestUrl)
+                        .post(body.toRequestBody(JSON_MEDIA_TYPE))
+                        .build(),
+                )
+            } catch (_: NumerisFailure.NotFound) {
+                // CrUX vastaa 404, kun sivustolla tai sivulla on liian vähän Chrome-käyttäjiä: ei dataa, ei virhe.
+                return emptyList()
+            }
         return parseCrux(response.body, targetType, target, formFactor)
     }
 
@@ -105,7 +111,12 @@ class CruxApiClient(
             val p75s = metric["percentilesTimeseries"]?.jsonObject?.get("p75s")?.jsonArray ?: JsonArray(emptyList())
             val histograms = metric["histogramTimeseries"]?.jsonArray ?: JsonArray(emptyList())
             periods.mapIndexed { index, periodValue ->
-                val histogram = histograms.mapNotNull { it.jsonObject["densities"]?.jsonArray }.map { it.valueAt(index) }
+                val histogram =
+                    histograms.mapNotNull { it.jsonObject["densities"]?.jsonArray }.map {
+                        it.valueAt(
+                            index,
+                        )
+                    }
                 val period = periodValue.jsonObject
                 CruxMetricPointWire(
                     targetType = targetType,

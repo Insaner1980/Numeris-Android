@@ -5,40 +5,29 @@
 //   ./gradlew :app:stabilityDump
 
 @Composable
-private fun com.emmah.numeris.EmptyCard(title: kotlin.String, detail: kotlin.String, syncing: kotlin.Boolean, onRefresh: kotlin.Function0<kotlin.Unit>): kotlin.Unit
-  skippable: true
-  restartable: true
-  params:
-    - title: STABLE (String is immutable)
-    - detail: STABLE (String is immutable)
-    - syncing: STABLE (primitive type)
-    - onRefresh: STABLE (function type)
-
-@Composable
-public fun com.emmah.numeris.HealthReportScreen(dao: com.emmah.numeris.data.ReportRepository, domain: kotlin.String, domains: kotlin.collections.List<kotlin.String>, period: com.emmah.numeris.core.model.Period, syncing: kotlin.Boolean, onSelectDomain: kotlin.Function1<kotlin.String, kotlin.Unit>, onSelectPeriod: kotlin.Function1<com.emmah.numeris.core.model.Period, kotlin.Unit>, onRefresh: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+internal fun com.emmah.numeris.CachedReport(source: kotlinx.coroutines.flow.Flow<T of com.emmah.numeris.CachedReport>, content: @[Composable] androidx.compose.runtime.internal.ComposableFunction1<T of com.emmah.numeris.CachedReport, kotlin.Unit>): kotlin.Unit
   skippable: false
   restartable: true
   params:
-    - dao: UNSTABLE (has mutable properties or unstable members)
-    - domain: STABLE (String is immutable)
-    - domains: RUNTIME (requires runtime check)
-    - period: STABLE (class with no mutable properties)
-    - syncing: STABLE (primitive type)
-    - onSelectDomain: STABLE (function type)
-    - onSelectPeriod: STABLE (function type)
-    - onRefresh: STABLE (function type)
+    - source: UNKNOWN (interface or non-final class; concrete implementation unknown)
+    - content: STABLE (composable function type)
 
 @Composable
-private fun com.emmah.numeris.MoreCard(title: kotlin.String, detail: kotlin.String, onClick: kotlin.Function0<kotlin.Unit>): kotlin.Unit
-  skippable: true
+internal fun com.emmah.numeris.HealthDestination(context: com.emmah.numeris.ShellContext): kotlin.Unit
+  skippable: false
   restartable: true
   params:
-    - title: STABLE (String is immutable)
-    - detail: STABLE (String is immutable)
-    - onClick: STABLE (function type)
+    - context: UNSTABLE (has mutable properties or unstable members)
 
 @Composable
-private fun com.emmah.numeris.MoreScreen(preferences: com.emmah.numeris.data.AppPreferences, onSetBackgroundSync: kotlin.Function2<kotlin.Boolean, kotlin.Int, kotlin.Unit>, onSetBiometricLock: kotlin.Function1<kotlin.Boolean, kotlin.Unit>, openHealth: kotlin.Function0<kotlin.Unit>, openSources: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+internal fun com.emmah.numeris.MoreDestination(context: com.emmah.numeris.ShellContext): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - context: UNSTABLE (has mutable properties or unstable members)
+
+@Composable
+internal fun com.emmah.numeris.MoreScreen(preferences: com.emmah.numeris.data.AppPreferences, onSetBackgroundSync: kotlin.Function2<kotlin.Boolean, kotlin.Int, kotlin.Unit>, onSetBiometricLock: kotlin.Function1<kotlin.Boolean, kotlin.Unit>, openHealth: kotlin.Function0<kotlin.Unit>, openSources: kotlin.Function0<kotlin.Unit>): kotlin.Unit
   skippable: false
   restartable: true
   params:
@@ -47,6 +36,16 @@ private fun com.emmah.numeris.MoreScreen(preferences: com.emmah.numeris.data.App
     - onSetBiometricLock: STABLE (function type)
     - openHealth: STABLE (function type)
     - openSources: STABLE (function type)
+
+@Composable
+private fun com.emmah.numeris.NavigationRow(title: kotlin.String, detail: kotlin.String, onClick: kotlin.Function0<kotlin.Unit>, divider: kotlin.Boolean): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - title: STABLE (String is immutable)
+    - detail: STABLE (String is immutable)
+    - onClick: STABLE (function type)
+    - divider: STABLE (primitive type)
 
 @Composable
 private fun com.emmah.numeris.NumerisContent(lockState: com.emmah.numeris.core.security.AppLockState, appLock: com.emmah.numeris.core.security.BiometricAppLock, container: com.emmah.numeris.AppContainer, authorizeGoogle: kotlin.Function0<kotlin.Unit>): kotlin.Unit
@@ -59,13 +58,6 @@ private fun com.emmah.numeris.NumerisContent(lockState: com.emmah.numeris.core.s
     - authorizeGoogle: STABLE (function type)
 
 @Composable
-private fun com.emmah.numeris.NumerisLineChart(values: kotlin.collections.List<kotlin.Double>): kotlin.Unit
-  skippable: false
-  restartable: true
-  params:
-    - values: RUNTIME (requires runtime check)
-
-@Composable
 public fun com.emmah.numeris.NumerisShell(container: com.emmah.numeris.AppContainer, requireBiometric: kotlin.Function1<kotlin.Function0<kotlin.Unit>, kotlin.Unit>, authorizeGoogle: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: false
   restartable: true
@@ -76,41 +68,26 @@ public fun com.emmah.numeris.NumerisShell(container: com.emmah.numeris.AppContai
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
-private fun com.emmah.numeris.OfflineReport(title: kotlin.String, domain: kotlin.String, period: com.emmah.numeris.core.model.Period, sources: kotlin.collections.List<kotlin.String>, selectedSource: kotlin.String, onSelectSource: kotlin.Function1<kotlin.String, kotlin.Unit>, tabs: kotlin.collections.List<kotlin.String>, selectedTab: kotlin.String, onSelectTab: kotlin.Function1<kotlin.String, kotlin.Unit>, rows: kotlin.collections.List<com.emmah.numeris.ReportRow>, trend: kotlin.collections.List<kotlin.Double>, syncing: kotlin.Boolean, onRefresh: kotlin.Function0<kotlin.Unit>, management: @[Composable] androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>?, domains: kotlin.collections.List<kotlin.String>, onSelectDomain: kotlin.Function1<kotlin.String, kotlin.Unit>, onSelectPeriod: kotlin.Function1<com.emmah.numeris.core.model.Period, kotlin.Unit>): kotlin.Unit
+internal fun com.emmah.numeris.OverviewDestination(context: com.emmah.numeris.ShellContext): kotlin.Unit
   skippable: false
   restartable: true
   params:
-    - title: STABLE (String is immutable)
-    - domain: STABLE (String is immutable)
-    - period: STABLE (class with no mutable properties)
-    - sources: RUNTIME (requires runtime check)
-    - selectedSource: STABLE (String is immutable)
-    - onSelectSource: STABLE (function type)
-    - tabs: RUNTIME (requires runtime check)
-    - selectedTab: STABLE (String is immutable)
-    - onSelectTab: STABLE (function type)
-    - rows: RUNTIME (requires runtime check)
-    - trend: RUNTIME (requires runtime check)
-    - syncing: STABLE (primitive type)
-    - onRefresh: STABLE (function type)
-    - management: STABLE (composable function type)
-    - domains: RUNTIME (requires runtime check)
-    - onSelectDomain: STABLE (function type)
-    - onSelectPeriod: STABLE (function type)
+    - context: UNSTABLE (has mutable properties or unstable members)
 
 @Composable
-public fun com.emmah.numeris.PerformanceReportScreen(dao: com.emmah.numeris.data.ReportRepository, domain: kotlin.String, domains: kotlin.collections.List<kotlin.String>, period: com.emmah.numeris.core.model.Period, syncing: kotlin.Boolean, onSelectDomain: kotlin.Function1<kotlin.String, kotlin.Unit>, onSelectPeriod: kotlin.Function1<com.emmah.numeris.core.model.Period, kotlin.Unit>, onRefresh: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+internal fun com.emmah.numeris.PageDestination(route: com.emmah.numeris.PageRoute, context: com.emmah.numeris.ShellContext): kotlin.Unit
   skippable: false
   restartable: true
   params:
-    - dao: UNSTABLE (has mutable properties or unstable members)
-    - domain: STABLE (String is immutable)
-    - domains: RUNTIME (requires runtime check)
-    - period: STABLE (class with no mutable properties)
-    - syncing: STABLE (primitive type)
-    - onSelectDomain: STABLE (function type)
-    - onSelectPeriod: STABLE (function type)
-    - onRefresh: STABLE (function type)
+    - route: STABLE (class with no mutable properties)
+    - context: UNSTABLE (has mutable properties or unstable members)
+
+@Composable
+internal fun com.emmah.numeris.PerformanceDestination(context: com.emmah.numeris.ShellContext): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - context: UNSTABLE (has mutable properties or unstable members)
 
 @Composable
 private fun com.emmah.numeris.PrivacySyncCard(preferences: com.emmah.numeris.data.AppPreferences, onSetBackgroundSync: kotlin.Function2<kotlin.Boolean, kotlin.Int, kotlin.Unit>, onSetBiometricLock: kotlin.Function1<kotlin.Boolean, kotlin.Unit>): kotlin.Unit
@@ -122,37 +99,22 @@ private fun com.emmah.numeris.PrivacySyncCard(preferences: com.emmah.numeris.dat
     - onSetBiometricLock: STABLE (function type)
 
 @Composable
-private fun com.emmah.numeris.ReportChoiceGroup(label: kotlin.String, content: @[Composable] androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>): kotlin.Unit
-  skippable: true
-  restartable: true
-  params:
-    - label: STABLE (String is immutable)
-    - content: STABLE (composable function type)
-
-@Composable
-private fun com.emmah.numeris.ReportListRow(row: com.emmah.numeris.ReportRow): kotlin.Unit
-  skippable: true
-  restartable: true
-  params:
-    - row: STABLE (class with no mutable properties)
-
-@Composable
-public fun com.emmah.numeris.SearchReportScreen(dao: com.emmah.numeris.data.ReportRepository, domain: kotlin.String, domains: kotlin.collections.List<kotlin.String>, period: com.emmah.numeris.core.model.Period, syncing: kotlin.Boolean, onSelectDomain: kotlin.Function1<kotlin.String, kotlin.Unit>, onSelectPeriod: kotlin.Function1<com.emmah.numeris.core.model.Period, kotlin.Unit>, onRefreshIndexing: kotlin.Function1<kotlin.String, kotlin.Unit>, onRefresh: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+internal fun com.emmah.numeris.ReportDestination(route: androidx.navigation3.runtime.NavKey, context: com.emmah.numeris.ShellContext): kotlin.Unit
   skippable: false
   restartable: true
   params:
-    - dao: UNSTABLE (has mutable properties or unstable members)
-    - domain: STABLE (String is immutable)
-    - domains: RUNTIME (requires runtime check)
-    - period: STABLE (class with no mutable properties)
-    - syncing: STABLE (primitive type)
-    - onSelectDomain: STABLE (function type)
-    - onSelectPeriod: STABLE (function type)
-    - onRefreshIndexing: STABLE (function type)
-    - onRefresh: STABLE (function type)
+    - route: UNKNOWN (interface or non-final class; concrete implementation unknown)
+    - context: UNSTABLE (has mutable properties or unstable members)
 
 @Composable
-private fun com.emmah.numeris.SettingSwitchRow(title: kotlin.String, detail: kotlin.String, checked: kotlin.Boolean, onCheckedChange: kotlin.Function1<kotlin.Boolean, kotlin.Unit>): kotlin.Unit
+internal fun com.emmah.numeris.SearchDestination(context: com.emmah.numeris.ShellContext): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - context: UNSTABLE (has mutable properties or unstable members)
+
+@Composable
+private fun com.emmah.numeris.SettingSwitchRow(title: kotlin.String, detail: kotlin.String, checked: kotlin.Boolean, onCheckedChange: kotlin.Function1<kotlin.Boolean, kotlin.Unit>, divider: kotlin.Boolean): kotlin.Unit
   skippable: true
   restartable: true
   params:
@@ -160,40 +122,51 @@ private fun com.emmah.numeris.SettingSwitchRow(title: kotlin.String, detail: kot
     - detail: STABLE (String is immutable)
     - checked: STABLE (primitive type)
     - onCheckedChange: STABLE (function type)
+    - divider: STABLE (primitive type)
 
 @Composable
-public fun com.emmah.numeris.TrafficReportScreen(dao: com.emmah.numeris.data.ReportRepository, domain: kotlin.String, domains: kotlin.collections.List<kotlin.String>, period: com.emmah.numeris.core.model.Period, syncing: kotlin.Boolean, onSelectDomain: kotlin.Function1<kotlin.String, kotlin.Unit>, onSelectPeriod: kotlin.Function1<com.emmah.numeris.core.model.Period, kotlin.Unit>, onRefresh: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+private fun com.emmah.numeris.ShellNavigation(context: com.emmah.numeris.ShellContext, syncState: com.emmah.numeris.core.model.SyncState, modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: false
   restartable: true
   params:
-    - dao: UNSTABLE (has mutable properties or unstable members)
-    - domain: STABLE (String is immutable)
-    - domains: RUNTIME (requires runtime check)
-    - period: STABLE (class with no mutable properties)
-    - syncing: STABLE (primitive type)
-    - onSelectDomain: STABLE (function type)
-    - onSelectPeriod: STABLE (function type)
-    - onRefresh: STABLE (function type)
+    - context: UNSTABLE (has mutable properties or unstable members)
+    - syncState: UNSTABLE (has mutable properties or unstable members)
+    - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
-private fun com.emmah.numeris.TrendCard(title: kotlin.String, values: kotlin.collections.List<kotlin.Double>, period: kotlin.String): kotlin.Unit
+private fun com.emmah.numeris.ShellReports(context: com.emmah.numeris.ShellContext, modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: false
   restartable: true
   params:
-    - title: STABLE (String is immutable)
-    - values: RUNTIME (requires runtime check)
-    - period: STABLE (String is immutable)
+    - context: UNSTABLE (has mutable properties or unstable members)
+    - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
-private fun com.emmah.numeris.UrlManagement(urls: kotlin.collections.List<com.emmah.numeris.core.database.PerformanceUrlEntity>, value: kotlin.String, error: kotlin.String?, onValueChange: kotlin.Function1<kotlin.String, kotlin.Unit>, onAdd: kotlin.Function0<kotlin.Unit>, onToggle: kotlin.Function2<kotlin.Long, kotlin.Boolean, kotlin.Unit>, onDelete: kotlin.Function1<kotlin.Long, kotlin.Unit>): kotlin.Unit
+internal fun com.emmah.numeris.SourcesDestination(route: com.emmah.numeris.SourcesRoute, context: com.emmah.numeris.ShellContext): kotlin.Unit
   skippable: false
   restartable: true
   params:
-    - urls: RUNTIME (requires runtime check)
-    - value: STABLE (String is immutable)
-    - error: STABLE (class with no mutable properties)
-    - onValueChange: STABLE (function type)
-    - onAdd: STABLE (function type)
-    - onToggle: STABLE (function type)
-    - onDelete: STABLE (function type)
+    - route: STABLE (class with no mutable properties)
+    - context: UNSTABLE (has mutable properties or unstable members)
+
+@Composable
+private fun com.emmah.numeris.SyncNotice(state: com.emmah.numeris.core.model.SyncState, onOpenSources: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - state: UNSTABLE (has mutable properties or unstable members)
+    - onOpenSources: STABLE (function type)
+
+@Composable
+internal fun com.emmah.numeris.TrafficDestination(context: com.emmah.numeris.ShellContext): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - context: UNSTABLE (has mutable properties or unstable members)
+
+@Composable
+private fun com.emmah.numeris.navigationItemColors(): androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItemColors
+  skippable: false
+  restartable: false
+  params:
 

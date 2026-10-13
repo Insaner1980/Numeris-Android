@@ -8,7 +8,9 @@ import com.emmah.numeris.core.database.BingRankTrafficEntity
 import com.emmah.numeris.core.database.BingRawItemEntity
 import com.emmah.numeris.core.database.NumerisDatabase
 import com.emmah.numeris.core.database.writeTransaction
+import com.emmah.numeris.core.model.ConnectionId
 import com.emmah.numeris.core.model.ConnectionTestResult
+import com.emmah.numeris.core.model.ProviderDate
 import com.emmah.numeris.core.model.SecretKey
 import com.emmah.numeris.core.model.SecretStore
 import com.emmah.numeris.core.model.SourceId
@@ -33,7 +35,7 @@ class BingSyncService(
 ) : SourceSyncService {
     override val source = SourceId.Bing
 
-    override suspend fun testConnection(): ConnectionTestResult =
+    override suspend fun testConnection(connectionId: ConnectionId?): ConnectionTestResult =
         withKey { key ->
             client.call(key, "GetUserSites")
             ConnectionTestResult.Success
@@ -46,57 +48,79 @@ class BingSyncService(
             val requestedDomain = request.domain
             val targets =
                 database
-                    .bingDao()
-                    .enabledSites()
-                    .filter { requestedDomain == null || it.siteUrl.contains(requestedDomain, ignoreCase = true) }
-            val rawItems = mutableListOf<BingRawItemEntity>()
-            val rankRows = mutableListOf<BingRankTrafficEntity>()
-            val queryRows = mutableListOf<BingQueryStatEntity>()
-            val pageRows = mutableListOf<BingPageStatEntity>()
-            rawItems += client.call(key, "GetUserSites").toRaw("GetUserSites", "", fetchedAt)
-            targets.forEach { site ->
-                listOf("GetCrawlStats", "GetCrawlIssues").forEach { method ->
-                    rawItems += client.call(key, method, site.siteUrl).toRaw(method, site.siteUrl, fetchedAt)
+                    .connectionDao()
+                    .bySource("bing_webmaster")
+                    .flatMap { it.configuredSites() }
+                    .distinct()
+                    .filter {
+                        requestedDomain == null ||
+                            com.emmah.numeris.core.model
+                                .reportDomain(it) == requestedDomain
+                    }
+            require(targets.isNotEmpty()) { "No Bing site is configured." }
+            syncTargets(targets) { site ->
+                val rawItems = mutableListOf<BingRawItemEntity>()
+                val rankRows = mutableListOf<BingRankTrafficEntity>()
+                val queryRows = mutableListOf<BingQueryStatEntity>()
+                val pageRows = mutableListOf<BingPageStatEntity>()
+                if (requestedDomain == null) {
+                    rawItems += client.call(key, "GetUserSites").toRaw("GetUserSites", "", fetchedAt)
                 }
-                client.call(key, "GetRankAndTrafficStats", site.siteUrl).forEach { item ->
-                    val date = item.firstString("Date", "date", "Day", "day") ?: fetchedAt
+                listOf("GetCrawlStats", "GetCrawlIssues").forEach { method ->
+                    rawItems += client.call(key, method, site).toRaw(method, site, fetchedAt)
+                }
+                client.call(key, "GetRankAndTrafficStats", site).forEach { item ->
+                    val date =
+                        com.emmah.numeris.core.model.ProviderDate
+                            .normalize(item.firstString("Date", "date", "Day", "day"))
+                            .orEmpty()
                     val raw = item.safeRaw()
                     rankRows +=
                         BingRankTrafficEntity(
-                            site.siteUrl,
+                            site,
                             date,
                             item.firstLong("Clicks", "clicks"),
                             item.firstLong("Impressions", "impressions"),
                             raw,
                             fetchedAt,
                         )
-                    rawItems += BingRawItemEntity("GetRankAndTrafficStats", site.siteUrl, date, raw, fetchedAt)
+                    rawItems += BingRawItemEntity("GetRankAndTrafficStats", site, date, raw, fetchedAt)
                 }
-                client.call(key, "GetQueryStats", site.siteUrl).forEach { item ->
+                client.call(key, "GetQueryStats", site).forEach { item ->
                     val query = item.firstString("Query", "query", "Keyword", "keyword") ?: return@forEach
-                    val date = item.firstString("Date", "date").orEmpty()
+                    val date =
+                        com.emmah.numeris.core.model.ProviderDate
+                            .normalize(item.firstString("Date", "date"))
+                            .orEmpty()
                     val raw = item.safeRaw()
                     queryRows +=
                         BingQueryStatEntity(
-                            site.siteUrl,
+                            site,
                             query,
                             date,
                             item.firstLong("Clicks", "clicks"),
                             item.firstLong("Impressions", "impressions"),
                             item.firstDouble("AvgClickPosition", "avgClickPosition", "AverageClickPosition"),
-                            item.firstDouble("AvgImpressionPosition", "avgImpressionPosition", "AverageImpressionPosition"),
+                            item.firstDouble(
+                                "AvgImpressionPosition",
+                                "avgImpressionPosition",
+                                "AverageImpressionPosition",
+                            ),
                             raw,
                             fetchedAt,
                         )
-                    rawItems += BingRawItemEntity("GetQueryStats", site.siteUrl, itemKey(query, date), raw, fetchedAt)
+                    rawItems += BingRawItemEntity("GetQueryStats", site, itemKey(query, date), raw, fetchedAt)
                 }
-                client.call(key, "GetPageStats", site.siteUrl).forEach { item ->
+                client.call(key, "GetPageStats", site).forEach { item ->
                     val page = item.firstString("Url", "url", "Page", "page") ?: return@forEach
-                    val date = item.firstString("Date", "date").orEmpty()
+                    val date =
+                        com.emmah.numeris.core.model.ProviderDate
+                            .normalize(item.firstString("Date", "date"))
+                            .orEmpty()
                     val raw = item.safeRaw()
                     pageRows +=
                         BingPageStatEntity(
-                            site.siteUrl,
+                            site,
                             page,
                             date,
                             item.firstLong("Clicks", "clicks"),
@@ -104,18 +128,21 @@ class BingSyncService(
                             raw,
                             fetchedAt,
                         )
-                    rawItems += BingRawItemEntity("GetPageStats", site.siteUrl, itemKey(page, date), raw, fetchedAt)
+                    rawItems += BingRawItemEntity("GetPageStats", site, itemKey(page, date), raw, fetchedAt)
                 }
-            }
-            database.writeTransaction {
-                bingDao().upsertTraffic(rankRows)
-                bingDao().upsertQueries(queryRows)
-                bingDao().upsertPages(pageRows)
-                bingDao().upsertRawItems(rawItems)
-                bingDao().deleteOldRawItems(Instant.now(clock).minus(BING_RETENTION_DAYS, ChronoUnit.DAYS).toString())
-            }
-            SyncResult.Success(rankRows.size + queryRows.size + pageRows.size + rawItems.size)
+                database.writeTransaction {
+                    bingDao().upsertTraffic(rankRows)
+                    bingDao().upsertQueries(queryRows)
+                    bingDao().upsertPages(pageRows)
+                    bingDao().upsertRawItems(rawItems)
+                    bingDao().deleteOldRawItems(
+                        Instant.now(clock).minus(BING_RETENTION_DAYS, ChronoUnit.DAYS).toString(),
+                    )
+                }
+                rankRows.size + queryRows.size + pageRows.size + rawItems.size
+            }.let { SyncResult.Success(it) }
         } catch (failure: Exception) {
+            if (failure is kotlinx.coroutines.CancellationException) throw failure
             SyncResult.Failure(failure.message ?: "Bing sync failed.", retryable = true)
         } finally {
             key.fill('\u0000')
@@ -127,6 +154,7 @@ class BingSyncService(
         return try {
             block(key)
         } catch (failure: Exception) {
+            if (failure is kotlinx.coroutines.CancellationException) throw failure
             ConnectionTestResult.Failure(failure.message ?: "Bing connection test failed.")
         } finally {
             key.fill('\u0000')

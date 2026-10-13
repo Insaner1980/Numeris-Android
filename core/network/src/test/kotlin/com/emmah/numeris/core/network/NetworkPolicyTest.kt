@@ -7,6 +7,17 @@ import org.junit.Test
 import java.net.URI
 
 class NetworkPolicyTest {
+    @Test fun `provider errors expose only enum-like codes, never free text`() {
+        val body =
+            """{"error":{"code":403,"message":"private-detail user@example.com","status":"PERMISSION_DENIED",
+            "details":[{"reason":"SERVICE_DISABLED"}]}}"""
+        assertEquals("PERMISSION_DENIED, SERVICE_DISABLED", ApiErrors.errorCode(body))
+        assertEquals(null, ApiErrors.errorCode("""{"error":{"status":"not an enum value"}}"""))
+        assertEquals(null, ApiErrors.errorCode("plain private text"))
+        val failure = ApiErrors.fromStatus("Google URL Inspection", 500, errorCode = "INTERNAL")
+        assertEquals("Google URL Inspection is temporarily unavailable (HTTP 500, INTERNAL).", failure.message)
+    }
+
     @Test fun `redacts credentials before limiting raw json`() {
         val raw = """{"api_key":"secret","authorization":"Bearer abc.def","url":"https://example.com/?token=value"}"""
         val stored = RawJsonStoragePolicy.redactAndLimit(raw)

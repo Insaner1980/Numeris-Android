@@ -13,21 +13,10 @@
       "tracking": "local-review:numeris-mobsf-target-sdk",
       "sourcePath": "build-logic/src/main/kotlin/AndroidApplicationConventionPlugin.kt",
       "selector": "defaultConfig.targetSdk = 36",
-      "findingPath": "app/src/main/AndroidManifest.xml"
-    },
-    {
-      "id": "numeris-mobsf-report-row-key",
-      "tool": "mobsfscan",
-      "rule": "android_kotlin_hardcoded",
-      "scope": "Report row identity in ReportScreens.kt",
-      "reason": "The exact MobSF match is a stable UI row identity assembled from report fields, not a credential or secret.",
-      "owner": "project-maintainers",
-      "added": "2026-07-29",
-      "expires": "2026-10-31",
-      "tracking": "local-review:numeris-mobsf-report-row-key",
-      "sourcePath": "app/src/main/java/com/emmah/numeris/ReportScreens.kt",
-      "selector": "key = \"$date:$kind:$query:${page.orEmpty()}\"",
-      "findingPath": "app/src/main/java/com/emmah/numeris/ReportScreens.kt"
+      "findingPath": "app/src/main/AndroidManifest.xml",
+      "findingSelectors": [
+        "Activity exported, targetSdk<29 and launchMode != singleInstance or taskAffinity is not empty"
+      ]
     },
     {
       "id": "numeris-mobsf-import-validation-sql",
@@ -41,7 +30,132 @@
       "tracking": "local-review:numeris-mobsf-import-validation-sql",
       "sourcePath": "data/src/main/kotlin/com/emmah/numeris/data/WindowsDatabaseImporter.kt",
       "selector": "db.rawQuery(\"PRAGMA user_version\"",
-      "findingPath": "data/src/main/kotlin/com/emmah/numeris/data/WindowsDatabaseImporter.kt"
+      "findingPath": "data/src/main/kotlin/com/emmah/numeris/data/WindowsDatabaseImporter.kt",
+      "findingSelectors": [
+        "android.database.sqlite",
+        "rawQuery("
+      ]
+    },
+    {
+      "id": "numeris-mobsf-traffic-breakdown-key",
+      "tool": "mobsfscan",
+      "rule": "android_kotlin_hardcoded",
+      "scope": "Traffic breakdown identity in TrafficMappings.kt",
+      "reason": "The exact match joins a report domain and page path into a Breakdown identity; it contains no credential or provider secret.",
+      "owner": "project-maintainers",
+      "added": "2026-10-12",
+      "expires": "2026-10-31",
+      "tracking": "local-review:numeris-mobsf-traffic-breakdown-key",
+      "sourcePath": "data/src/main/kotlin/com/emmah/numeris/data/TrafficMappings.kt",
+      "selector": "key = \"${it.domain}:${it.path}\"",
+      "findingPath": "data/src/main/kotlin/com/emmah/numeris/data/TrafficMappings.kt",
+      "findingSelectors": [
+        "key = \"${it.domain}:${it.path}\""
+      ]
+    },
+    {
+      "id": "numeris-mobsf-health-list-keys",
+      "tool": "mobsfscan",
+      "rule": "android_kotlin_hardcoded",
+      "scope": "Health report Compose item identities in HealthReportScreen.kt",
+      "reason": "The exact matches are LazyListScope item identities for response-time and failed-check charts, assembled from a site label.",
+      "owner": "project-maintainers",
+      "added": "2026-10-12",
+      "expires": "2026-10-31",
+      "tracking": "local-review:numeris-mobsf-health-list-keys",
+      "sourcePath": "feature/health/src/main/kotlin/com/emmah/numeris/feature/health/HealthReportScreen.kt",
+      "selector": "item(key = \"response-$site\")",
+      "findingPath": "feature/health/src/main/kotlin/com/emmah/numeris/feature/health/HealthReportScreen.kt",
+      "findingSelectors": [
+        "key = \"response-$site\"",
+        "key = \"failed-$site\""
+      ]
+    },
+    {
+      "id": "numeris-mobsf-performance-list-key",
+      "tool": "mobsfscan",
+      "rule": "android_kotlin_hardcoded",
+      "scope": "Performance site Compose item identity in PerformanceReportScreen.kt",
+      "reason": "The exact match is a LazyListScope item identity assembled from a report site domain.",
+      "owner": "project-maintainers",
+      "added": "2026-10-12",
+      "expires": "2026-10-31",
+      "tracking": "local-review:numeris-mobsf-performance-list-key",
+      "sourcePath": "feature/performance/src/main/kotlin/com/emmah/numeris/feature/performance/PerformanceReportScreen.kt",
+      "selector": "item(key = \"site-${site.domain}\")",
+      "findingPath": "feature/performance/src/main/kotlin/com/emmah/numeris/feature/performance/PerformanceReportScreen.kt",
+      "findingSelectors": [
+        "key = \"site-${site.domain}\""
+      ]
+    },
+    {
+      "id": "numeris-mobsf-sources-list-keys",
+      "tool": "mobsfscan",
+      "rule": "android_kotlin_hardcoded",
+      "scope": "Sources Compose section identities in SourcesScreen.kt",
+      "reason": "The exact matches are LazyListScope item identities for source-group headers, group contents and the measured-URLs section.",
+      "owner": "project-maintainers",
+      "added": "2026-10-12",
+      "expires": "2026-10-31",
+      "tracking": "local-review:numeris-mobsf-sources-list-keys",
+      "sourcePath": "feature/sources/src/main/kotlin/com/emmah/numeris/feature/sources/SourcesScreen.kt",
+      "selector": "item(key = \"measured-urls\")",
+      "findingPath": "feature/sources/src/main/kotlin/com/emmah/numeris/feature/sources/SourcesScreen.kt",
+      "findingSelectors": [
+        "key = \"header-${group.name}\"",
+        "key = \"group-${group.name}\"",
+        "key = \"measured-urls\""
+      ]
+    },
+    {
+      "id": "numeris-mobsf-import-contract-test-sql",
+      "tool": "mobsfscan",
+      "rule": "android_kotlin_sql_raw_query",
+      "scope": "Instrumentation fixture queries in ImportContractTest.kt",
+      "reason": "This androidTest file creates a temporary database from the bundled schema11.sql fixture. Its fixed metadata query and row counts use table names from that test database, with no application input.",
+      "owner": "project-maintainers",
+      "added": "2026-10-12",
+      "expires": "2026-10-31",
+      "tracking": "local-review:numeris-mobsf-import-contract-test-sql",
+      "sourcePath": "app/src/androidTest/java/com/emmah/numeris/ImportContractTest.kt",
+      "selector": "db.rawQuery(\"SELECT COUNT(*) FROM $table\", null)",
+      "findingPath": "app/src/androidTest/java/com/emmah/numeris/ImportContractTest.kt",
+      "findingSelectors": [
+        "android.database.sqlite",
+        "rawQuery("
+      ]
+    },
+    {
+      "id": "numeris-mobsf-import-recovery-test-sql",
+      "tool": "mobsfscan",
+      "rule": "android_kotlin_sql_raw_query",
+      "scope": "Instrumentation fixture mutations in ImportRecoveryTest.kt",
+      "reason": "This androidTest file uses fixed UPDATE and INSERT statements to corrupt a temporary fixture deliberately and verify that import preflight rejects invalid flags, dates and duplicate targets.",
+      "owner": "project-maintainers",
+      "added": "2026-10-12",
+      "expires": "2026-10-31",
+      "tracking": "local-review:numeris-mobsf-import-recovery-test-sql",
+      "sourcePath": "app/src/androidTest/java/com/emmah/numeris/ImportRecoveryTest.kt",
+      "selector": "db.execSQL(\"UPDATE performance_urls SET enabled = 2\")",
+      "findingPath": "app/src/androidTest/java/com/emmah/numeris/ImportRecoveryTest.kt",
+      "findingSelectors": [
+        "android.database.sqlite",
+        "execSQL("
+      ]
+    },
+    {
+      "id": "numeris-codeql-ui-app-lock-accepted-risk",
+      "tool": "codeql",
+      "rule": "java/android/insecure-local-authentication",
+      "scope": "BiometricAppLock.kt UI app unlock and explicit import confirmation",
+      "reason": "Accepted risk through 2026-10-31: this local UI privacy gate is not cryptographic protection against privileged process hooking. Report data remains readable by the app and the independent AndroidKeyStore secret key deliberately permits unattended background sync and import recovery. Existing biometric, API 28-29 device-credential fallback and background behavior are preserved. A crypto-only dummy challenge would not protect the actual data or import action. Full cryptographic data protection requires a separate decision about background access and legacy device credentials.",
+      "owner": "project-maintainers",
+      "added": "2026-10-12",
+      "expires": "2026-10-31",
+      "tracking": "local-review:numeris-codeql-ui-app-lock-accepted-risk",
+      "sourcePath": "core/security/src/main/kotlin/com/emmah/numeris/core/security/BiometricAppLock.kt",
+      "selector": "override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult)",
+      "findingPath": "core/security/src/main/kotlin/com/emmah/numeris/core/security/BiometricAppLock.kt"
     }
   ]
 }

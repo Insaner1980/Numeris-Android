@@ -2,7 +2,6 @@
 
 package com.emmah.numeris
 
-import android.app.Activity
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -40,16 +39,20 @@ import kotlinx.coroutines.launch
 
 class MainActivity : FragmentActivity() {
     private var lockState: AppLockState by mutableStateOf(AppLockState.Locked)
+    private var initialized by mutableStateOf(false)
     private var biometricLockEnabled = false
     private lateinit var appLock: BiometricAppLock
     private val lockViewModel: LockViewModel by viewModels()
+    private val credentialLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            appLock.onCredentialResult(result.resultCode)
+        }
     private val googleAuthorizationLauncher =
         registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                result.data?.let { intent ->
-                    (application as NumerisApplication).container.googleAuthorization.completeAuthorization(intent)
-                }
-            }
+            (application as NumerisApplication).container.googleAuthorization.completeAuthorization(
+                result.data,
+                result.resultCode,
+            )
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,7 +63,7 @@ class MainActivity : FragmentActivity() {
             isAppearanceLightNavigationBars = false
         }
         appLock =
-            BiometricAppLock(this, ContextCompat.getMainExecutor(this)) { state ->
+            BiometricAppLock(this, ContextCompat.getMainExecutor(this), credentialLauncher::launch) { state ->
                 lockState = state
                 lockViewModel.unlocked = state == AppLockState.Unlocked
             }
@@ -69,6 +72,8 @@ class MainActivity : FragmentActivity() {
             appLock.restoreUnlockedAfterConfigurationChange()
         }
         lifecycleScope.launch {
+            (application as NumerisApplication).initialization.await()
+            initialized = true
             (application as NumerisApplication)
                 .container.preferences.preferences
                 .map { it.biometricLockEnabled }
@@ -85,12 +90,14 @@ class MainActivity : FragmentActivity() {
                 }
         }
         setContent {
-            NumerisContent(
-                lockState = lockState,
-                appLock = appLock,
-                container = (application as NumerisApplication).container,
-                authorizeGoogle = ::authorizeGoogle,
-            )
+            if (initialized) {
+                NumerisContent(
+                    lockState = lockState,
+                    appLock = appLock,
+                    container = (application as NumerisApplication).container,
+                    authorizeGoogle = ::authorizeGoogle,
+                )
+            }
         }
     }
 

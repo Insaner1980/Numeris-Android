@@ -10,19 +10,35 @@ import java.time.Instant
     val value: String,
 )
 
-enum class SourceId {
-    CloudflareZone,
-    CloudflareWebAnalytics,
-    SearchConsole,
-    GoogleAnalytics,
-    Crux,
-    PageSpeed,
-    Bing,
-    Uptime,
-    Sitemap,
+enum class SourceId(
+    val storageName: String,
+) {
+    CloudflareZone("cloudflare"),
+    CloudflareWebAnalytics("web_analytics"),
+    SearchConsole("search_console"),
+    GoogleAnalytics("google_analytics"),
+    Crux("crux"),
+    PageSpeed("pagespeed"),
+    Bing("bing_webmaster"),
+    Uptime("uptime"),
+    Sitemap("sitemap"),
 }
 
-enum class ReportingGroup { Traffic, Search, Performance, Health }
+fun sourceIdFromStorage(value: String): SourceId? = SourceId.entries.firstOrNull { it.storageName == value }
+
+val SourceId.displayName: String
+    get() =
+        when (this) {
+            SourceId.CloudflareZone -> "Cloudflare Zone Analytics"
+            SourceId.CloudflareWebAnalytics -> "Cloudflare Web Analytics"
+            SourceId.SearchConsole -> "Google Search Console"
+            SourceId.GoogleAnalytics -> "Google Analytics"
+            SourceId.Crux -> "Chrome UX Report"
+            SourceId.PageSpeed -> "PageSpeed Insights"
+            SourceId.Bing -> "Bing Webmaster"
+            SourceId.Uptime -> "Uptime"
+            SourceId.Sitemap -> "Sitemap"
+        }
 
 sealed interface UiState<out T> {
     data object Loading : UiState<Nothing>
@@ -84,6 +100,7 @@ data class Connection(
     val configured: Boolean,
     val lastSuccessfulSync: Instant? = null,
     val lastError: String? = null,
+    val metadata: Map<String, String> = emptyMap(),
 )
 
 data class SaveConnectionCommand(

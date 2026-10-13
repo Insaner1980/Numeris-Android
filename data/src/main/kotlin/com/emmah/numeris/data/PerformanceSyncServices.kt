@@ -8,6 +8,7 @@ import com.emmah.numeris.core.database.NumerisDatabase
 import com.emmah.numeris.core.database.PageSpeedAuditEntity
 import com.emmah.numeris.core.database.PageSpeedRunEntity
 import com.emmah.numeris.core.database.writeTransaction
+import com.emmah.numeris.core.model.ConnectionId
 import com.emmah.numeris.core.model.ConnectionTestResult
 import com.emmah.numeris.core.model.SecretKey
 import com.emmah.numeris.core.model.SecretStore
@@ -32,7 +33,7 @@ class CruxSyncService(
 ) : SourceSyncService {
     override val source = SourceId.Crux
 
-    override suspend fun testConnection(): ConnectionTestResult =
+    override suspend fun testConnection(connectionId: ConnectionId?): ConnectionTestResult =
         secretStore.withTestSecret(CRUX_KEY, "No CrUX API key is configured.") { key ->
             val url =
                 database
@@ -48,33 +49,36 @@ class CruxSyncService(
     override suspend fun sync(request: SyncRequest): SyncResult =
         secretStore.withSyncSecret(CRUX_KEY, "No CrUX API key is configured.") { key ->
             val fetchedAt = Instant.now(clock).toString()
-            val urls = database.performanceDao().enabledUrls()
-            val points =
-                buildList {
-                    urls.map { it.origin }.distinct().forEach { origin ->
-                        FORM_FACTORS.forEach { factor -> addAll(client.queryHistory(key, "origin", origin, factor)) }
-                    }
-                    urls.forEach { url ->
-                        FORM_FACTORS.forEach { factor -> addAll(client.queryHistory(key, "url", url.url, factor)) }
-                    }
-                }.map { point ->
-                    CruxMetricPointEntity(
-                        point.targetType,
-                        point.target,
-                        point.formFactor,
-                        point.collectionStart,
-                        point.collectionEnd,
-                        point.metric,
-                        point.p75,
-                        point.goodDensity,
-                        point.needsImprovementDensity,
-                        point.poorDensity,
-                        RawJsonStoragePolicy.redactAndLimit(point.rawJson),
-                        fetchedAt,
-                    )
+            val urls =
+                database.performanceDao().enabledUrls().filter {
+                    request.domain == null ||
+                        com.emmah.numeris.core.model
+                            .reportDomain(it.url) == request.domain
                 }
-            database.writeTransaction { performanceDao().upsertCruxMetrics(points) }
-            points.size
+            val targets = urls.map { it.origin }.distinct().map { "origin" to it } + urls.map { "url" to it.url }
+            syncTargets(targets) { (type, target) ->
+                syncTargets(FORM_FACTORS) { factor ->
+                    val points =
+                        client.queryHistory(key, type, target, factor).map { point ->
+                            CruxMetricPointEntity(
+                                point.targetType,
+                                point.target,
+                                point.formFactor,
+                                point.collectionStart,
+                                point.collectionEnd,
+                                point.metric,
+                                point.p75,
+                                point.goodDensity,
+                                point.needsImprovementDensity,
+                                point.poorDensity,
+                                RawJsonStoragePolicy.redactAndLimit(point.rawJson),
+                                fetchedAt,
+                            )
+                        }
+                    database.writeTransaction { performanceDao().upsertCruxMetrics(points) }
+                    points.size
+                }
+            }
         }
 
     private companion object {
@@ -92,7 +96,7 @@ class PageSpeedSyncService(
     override val source = SourceId.PageSpeed
     private val limiter = Mutex()
 
-    override suspend fun testConnection(): ConnectionTestResult =
+    override suspend fun testConnection(connectionId: ConnectionId?): ConnectionTestResult =
         secretStore.withTestSecret(PAGESPEED_KEY, "No PageSpeed API key is configured.") { key ->
             val url =
                 database
@@ -109,52 +113,19 @@ class PageSpeedSyncService(
         secretStore.withSyncSecret(PAGESPEED_KEY, "No PageSpeed API key is configured.") { key ->
             limiter.withLock {
                 val fetchedAt = Instant.now(clock).toString()
-                var rows = 0
-                database.performanceDao().enabledUrls().forEach { target ->
-                    STRATEGIES.forEach { strategy ->
-                        val run = retry { client.run(key, target.url, strategy) }
-                        val runEntity =
-                            PageSpeedRunEntity(
-                                run.url,
-                                run.strategy,
-                                run.analysisUtc,
-                                run.finalUrl,
-                                run.performanceScore,
-                                run.accessibilityScore,
-                                run.bestPracticesScore,
-                                run.seoScore,
-                                run.lighthouseVersion,
-                                run.runtimeError,
-                                run.warningsJson?.let { RawJsonStoragePolicy.redactAndLimit(it) },
-                                RawJsonStoragePolicy.redactAndLimit(run.rawJson),
-                                fetchedAt,
-                            )
-                        val audits =
-                            run.audits.map { audit ->
-                                PageSpeedAuditEntity(
-                                    run.url,
-                                    run.strategy,
-                                    run.analysisUtc,
-                                    audit.id,
-                                    audit.title,
-                                    audit.score,
-                                    audit.numericValue,
-                                    audit.numericUnit,
-                                    audit.displayValue,
-                                    audit.scoreDisplayMode,
-                                    audit.detailsJson?.let {
-                                        RawJsonStoragePolicy.redactAndLimit(it, RawJsonStoragePolicy.MAX_DETAIL_CHARS)
-                                    },
-                                )
-                            }
-                        database.writeTransaction {
-                            performanceDao().upsertPageSpeedRuns(listOf(runEntity))
-                            performanceDao().upsertPageSpeedAudits(audits)
-                        }
-                        rows += 1 + audits.size
-                        delay(REQUEST_SPACING_MILLIS)
+                val rows =
+                    syncTargets(
+                        database
+                            .performanceDao()
+                            .enabledUrls()
+                            .filter {
+                                request.domain == null ||
+                                    com.emmah.numeris.core.model
+                                        .reportDomain(it.url) == request.domain
+                            },
+                    ) { target ->
+                        syncTargets(STRATEGIES) { strategy -> syncRun(key, target.url, strategy, fetchedAt) }
                     }
-                }
                 database.writeTransaction {
                     performanceDao().retainLatestPageSpeedRuns(RUNS_TO_KEEP)
                     performanceDao().deleteOrphanedPageSpeedAudits()
@@ -162,6 +133,58 @@ class PageSpeedSyncService(
                 rows
             }
         }
+
+    private suspend fun syncRun(
+        key: CharArray,
+        url: String,
+        strategy: String,
+        fetchedAt: String,
+    ): Int {
+        val run = retry { client.run(key, url, strategy) }
+        val runEntity =
+            PageSpeedRunEntity(
+                run.url,
+                run.strategy,
+                run.analysisUtc,
+                run.finalUrl,
+                run.performanceScore,
+                run.accessibilityScore,
+                run.bestPracticesScore,
+                run.seoScore,
+                run.lighthouseVersion,
+                run.runtimeError,
+                run.warningsJson?.let { RawJsonStoragePolicy.redactAndLimit(it) },
+                RawJsonStoragePolicy.redactAndLimit(run.rawJson),
+                fetchedAt,
+            )
+        val audits =
+            run.audits.map { audit ->
+                PageSpeedAuditEntity(
+                    run.url,
+                    run.strategy,
+                    run.analysisUtc,
+                    audit.id,
+                    audit.title,
+                    audit.score,
+                    audit.numericValue,
+                    audit.numericUnit,
+                    audit.displayValue,
+                    audit.scoreDisplayMode,
+                    audit.detailsJson?.let {
+                        RawJsonStoragePolicy.redactAndLimit(
+                            it,
+                            RawJsonStoragePolicy.MAX_DETAIL_CHARS,
+                        )
+                    },
+                )
+            }
+        database.writeTransaction {
+            performanceDao().upsertPageSpeedRuns(listOf(runEntity))
+            performanceDao().upsertPageSpeedAudits(audits)
+        }
+        delay(REQUEST_SPACING_MILLIS)
+        return 1 + audits.size
+    }
 
     private suspend fun <T> retry(block: suspend () -> T): T {
         var delayMillis = INITIAL_BACKOFF_MILLIS
@@ -196,6 +219,7 @@ private suspend fun SecretStore.withTestSecret(
     return try {
         block(secret)
     } catch (failure: Exception) {
+        if (failure is kotlinx.coroutines.CancellationException) throw failure
         ConnectionTestResult.Failure(failure.message ?: "Connection test failed.")
     } finally {
         secret.fill('\u0000')
@@ -211,6 +235,7 @@ private suspend fun SecretStore.withSyncSecret(
     return try {
         SyncResult.Success(block(secret))
     } catch (failure: Exception) {
+        if (failure is kotlinx.coroutines.CancellationException) throw failure
         SyncResult.Failure(failure.message ?: "Sync failed.", failure is NumerisFailure.TransientNetwork)
     } finally {
         secret.fill('\u0000')

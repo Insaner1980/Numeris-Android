@@ -10,8 +10,6 @@ import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import androidx.work.WorkerFactory
 import androidx.work.WorkerParameters
-import com.emmah.numeris.core.model.Period
-import com.emmah.numeris.core.model.SyncRequest
 import com.emmah.numeris.core.model.SyncState
 import java.time.Duration
 
@@ -20,12 +18,14 @@ class NumerisSyncWorker(
     workerParameters: WorkerParameters,
     private val container: AppContainer,
 ) : CoroutineWorker(appContext, workerParameters) {
-    override suspend fun doWork(): Result =
-        when (container.syncOrchestrator.syncAll(SyncRequest(Period.All)).state) {
+    override suspend fun doWork(): Result {
+        container.importRepository.recoverInterruptedTransfer()
+        return when (container.syncOrchestrator.syncEverything().state) {
             is SyncState.Success, is SyncState.PartialSuccess -> Result.success()
             is SyncState.AuthRequired -> Result.failure()
             else -> Result.retry()
         }
+    }
 }
 
 class NumerisWorkerFactory(

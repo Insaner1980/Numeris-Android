@@ -7,6 +7,7 @@ plugins {
 
 android {
     namespace = "com.emmah.numeris"
+    sourceSets.getByName("androidTest").assets.srcDir(rootProject.file("test-fixtures/parity"))
 
     defaultConfig {
         applicationId = "com.emmah.numeris"
@@ -31,19 +32,23 @@ android {
     }
 }
 
+// Yksi lähde OWASP-tietokannan polulle: security-check antaa sen
+// DEPENDENCY_CHECK_DATA_DIRECTORY-muuttujassa, muuten käytetään projektin omaa oletusta.
+val dependencyCheckDataDirectory: String =
+    providers
+        .environmentVariable("DEPENDENCY_CHECK_DATA_DIRECTORY")
+        .orElse(
+            rootProject.layout.projectDirectory
+                .dir(".gradle/dependency-check-data")
+                .asFile
+                .absolutePath,
+        ).get()
+
 dependencyCheck {
     formats = listOf("HTML", "JSON", "SARIF")
     outputDirectory = rootProject.layout.projectDirectory.dir("reports")
     data {
-        directory =
-            providers
-                .environmentVariable("DEPENDENCY_CHECK_DATA_DIRECTORY")
-                .orElse(
-                    rootProject.layout.projectDirectory
-                        .dir(".gradle/dependency-check-data")
-                        .asFile
-                        .absolutePath,
-                ).get()
+        directory = dependencyCheckDataDirectory
     }
     autoUpdate =
         providers
@@ -57,6 +62,7 @@ dependencyCheck {
             .getOrElse(7f)
     scanConfigurations = listOf("debugRuntimeClasspath", "releaseRuntimeClasspath")
     skipTestGroups = true
+    suppressionFiles = listOf(rootProject.file("config/dependency-check/suppressions.xml").absolutePath)
     analyzers {
         ossIndex {
             enabled = false
@@ -77,6 +83,14 @@ dependencyCheck {
     }
 }
 
+// Plugin 13.0.0: DataExtension asettaa hakemiston jo konstruktorissaan set()-kutsulla, joten
+// ConfiguredTaskin convention(defaults.data.directory) ei pure eikä yllä oleva data.directory
+// mene perille — tietokanta päätyisi polkuun $GRADLE_USER_HOME/dependency-check-data/11.0.
+// Asetetaan sama polku suoraan taskeille. Korjattu upstreamissa, poistettavissa kun julkaistaan.
+tasks.withType<org.owasp.dependencycheck.gradle.tasks.ConfiguredTask>().configureEach {
+    data.directory.set(dependencyCheckDataDirectory)
+}
+
 dependencies {
     constraints {
         implementation(libs.androidx.concurrent.futures) {
@@ -86,6 +100,11 @@ dependencies {
             because("Keep the application and Android test runtime on compatible Concurrent versions.")
         }
     }
+    androidTestImplementation(libs.androidx.test.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.okhttp)
+    androidTestImplementation(libs.play.services.auth)
     lintChecks(libs.android.security.lints)
     implementation(project(":core:model"))
     implementation(project(":core:database"))
@@ -110,6 +129,7 @@ dependencies {
     implementation(libs.androidx.material3.adaptive.navigation.suite)
     implementation(libs.androidx.work.runtime)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.sqlite.framework)
     implementation(libs.vico.compose)
     implementation(libs.vico.compose.m3)
     debugImplementation(libs.androidx.compose.ui.tooling)

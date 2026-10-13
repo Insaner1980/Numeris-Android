@@ -3,7 +3,7 @@
   "exceptionsFile": "config/check-exceptions.json",
   "projectId": "numeris-android",
   "modules": [
-    { "path": ":app", "relativePath": "app", "kind": "android-application", "required": true, "variants": ["debug", "release"], "sourceSets": ["main"] },
+    { "path": ":app", "relativePath": "app", "kind": "android-application", "required": true, "variants": ["debug", "release"], "sourceSets": ["main", "androidTest"] },
     { "path": ":core:model", "relativePath": "core/model", "kind": "kotlin-library", "required": true, "variants": [], "sourceSets": ["main", "test"] },
     { "path": ":core:common", "relativePath": "core/common", "kind": "kotlin-library", "required": true, "variants": [], "sourceSets": ["main"] },
     { "path": ":core:designsystem", "relativePath": "core/designsystem", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main"] },
@@ -11,7 +11,7 @@
     { "path": ":core:network", "relativePath": "core/network", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main", "test"] },
     { "path": ":core:security", "relativePath": "core/security", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main", "test"] },
     { "path": ":core:testing", "relativePath": "core/testing", "kind": "kotlin-library", "required": true, "variants": [], "sourceSets": ["main"] },
-    { "path": ":data", "relativePath": "data", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main"] },
+    { "path": ":data", "relativePath": "data", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main", "test"] },
     { "path": ":feature:overview", "relativePath": "feature/overview", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main"] },
     { "path": ":feature:traffic", "relativePath": "feature/traffic", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main"] },
     { "path": ":feature:search", "relativePath": "feature/search", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main"] },
@@ -53,6 +53,7 @@
     ":feature:health:testDebugUnitTest",
     ":feature:sources:testDebugUnitTest"
   ],
+  "deviceTestTasks": [":app:connectedDebugAndroidTest"],
   "includedBuilds": [
     {
       "path": "build-logic",
@@ -64,7 +65,7 @@
     }
   ],
   "checks": {
-    "dependabotEnabled": false,
+    "dependabotEnabled": true,
     "ktlintTasks": ["ktlintCheck"],
     "detektTasks": ["detektCheck"],
     "lintTasks": [
@@ -92,7 +93,7 @@
       ":feature:traffic:stabilityCheck"
     ],
     "dependencyConfigurations": ["debugRuntimeClasspath", "releaseRuntimeClasspath"],
-    "dependencyCheckTasks": [":app:dependencyCheckAggregate"],
+    "dependencyCheckTasks": [":app:dependencyCheckAnalyze"],
     "semgrepConfig": "config/semgrep/numeris-android-security.yml"
   }
 }

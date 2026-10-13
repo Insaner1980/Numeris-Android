@@ -1,0 +1,9 @@
+[[IgnoredVulns]]
+id = "GHSA-r937-wjx7-w2jp"
+reason = "The upstream fix is in plugins/kapt/kapt-base incremental cache deserialization. Numeris Android and build-logic use KSP and do not apply KAPT; review if annotation-processing plugins change. https://github.com/JetBrains/kotlin/commit/bf51df6"
+ignoreUntil = 2026-10-31
+
+[[IgnoredVulns]]
+id = "GHSA-4jrv-ppp4-jm57"
+reason = "Gradle needs gson-2.3.1.pom as plugin resolution metadata, but no Gson 2.3.1 JAR is verified or selected in any main or included-build configuration. Every selected Gson version is at least the patched 2.8.9. Recheck the complete dependency inventory if build-tool dependencies change. https://github.com/advisories/GHSA-4jrv-ppp4-jm57"
+ignoreUntil = 2026-10-31

@@ -6,6 +6,8 @@ plugins {
 android { namespace = "com.emmah.numeris.core.designsystem" }
 
 dependencies {
+    implementation(project(":core:model"))
+    implementation(libs.vico.compose)
     api(libs.androidx.compose.ui)
     api(libs.androidx.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)

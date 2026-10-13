@@ -1,0 +1,270 @@
+{
+  "head": "c973201847b18e4fb044c21d64eec04f32ff5b0f",
+  "referenceDate": "2026-10-11",
+  "files": [
+    {
+      "file": "Numeris/Helpers/AppPaths.cs",
+      "sha256": "b84a5506937f509625d1a41dc96069e70180ff882cd481a08f4a1096f73e0430"
+    },
+    {
+      "file": "Numeris/Helpers/BusyState.cs",
+      "sha256": "b763325a9b2b10e61ad51eef483f0673391f96177097c18feef03f85fe5ab89b"
+    },
+    {
+      "file": "Numeris/Helpers/CollectionExtensions.cs",
+      "sha256": "898ebec5b6aaccc2e2c40a6c5bff4a7b75a66bb317a326de48dea187eaea3cdf"
+    },
+    {
+      "file": "Numeris/Helpers/DateSeries.cs",
+      "sha256": "08429afbdd49fcf1a9e23662970a55a7e8d6ace333bf8bfb4fce7a89119d9576"
+    },
+    {
+      "file": "Numeris/Helpers/DisplayFormat.cs",
+      "sha256": "650d55264d84ca6ae7f6442fe3804f8776bd0fe3f84ca95e1d4d6a9e05421192"
+    },
+    {
+      "file": "Numeris/Helpers/Domains.cs",
+      "sha256": "87941bf9de21721b11a22b9803f6f51b0bd6a68562ecef6c08da93b2be2cc67a"
+    },
+    {
+      "file": "Numeris/Helpers/EmptyState.cs",
+      "sha256": "85a14cb47052c6d992ef6419088115e841878905b286901d7548b9881b72b449"
+    },
+    {
+      "file": "Numeris/Helpers/PeriodComparison.cs",
+      "sha256": "eb574dc0ed31457b6dbeba7b5b0ae1a08048bb294e38da123c443b0fff9ded0f"
+    },
+    {
+      "file": "Numeris/Helpers/SecretQueryNames.cs",
+      "sha256": "77b426661a44afc2513971e8d583876bd5cb9aff8c932797dfa8f7124c903af6"
+    },
+    {
+      "file": "Numeris/Helpers/SelectorBarExtensions.cs",
+      "sha256": "f6a4ac57d95207acc2614b3cd2d71f162d8fd62148220f2e8feec76a06e2c18d"
+    },
+    {
+      "file": "Numeris/Helpers/SiteIdentity.cs",
+      "sha256": "efdb46878f8be3e793fdcc336bc53e871905bb78cc019f73ab4ae46f723018c4"
+    },
+    {
+      "file": "Numeris/Models/AnalyticsRows.cs",
+      "sha256": "d6b29520bbe9702c192fe7eecb494a0cee2825a5626fd612602b4b8582ac7967"
+    },
+    {
+      "file": "Numeris/Models/BingRows.cs",
+      "sha256": "47afa3827132b635bb03e7e8b2837f95574a15f99b1bad38c9098055cb5f6007"
+    },
+    {
+      "file": "Numeris/Models/CloudflareRows.cs",
+      "sha256": "5db59d4c16573abe347c2d8310ea966aff62e15cd66a5c5c72585b78772ff370"
+    },
+    {
+      "file": "Numeris/Models/ConnectionConfigs.cs",
+      "sha256": "aae85b5eb0cf9cee49a0eb469474be1ae2600aa179ad15a7b9deaa18d49a3a97"
+    },
+    {
+      "file": "Numeris/Models/ConnectionInfo.cs",
+      "sha256": "c7e3b07b1a4324d6947edf6df3731ee5f20b6cd7453b3d2481bafa6b76d6398f"
+    },
+    {
+      "file": "Numeris/Models/HealthRows.cs",
+      "sha256": "170f9aaa2d5351e2d2b892d4963df3ad6d3705fa505f64d2db5b47ba8ea61941"
+    },
+    {
+      "file": "Numeris/Models/InsightRows.cs",
+      "sha256": "23733f68075d1615bbe480257bbb1830c092d897b2f576c7497e8625105b998e"
+    },
+    {
+      "file": "Numeris/Models/PerformanceRows.cs",
+      "sha256": "69440a45dcc1815a439fa0c912a4ec768174b1850560c7133495f8447f5c0c37"
+    },
+    {
+      "file": "Numeris/Models/Period.cs",
+      "sha256": "ee9d0987fc9d13a2cd15a6355da11d7e0cc1df9dac6686c4f8a2782822919216"
+    },
+    {
+      "file": "Numeris/Models/PortfolioRows.cs",
+      "sha256": "8df7cdbac4ce47c3c2941d3c890a265038892ca33c2ab1050e6b3618f5e992c9"
+    },
+    {
+      "file": "Numeris/Models/SearchConsoleRows.cs",
+      "sha256": "4a16f816245896ee8b3bd1757094cf7bf83d321ea34a97ae696afa2ca95e26c4"
+    },
+    {
+      "file": "Numeris/Models/SelectOption.cs",
+      "sha256": "2be0d9b8dcb00aefe3eddf9b7d2359f0719cd98bdbb8857a38cc5fe985f765bd"
+    },
+    {
+      "file": "Numeris/Models/SummaryData.cs",
+      "sha256": "c01c1b1781a35570c5a0a1a92bce7177b3460d6d43cdad5d44b78dbb4ed1b34e"
+    },
+    {
+      "file": "Numeris/Services/Database/Repositories/BingRepository.cs",
+      "sha256": "26c216ffab46b3fa550a5f49571da7935673c2fe20fb27feb74dddd1c118c260"
+    },
+    {
+      "file": "Numeris/Services/Database/Repositories/CloudflareRepository.cs",
+      "sha256": "4a512ad42a173fd4527ee8a483128383603cbe14c38fd71be22731818f4e7f93"
+    },
+    {
+      "file": "Numeris/Services/Database/Repositories/ConnectionsRepository.cs",
+      "sha256": "ea21ccd77f48361415751f4a113c6b99bd9b66808c13f2b0c99846dd3662e62b"
+    },
+    {
+      "file": "Numeris/Services/Database/Repositories/HealthRepository.cs",
+      "sha256": "e90a96899b629772472b330211dfb7c8d6798ab4886a329e8382c82b9c2a4b14"
+    },
+    {
+      "file": "Numeris/Services/Database/Repositories/InsightMetricsRepository.cs",
+      "sha256": "58fec0e71d66f24a457a46a5b40f86c333a5222b7cb31dc0586d116818b694de"
+    },
+    {
+      "file": "Numeris/Services/Database/Repositories/PerformanceRepository.cs",
+      "sha256": "98f4a2a1bd2bd5ed8efd0d1ef3ec96cb8b950b013190b742139d2656f3912517"
+    },
+    {
+      "file": "Numeris/Services/Database/Repositories/PortfolioRepository.cs",
+      "sha256": "8e4b8fd2e28fa1253e4d2165dafd00a848e8977ffc972dc907b10ff7e48a5ea0"
+    },
+    {
+      "file": "Numeris/Services/Database/Repositories/SearchConsoleRepository.cs",
+      "sha256": "276bee04c8d2c779824097737b25597ceb3e686c1fa750466fd06cd64aaf9e88"
+    },
+    {
+      "file": "Numeris/Services/Database/Repositories/SitemapRepository.cs",
+      "sha256": "55ea38e0f8c19de34de04a500bd62ff8fd31bdcd152c71d01c91cdea1dc828a3"
+    },
+    {
+      "file": "Numeris/Services/Database/Repositories/SitePeriodCoverage.cs",
+      "sha256": "966be7c2817a0662b1d2eb98fa8d4e24419e78007dc9436bbca8db4ddebf53d9"
+    },
+    {
+      "file": "Numeris/Services/Database/Repositories/SummaryRepository.cs",
+      "sha256": "9df8d90ba8a26935f6440c24308bd560d73d3261685bda49cb30f8c9a61fda44"
+    },
+    {
+      "file": "Numeris/Services/Database/Repositories/WebAnalyticsRepository.cs",
+      "sha256": "34e2ababcfca63c674126c64db78f5f5e0d24f94aaac940061f5e111887c653b"
+    },
+    {
+      "file": "Numeris/Services/Insights/InsightEngine.cs",
+      "sha256": "9b0f3f20e60a83cf5bb2cc4900573ea8a49bdc572e669756a9b761deca60aa36"
+    },
+    {
+      "file": "Numeris/Services/Insights/Trend.cs",
+      "sha256": "61cf212c8b4a2aa4d26b7c633c3a814bab3ff3dd5fa64a8e8a3a11d1936d83af"
+    },
+    {
+      "file": "Numeris/ViewModels/BingViewModel.cs",
+      "sha256": "2c7844a26c80d8fcf135ea638a0f76880e0acc1793b4a1ac057ec60e791cdb1d"
+    },
+    {
+      "file": "Numeris/ViewModels/CloudflareViewModel.cs",
+      "sha256": "01189135a3b2d6b12537194fbd45ddbdffc572952e8e69f04415aec6ec54d401"
+    },
+    {
+      "file": "Numeris/ViewModels/DashboardViewModel.cs",
+      "sha256": "9960a513e598f601043d42d25cce0f4dcec02b302c85fca707af13067d1cb28b"
+    },
+    {
+      "file": "Numeris/ViewModels/HealthViewModel.cs",
+      "sha256": "ecf8c3ab620d292aa0c6908bfa17994dde5dfd2b0abe369babd014173acaf151"
+    },
+    {
+      "file": "Numeris/ViewModels/PageDetailViewModel.cs",
+      "sha256": "f7569400a399bcda6992d598a2e48e600e1e673f2a1390ff8fb462c4018e58d7"
+    },
+    {
+      "file": "Numeris/ViewModels/PerformanceViewModel.cs",
+      "sha256": "8fa9bcb4870507a4827cc9cff9db4e0c224b813a1c6e1ae9ce1db60f9c74c5d4"
+    },
+    {
+      "file": "Numeris/ViewModels/SearchConsoleViewModel.cs",
+      "sha256": "65ab600b83d2f0992d16fa38afea0d073419ac8c357927db89d76a21249b7eec"
+    },
+    {
+      "file": "Numeris/ViewModels/ShellViewModel.cs",
+      "sha256": "b2517ec90cc742fc68de5bde51249f47478382113ecb0371791e5a07b1a112f4"
+    },
+    {
+      "file": "Numeris/ViewModels/SourcesViewModel.cs",
+      "sha256": "af1029d01ed0132c97740bd9d748024a51f019557fda9d31c1745ce176fee263"
+    },
+    {
+      "file": "Numeris/Views/BingPage.xaml",
+      "sha256": "e92c1c837398263c16bf92bb077fe58d83869269013cb4f1c036c3b30c6644fc"
+    },
+    {
+      "file": "Numeris/Views/BingPage.xaml.cs",
+      "sha256": "4136f9aa25ae94160040cce5e0f44bf55dbca1210eb7d38cfdd9d4a55a6f2802"
+    },
+    {
+      "file": "Numeris/Views/CloudflarePage.xaml",
+      "sha256": "0e29cc5f42796146456d7da7ccf089d6eb384ea157916713bb0554d1a5b07b49"
+    },
+    {
+      "file": "Numeris/Views/CloudflarePage.xaml.cs",
+      "sha256": "ee4f8ecaca4f4dc8a5c331a04cf3f5b09ef1c82f75e30a9ae3ce0e7c4ac7e09c"
+    },
+    {
+      "file": "Numeris/Views/DashboardPage.xaml",
+      "sha256": "0fa01a37ce09de70f0b3ee0c7286fa7a37780db93b5cf0b345edbdb1d8559ea5"
+    },
+    {
+      "file": "Numeris/Views/DashboardPage.xaml.cs",
+      "sha256": "62bef21476d8812e2f069bdfa2e248fd4a2bce79522d8fecf3d80a643dfe9f11"
+    },
+    {
+      "file": "Numeris/Views/HealthPage.xaml",
+      "sha256": "0078f7dc2711bb995be992a1c19113fa4e7e14fc0efeb798501854ffd393cc03"
+    },
+    {
+      "file": "Numeris/Views/HealthPage.xaml.cs",
+      "sha256": "1b12dfcb9e983f51f81ddd4119163b8c71e61025e929dc24ba14e85ef620e81a"
+    },
+    {
+      "file": "Numeris/Views/PerformancePage.xaml",
+      "sha256": "b9ba83de1cc096e0ce1fcca28f23b4088696eb37892ffddc6451ee0b8c83a36e"
+    },
+    {
+      "file": "Numeris/Views/PerformancePage.xaml.cs",
+      "sha256": "90cb6277c556e70dfeddca932a0a4db2e149aac7d76ec6bee49813dead3f3261"
+    },
+    {
+      "file": "Numeris/Views/SearchConsolePage.xaml",
+      "sha256": "e629f5e0db313f3b459bc550fa9741bce4c31206017ea676a678faf60efca654"
+    },
+    {
+      "file": "Numeris/Views/SearchConsolePage.xaml.cs",
+      "sha256": "5fc79d9a7f0354ac6df4f94d6355284de42843e01b77848f5fcd5dfbf83df941"
+    },
+    {
+      "file": "Numeris/Views/SourcesPage.xaml",
+      "sha256": "e8722005307bcaef253287cb413b5e2c31f9c0d1dce9dbb4da48e9704f662d88"
+    },
+    {
+      "file": "Numeris/Views/SourcesPage.xaml.cs",
+      "sha256": "6cb11f88616946367e3c5e7bd693256be3e57c170ac1aa024e78383545571fca"
+    },
+    {
+      "file": "Numeris/Themes/ChartPalette.cs",
+      "sha256": "5618c13a10b1d6cf2c031226f5110175abd17d9b7c8b24c58ee04ba3d01f0b5d"
+    },
+    {
+      "file": "Numeris/Themes/ChartTheme.cs",
+      "sha256": "c1110c0025f2afee80355e97ec2daac4d758aecdae42ff8d6900de8dbedf4823"
+    },
+    {
+      "file": "Numeris/Themes/ThemeResources.cs",
+      "sha256": "b802e9e534cce803b15c721e1938908bf27ee910c51d5ead7c5696c2c9b2bea0"
+    },
+    {
+      "file": "Numeris/Themes/Tokens.xaml",
+      "sha256": "be83ae437235a72855582f1ef14f4eadebc2a607e03d258112df1515b867313f"
+    },
+    {
+      "file": "Numeris/Services/Database/Migrations.cs",
+      "sha256": "4e594cbdd4d312eef5ff4b140f375da1395844f8fc05b64a6370cdcce41fcbeb"
+    }
+  ]
+}

@@ -5,17 +5,199 @@
 //   ./gradlew :designsystem:stabilityDump
 
 @Composable
-public fun com.emmah.numeris.core.designsystem.NumerisChoiceRow(options: kotlin.collections.List<kotlin.String>, selected: kotlin.String, onSelect: kotlin.Function1<kotlin.String, kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+public fun com.emmah.numeris.core.designsystem.AttentionSummary(count: kotlin.Int, expanded: kotlin.Boolean, onToggle: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier, content: @[Composable] androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - count: STABLE (primitive type)
+    - expanded: STABLE (primitive type)
+    - onToggle: STABLE (function type)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - content: STABLE (composable function type)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.BreakdownRows(rows: kotlin.collections.List<com.emmah.numeris.core.model.Breakdown>, unit: kotlin.String, modifier: androidx.compose.ui.Modifier, visibleCount: kotlin.Int): kotlin.Unit
   skippable: false
   restartable: true
   params:
-    - options: RUNTIME (requires runtime check)
-    - selected: STABLE (String is immutable)
-    - onSelect: STABLE (function type)
+    - rows: RUNTIME (requires runtime check)
+    - unit: STABLE (String is immutable)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - visibleCount: STABLE (primitive type)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.ChangeText(change: kotlin.Double, modifier: androidx.compose.ui.Modifier, higherIsBetter: kotlin.Boolean, suffix: kotlin.String): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - change: STABLE (primitive type)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - higherIsBetter: STABLE (primitive type)
+    - suffix: STABLE (String is immutable)
+
+@Composable
+internal fun com.emmah.numeris.core.designsystem.ChartDataTable(series: kotlin.collections.List<com.emmah.numeris.core.model.ReportSeries>): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - series: RUNTIME (requires runtime check)
+
+@Composable
+internal fun com.emmah.numeris.core.designsystem.ChartLegend(series: kotlin.collections.List<com.emmah.numeris.core.model.ReportSeries>): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - series: RUNTIME (requires runtime check)
+
+@Composable
+private fun com.emmah.numeris.core.designsystem.ChartPlot(series: kotlin.collections.List<com.emmah.numeris.core.model.ReportSeries>, segments: kotlin.collections.List<kotlin.Pair<kotlin.Int, kotlin.collections.List<com.emmah.numeris.core.model.DatedValue>>>, pointListener: com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarkerVisibilityListener): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - series: RUNTIME (requires runtime check)
+    - segments: RUNTIME (requires runtime check)
+    - pointListener: STABLE (marked @Stable or @Immutable)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.CompactKpiRow(metrics: kotlin.collections.List<com.emmah.numeris.core.model.Metric>, modifier: androidx.compose.ui.Modifier, tones: kotlin.collections.List<kotlin.Pair<kotlin.String, com.emmah.numeris.core.designsystem.PillTone>?>): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - metrics: RUNTIME (requires runtime check)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - tones: RUNTIME (requires runtime check)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.DatedChart(title: kotlin.String, series: kotlin.collections.List<com.emmah.numeris.core.model.ReportSeries>, modifier: androidx.compose.ui.Modifier, supporting: kotlin.String?): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - title: STABLE (String is immutable)
+    - series: RUNTIME (requires runtime check)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - supporting: STABLE (class with no mutable properties)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.DetailPairs(pairs: kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.String>>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - pairs: RUNTIME (requires runtime check)
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
-public fun com.emmah.numeris.core.designsystem.NumerisDropdownSelector(selected: kotlin.String, options: kotlin.collections.List<kotlin.String>, onSelect: kotlin.Function1<kotlin.String, kotlin.Unit>, label: kotlin.Function1<kotlin.String, kotlin.String>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+public fun com.emmah.numeris.core.designsystem.ExpandableRow(title: kotlin.String, value: kotlin.String, details: kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.String>>, modifier: androidx.compose.ui.Modifier, supporting: kotlin.String?, valueCaption: kotlin.String?, tone: com.emmah.numeris.core.designsystem.PillTone?, body: kotlin.String?): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - title: STABLE (String is immutable)
+    - value: STABLE (String is immutable)
+    - details: RUNTIME (requires runtime check)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - supporting: STABLE (class with no mutable properties)
+    - valueCaption: STABLE (class with no mutable properties)
+    - tone: STABLE (class with no mutable properties)
+    - body: STABLE (class with no mutable properties)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.FreshnessStatus(freshness: kotlin.String?, modifier: androidx.compose.ui.Modifier, source: kotlin.String?): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - freshness: STABLE (class with no mutable properties)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - source: STABLE (class with no mutable properties)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.HeroMetric(label: kotlin.String, value: kotlin.String, modifier: androidx.compose.ui.Modifier, change: kotlin.Double?, current: kotlin.collections.List<kotlin.Double?>, previous: kotlin.collections.List<kotlin.Double?>, footer: @[Composable] androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>?): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - label: STABLE (String is immutable)
+    - value: STABLE (String is immutable)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - change: STABLE (class with no mutable properties)
+    - current: RUNTIME (requires runtime check)
+    - previous: RUNTIME (requires runtime check)
+    - footer: STABLE (composable function type)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.InlineTextButton(text: kotlin.String, onClick: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - text: STABLE (String is immutable)
+    - onClick: STABLE (function type)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.KpiGrid(metrics: kotlin.collections.List<com.emmah.numeris.core.model.Metric>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - metrics: RUNTIME (requires runtime check)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+private fun com.emmah.numeris.core.designsystem.KpiTile(metric: com.emmah.numeris.core.model.Metric, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - metric: UNSTABLE (has mutable properties or unstable members)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.LabScores(run: com.emmah.numeris.core.model.LabRun, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - run: UNSTABLE (has mutable properties or unstable members)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.LetterAvatar(text: kotlin.String, modifier: androidx.compose.ui.Modifier, color: androidx.compose.ui.graphics.Color?): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - text: STABLE (String is immutable)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - color: STABLE (marked @Stable or @Immutable)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.ListCard(modifier: androidx.compose.ui.Modifier, content: @[Composable] androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - content: STABLE (composable function type)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.ListRow(title: kotlin.String, modifier: androidx.compose.ui.Modifier, supporting: kotlin.String?, divider: kotlin.Boolean, onClick: kotlin.Function0<kotlin.Unit>?, leading: @[Composable] androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>?, trailing: @[Composable] androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>?): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - title: STABLE (String is immutable)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - supporting: STABLE (class with no mutable properties)
+    - divider: STABLE (primitive type)
+    - onClick: STABLE (function type)
+    - leading: STABLE (composable function type)
+    - trailing: STABLE (composable function type)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.NoticeCard(title: kotlin.String, message: kotlin.String, tone: com.emmah.numeris.core.designsystem.PillTone, modifier: androidx.compose.ui.Modifier, actionLabel: kotlin.String?, onAction: kotlin.Function0<kotlin.Unit>?): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - title: STABLE (String is immutable)
+    - message: STABLE (String is immutable)
+    - tone: STABLE (class with no mutable properties)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - actionLabel: STABLE (class with no mutable properties)
+    - onAction: STABLE (function type)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.NumerisDropdownSelector(selected: kotlin.String, options: kotlin.collections.List<kotlin.String>, onSelect: kotlin.Function1<kotlin.String, kotlin.Unit>, label: kotlin.Function1<kotlin.String, kotlin.String>, modifier: androidx.compose.ui.Modifier, detail: kotlin.Function1<kotlin.String, kotlin.String>?): kotlin.Unit
   skippable: false
   restartable: true
   params:
@@ -24,9 +206,40 @@ public fun com.emmah.numeris.core.designsystem.NumerisDropdownSelector(selected:
     - onSelect: STABLE (function type)
     - label: STABLE (function type)
     - modifier: STABLE (marked @Stable or @Immutable)
+    - detail: STABLE (function type)
 
 @Composable
-public fun com.emmah.numeris.core.designsystem.NumerisEqualChoiceRow(options: kotlin.collections.List<kotlin.String>, selected: kotlin.String, onSelect: kotlin.Function1<kotlin.String, kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+public fun com.emmah.numeris.core.designsystem.NumerisScreenHeader(title: kotlin.String, syncing: kotlin.Boolean, onRefresh: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier, status: @[Composable] androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>?): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - title: STABLE (String is immutable)
+    - syncing: STABLE (primitive type)
+    - onRefresh: STABLE (function type)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - status: STABLE (composable function type)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.NumerisSelectChip(label: kotlin.String, onClick: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - label: STABLE (String is immutable)
+    - onClick: STABLE (function type)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+internal fun com.emmah.numeris.core.designsystem.NumerisSiteSelector(selected: kotlin.String, domains: kotlin.collections.List<kotlin.String>, onSelect: kotlin.Function1<kotlin.String, kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - selected: STABLE (String is immutable)
+    - domains: RUNTIME (requires runtime check)
+    - onSelect: STABLE (function type)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.NumerisTabs(options: kotlin.collections.List<kotlin.String>, selected: kotlin.String, onSelect: kotlin.Function1<kotlin.String, kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: false
   restartable: true
   params:
@@ -36,20 +249,224 @@ public fun com.emmah.numeris.core.designsystem.NumerisEqualChoiceRow(options: ko
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
-public fun com.emmah.numeris.core.designsystem.NumerisScreenHeader(title: kotlin.String, subtitle: kotlin.String, syncing: kotlin.Boolean, onRefresh: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: true
-  restartable: true
-  params:
-    - title: STABLE (String is immutable)
-    - subtitle: STABLE (String is immutable)
-    - syncing: STABLE (primitive type)
-    - onRefresh: STABLE (function type)
-    - modifier: STABLE (marked @Stable or @Immutable)
-
-@Composable
 public fun com.emmah.numeris.core.designsystem.NumerisTheme(content: @[Composable] androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>): kotlin.Unit
   skippable: true
   restartable: true
   params:
     - content: STABLE (composable function type)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.NumerisTopBar(title: kotlin.String, onBack: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier, actions: @[Composable] androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>?): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - title: STABLE (String is immutable)
+    - onBack: STABLE (function type)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - actions: STABLE (composable function type)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.RefreshButton(syncing: kotlin.Boolean, onRefresh: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - syncing: STABLE (primitive type)
+    - onRefresh: STABLE (function type)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.ReportFilters(domain: kotlin.String, domains: kotlin.collections.List<kotlin.String>, period: com.emmah.numeris.core.model.Period, onDomain: kotlin.Function1<kotlin.String, kotlin.Unit>, onPeriod: kotlin.Function1<com.emmah.numeris.core.model.Period, kotlin.Unit>, modifier: androidx.compose.ui.Modifier, extra: @[Composable] androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - domain: STABLE (String is immutable)
+    - domains: RUNTIME (requires runtime check)
+    - period: STABLE (class with no mutable properties)
+    - onDomain: STABLE (function type)
+    - onPeriod: STABLE (function type)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - extra: STABLE (composable function type)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.ReportList(modifier: androidx.compose.ui.Modifier, contentPadding: androidx.compose.foundation.layout.PaddingValues, content: @[ExtensionFunctionType] kotlin.Function1<androidx.compose.foundation.lazy.LazyListScope, kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - contentPadding: STABLE (marked @Stable or @Immutable)
+    - content: STABLE (function type)
+
+@Composable
+private fun com.emmah.numeris.core.designsystem.ReportPlot(series: kotlin.collections.List<com.emmah.numeris.core.model.ReportSeries>, model: com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModel, layer: com.patrykandpatrick.vico.compose.cartesian.layer.CartesianLayer<*>, pointListener: com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarkerVisibilityListener): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - series: RUNTIME (requires runtime check)
+    - model: STABLE (class with no mutable properties)
+    - layer: UNKNOWN (interface or non-final class; concrete implementation unknown)
+    - pointListener: STABLE (marked @Stable or @Immutable)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.ReportSection(title: kotlin.String, modifier: androidx.compose.ui.Modifier, supporting: kotlin.String?, action: @[Composable] androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>?, content: @[Composable] androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - title: STABLE (String is immutable)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - supporting: STABLE (class with no mutable properties)
+    - action: STABLE (composable function type)
+    - content: STABLE (composable function type)
+
+@Composable
+private fun com.emmah.numeris.core.designsystem.ScoreTile(label: kotlin.String, score: kotlin.Double?, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - label: STABLE (String is immutable)
+    - score: STABLE (class with no mutable properties)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.SectionHeader(title: kotlin.String, modifier: androidx.compose.ui.Modifier, supporting: kotlin.String?, action: @[Composable] androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>?): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - title: STABLE (String is immutable)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - supporting: STABLE (class with no mutable properties)
+    - action: STABLE (composable function type)
+
+@Composable
+internal fun com.emmah.numeris.core.designsystem.SelectedSamples(series: kotlin.collections.List<com.emmah.numeris.core.model.ReportSeries>, day: kotlin.Long?): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - series: RUNTIME (requires runtime check)
+    - day: STABLE (class with no mutable properties)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.ShareBar(segments: kotlin.collections.List<kotlin.Pair<androidx.compose.ui.graphics.Color, kotlin.Double>>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - segments: RUNTIME (requires runtime check)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.ShareLegend(items: kotlin.collections.List<kotlin.Triple<androidx.compose.ui.graphics.Color, kotlin.String, kotlin.String>>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - items: RUNTIME (requires runtime check)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.ShowMoreButton(expanded: kotlin.Boolean, total: kotlin.Int, onToggle: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - expanded: STABLE (primitive type)
+    - total: STABLE (primitive type)
+    - onToggle: STABLE (function type)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.SiteAvatar(domain: kotlin.String, domains: kotlin.collections.List<kotlin.String>, modifier: androidx.compose.ui.Modifier, size: androidx.compose.ui.unit.Dp): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - domain: STABLE (String is immutable)
+    - domains: RUNTIME (requires runtime check)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - size: STABLE (marked @Stable or @Immutable)
+
+@Composable
+private fun com.emmah.numeris.core.designsystem.SiteOption(value: kotlin.String, label: kotlin.String, selected: kotlin.String, domains: kotlin.collections.List<kotlin.String>, onClick: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - value: STABLE (String is immutable)
+    - label: STABLE (String is immutable)
+    - selected: STABLE (String is immutable)
+    - domains: RUNTIME (requires runtime check)
+    - onClick: STABLE (function type)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.StatusDot(color: androidx.compose.ui.graphics.Color, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - color: STABLE (marked @Stable or @Immutable)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.StatusPill(text: kotlin.String, tone: com.emmah.numeris.core.designsystem.PillTone, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - text: STABLE (String is immutable)
+    - tone: STABLE (class with no mutable properties)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.TrailingValue(value: kotlin.String, modifier: androidx.compose.ui.Modifier, caption: kotlin.String?): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - value: STABLE (String is immutable)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - caption: STABLE (class with no mutable properties)
+
+@Composable
+public fun com.emmah.numeris.core.designsystem.TrendArea(current: kotlin.collections.List<kotlin.Double?>, previous: kotlin.collections.List<kotlin.Double?>, modifier: androidx.compose.ui.Modifier, color: androidx.compose.ui.graphics.Color): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - current: RUNTIME (requires runtime check)
+    - previous: RUNTIME (requires runtime check)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - color: STABLE (marked @Stable or @Immutable)
+
+@Composable
+private fun com.emmah.numeris.core.designsystem.VolumePlot(series: kotlin.collections.List<com.emmah.numeris.core.model.ReportSeries>, pointListener: com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarkerVisibilityListener): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - series: RUNTIME (requires runtime check)
+    - pointListener: STABLE (marked @Stable or @Immutable)
+
+@Composable
+private fun com.emmah.numeris.core.designsystem.rememberDateAxis(): com.patrykandpatrick.vico.compose.cartesian.axis.HorizontalAxis<com.patrykandpatrick.vico.compose.cartesian.axis.Axis.Position.Horizontal.Bottom>
+  skippable: false
+  restartable: false
+  params:
+
+@Composable
+internal fun com.emmah.numeris.core.designsystem.rememberPointListener(onDay: kotlin.Function1<kotlin.Long, kotlin.Unit>): com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarkerVisibilityListener
+  skippable: false
+  restartable: false
+  params:
+    - onDay: STABLE (function type)
+
+@Composable
+internal fun com.emmah.numeris.core.designsystem.rememberPointMarker(): com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarker
+  skippable: false
+  restartable: false
+  params:
+
+@Composable
+private fun com.emmah.numeris.core.designsystem.rememberReportLine(color: androidx.compose.ui.graphics.Color, previous: kotlin.Boolean, sparse: kotlin.Boolean): com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer.Line
+  skippable: false
+  restartable: false
+  params:
+    - color: STABLE (marked @Stable or @Immutable)
+    - previous: STABLE (primitive type)
+    - sparse: STABLE (primitive type)
+
+@Composable
+private fun com.emmah.numeris.core.designsystem.rememberValueAxis(series: kotlin.collections.List<com.emmah.numeris.core.model.ReportSeries>): com.patrykandpatrick.vico.compose.cartesian.axis.VerticalAxis<com.patrykandpatrick.vico.compose.cartesian.axis.Axis.Position.Vertical.Start>
+  skippable: false
+  restartable: false
+  params:
+    - series: RUNTIME (requires runtime check)
 

@@ -18,7 +18,7 @@ interface ConnectionDao {
     @Query("SELECT * FROM connections WHERE source = :source ORDER BY id")
     suspend fun bySource(source: String): List<ConnectionEntity>
 
-    @Query("SELECT DISTINCT source FROM connections WHERE status = 'configured'")
+    @Query("SELECT DISTINCT source FROM connections WHERE status != 'disconnected' AND source != 'google_analytics'")
     suspend fun configuredSourceNames(): List<String>
 
     @Query("DELETE FROM connections WHERE id = :id")
@@ -27,9 +27,6 @@ interface ConnectionDao {
 
 @Dao
 interface CloudflareDao {
-    @Query("SELECT * FROM web_analytics_sites ORDER BY domain")
-    suspend fun webAnalyticsSites(): List<WebAnalyticsSiteEntity>
-
     @Query("SELECT * FROM cloudflare_traffic WHERE domain = :domain AND date BETWEEN :start AND :end ORDER BY date")
     fun observeTraffic(
         domain: String,
@@ -44,6 +41,40 @@ interface CloudflareDao {
     @Upsert suspend fun upsertPages(rows: List<CloudflarePageEntity>)
 
     @Upsert suspend fun upsertStatuses(rows: List<CloudflareStatusEntity>)
+}
+
+@Dao
+interface WebAnalyticsDao {
+    @Query("DELETE FROM web_analytics_daily WHERE domain = :domain AND date BETWEEN :start AND :end")
+    suspend fun deleteWebDaily(
+        domain: String,
+        start: String,
+        end: String,
+    )
+
+    @Query("DELETE FROM web_analytics_pages WHERE domain = :domain AND date BETWEEN :start AND :end")
+    suspend fun deleteWebPages(
+        domain: String,
+        start: String,
+        end: String,
+    )
+
+    @Query("DELETE FROM web_analytics_referrers WHERE domain = :domain AND date BETWEEN :start AND :end")
+    suspend fun deleteWebReferrers(
+        domain: String,
+        start: String,
+        end: String,
+    )
+
+    @Query("DELETE FROM web_analytics_countries WHERE domain = :domain AND date BETWEEN :start AND :end")
+    suspend fun deleteWebCountries(
+        domain: String,
+        start: String,
+        end: String,
+    )
+
+    @Query("SELECT * FROM web_analytics_sites ORDER BY domain")
+    suspend fun webAnalyticsSites(): List<WebAnalyticsSiteEntity>
 
     @Upsert suspend fun upsertWebAnalytics(rows: List<WebAnalyticsDailyEntity>)
 
@@ -54,6 +85,9 @@ interface CloudflareDao {
     @Upsert suspend fun upsertWebAnalyticsPages(rows: List<WebAnalyticsPageEntity>)
 
     @Upsert suspend fun upsertWebAnalyticsCountries(rows: List<WebAnalyticsCountryEntity>)
+
+    @Query("DELETE FROM web_analytics_sites WHERE domain IN (:domains)")
+    suspend fun deleteSites(domains: List<String>)
 }
 
 @Dao
@@ -180,255 +214,190 @@ interface SyncRunDao {
 }
 
 @Dao
-interface OverviewDao {
-    @Query(
-        "SELECT COALESCE(SUM(uniqueVisitors), 0) FROM cloudflare_traffic " +
-            "WHERE (:domain = 'all' OR domain = :domain) AND date BETWEEN :start AND :end",
-    )
-    fun observeCloudflareVisitors(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<Long>
-
-    @Query(
-        "SELECT COALESCE(SUM(clicks), 0) FROM search_console WHERE kind = 'daily' " +
-            "AND (:domain = 'all' OR siteUrl LIKE '%' || :domain || '%') AND date BETWEEN :start AND :end",
-    )
-    fun observeGoogleClicks(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<Long>
-
-    @Query(
-        "SELECT COALESCE(SUM(clicks), 0) FROM bing_rank_traffic " +
-            "WHERE (:domain = 'all' OR siteUrl LIKE '%' || :domain || '%') AND date BETWEEN :start AND :end",
-    )
-    fun observeBingClicks(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<Long>
-
-    @Query(
-        "SELECT performanceScore FROM pagespeed_runs WHERE strategy = 'mobile' " +
-            "AND (:domain = 'all' OR url LIKE '%' || :domain || '%') ORDER BY analysisUtc DESC LIMIT 1",
-    )
-    fun observePageSpeedMobile(domain: String): Flow<Double?>
-
-    @Query("SELECT COUNT(*) FROM connections WHERE status != 'disconnected'")
-    fun observeConfiguredConnections(): Flow<Int>
-
-    @Query("SELECT COUNT(*) FROM connections")
-    fun observeConnectionCount(): Flow<Int>
-
-    @Query("SELECT completedAt FROM sync_runs WHERE state = 'success' ORDER BY completedAt DESC LIMIT 1")
-    fun observeLatestSync(): Flow<String?>
-}
-
-@Dao
 @Suppress("TooManyFunctions")
-interface ReportDao {
-    @Query(
-        "SELECT domain FROM cloudflare_traffic UNION SELECT domain FROM web_analytics_daily " +
-            "UNION SELECT domain FROM google_analytics_daily UNION SELECT domain FROM sitemap_urls " +
-            "UNION SELECT domain FROM uptime_checks ORDER BY domain",
-    )
-    fun observeDomains(): Flow<List<String>>
-
-    @Upsert
-    suspend fun upsertUrls(rows: List<PerformanceUrlEntity>)
-
-    @Query("UPDATE performance_urls SET enabled = :enabled WHERE id = :id")
-    suspend fun setUrlEnabled(
-        id: Long,
-        enabled: Boolean,
-    )
-
-    @Query("DELETE FROM performance_urls WHERE id = :id")
-    suspend fun deleteUrl(id: Long)
-
+interface ReportSnapshotDao {
     @Query(
         "SELECT * FROM cloudflare_traffic WHERE (:domain = 'all' OR domain = :domain) " +
             "AND date BETWEEN :start AND :end ORDER BY date",
     )
-    fun observeCloudflareTraffic(
+    suspend fun readCloudflareTraffic(
         domain: String,
         start: String,
         end: String,
-    ): Flow<List<CloudflareTrafficEntity>>
+    ): List<CloudflareTrafficEntity>
 
     @Query(
         "SELECT * FROM cloudflare_countries WHERE (:domain = 'all' OR domain = :domain) " +
             "AND date BETWEEN :start AND :end ORDER BY visitors DESC",
     )
-    fun observeCloudflareCountries(
+    suspend fun readCloudflareCountries(
         domain: String,
         start: String,
         end: String,
-    ): Flow<List<CloudflareCountryEntity>>
+    ): List<CloudflareCountryEntity>
 
     @Query(
         "SELECT * FROM cloudflare_pages WHERE (:domain = 'all' OR domain = :domain) " +
             "AND date BETWEEN :start AND :end ORDER BY requests DESC",
     )
-    fun observeCloudflarePages(
+    suspend fun readCloudflarePages(
         domain: String,
         start: String,
         end: String,
-    ): Flow<List<CloudflarePageEntity>>
+    ): List<CloudflarePageEntity>
 
     @Query(
         "SELECT * FROM cloudflare_status_codes WHERE (:domain = 'all' OR domain = :domain) " +
             "AND date BETWEEN :start AND :end ORDER BY requests DESC",
     )
-    fun observeCloudflareStatuses(
+    suspend fun readCloudflareStatuses(
         domain: String,
         start: String,
         end: String,
-    ): Flow<List<CloudflareStatusEntity>>
+    ): List<CloudflareStatusEntity>
 
     @Query(
         "SELECT * FROM web_analytics_daily WHERE (:domain = 'all' OR domain = :domain) " +
             "AND date BETWEEN :start AND :end ORDER BY date",
     )
-    fun observeWebAnalytics(
+    suspend fun readWebAnalytics(
         domain: String,
         start: String,
         end: String,
-    ): Flow<List<WebAnalyticsDailyEntity>>
-
-    @Query(
-        "SELECT * FROM google_analytics_daily WHERE (:domain = 'all' OR domain = :domain) " +
-            "AND date BETWEEN :start AND :end ORDER BY date",
-    )
-    fun observeAnalyticsDaily(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<GoogleAnalyticsDailyEntity>>
-
-    @Query(
-        "SELECT * FROM google_analytics_pages WHERE (:domain = 'all' OR domain = :domain) " +
-            "AND periodEnd >= :start AND periodStart <= :end ORDER BY pageViews DESC",
-    )
-    fun observeAnalyticsPages(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<GoogleAnalyticsPageEntity>>
-
-    @Query(
-        "SELECT * FROM google_analytics_sources WHERE (:domain = 'all' OR domain = :domain) " +
-            "AND periodEnd >= :start AND periodStart <= :end ORDER BY sessions DESC",
-    )
-    fun observeAnalyticsSources(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<GoogleAnalyticsSourceEntity>>
-
-    @Query(
-        "SELECT * FROM google_analytics_events WHERE (:domain = 'all' OR domain = :domain) " +
-            "AND periodEnd >= :start AND periodStart <= :end ORDER BY eventCount DESC",
-    )
-    fun observeAnalyticsEvents(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<GoogleAnalyticsEventEntity>>
-
-    @Query(
-        "SELECT * FROM google_analytics_devices WHERE (:domain = 'all' OR domain = :domain) " +
-            "AND date BETWEEN :start AND :end ORDER BY sessions DESC",
-    )
-    fun observeAnalyticsDevices(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<GoogleAnalyticsDeviceEntity>>
+    ): List<WebAnalyticsDailyEntity>
 
     @Query(
         "SELECT * FROM search_console WHERE (:domain = 'all' OR siteUrl LIKE '%' || :domain || '%') " +
             "AND date BETWEEN :start AND :end ORDER BY clicks DESC",
     )
-    fun observeSearchConsole(
+    suspend fun readSearchConsole(
         domain: String,
         start: String,
         end: String,
-    ): Flow<List<SearchConsoleEntity>>
+    ): List<SearchConsoleEntity>
 
     @Query(
         "SELECT * FROM search_devices WHERE (:domain = 'all' OR siteUrl LIKE '%' || :domain || '%') " +
             "AND date BETWEEN :start AND :end ORDER BY clicks DESC",
     )
-    fun observeSearchDevices(
+    suspend fun readSearchDevices(
         domain: String,
         start: String,
         end: String,
-    ): Flow<List<SearchDeviceEntity>>
+    ): List<SearchDeviceEntity>
 
     @Query(
         "SELECT * FROM bing_rank_traffic WHERE (:domain = 'all' OR siteUrl LIKE '%' || :domain || '%') " +
             "AND date BETWEEN :start AND :end ORDER BY date",
     )
-    fun observeBingTraffic(
+    suspend fun readBingTraffic(
         domain: String,
         start: String,
         end: String,
-    ): Flow<List<BingRankTrafficEntity>>
+    ): List<BingRankTrafficEntity>
 
     @Query(
         "SELECT * FROM bing_query_stats WHERE (:domain = 'all' OR siteUrl LIKE '%' || :domain || '%') " +
             "AND date BETWEEN :start AND :end ORDER BY clicks DESC",
     )
-    fun observeBingQueries(
+    suspend fun readBingQueries(
         domain: String,
         start: String,
         end: String,
-    ): Flow<List<BingQueryStatEntity>>
+    ): List<BingQueryStatEntity>
 
     @Query(
         "SELECT * FROM bing_page_stats WHERE (:domain = 'all' OR siteUrl LIKE '%' || :domain || '%') " +
             "AND date BETWEEN :start AND :end ORDER BY clicks DESC",
     )
-    fun observeBingPages(
+    suspend fun readBingPages(
         domain: String,
         start: String,
         end: String,
-    ): Flow<List<BingPageStatEntity>>
+    ): List<BingPageStatEntity>
 
     @Query(
         "SELECT * FROM bing_raw_items WHERE (:domain = 'all' OR siteUrl LIKE '%' || :domain || '%') " +
             "ORDER BY fetchedAt DESC",
     )
-    fun observeBingRaw(domain: String): Flow<List<BingRawItemEntity>>
+    suspend fun readBingRaw(domain: String): List<BingRawItemEntity>
 
     @Query("SELECT * FROM sitemap_urls WHERE (:domain = 'all' OR domain = :domain) ORDER BY url")
-    fun observeSitemap(domain: String): Flow<List<SitemapUrlEntity>>
+    suspend fun readSitemap(domain: String): List<SitemapUrlEntity>
 
     @Query("SELECT * FROM performance_urls WHERE (:domain = 'all' OR origin LIKE '%' || :domain || '%') ORDER BY url")
-    fun observePerformanceUrls(domain: String): Flow<List<PerformanceUrlEntity>>
+    suspend fun readPerformanceUrls(domain: String): List<PerformanceUrlEntity>
 
     @Query(
         "SELECT * FROM crux_metric_points WHERE (:domain = 'all' OR target LIKE '%' || :domain || '%') " +
             "ORDER BY collectionEnd DESC, metric",
     )
-    fun observeCrux(domain: String): Flow<List<CruxMetricPointEntity>>
+    suspend fun readCrux(domain: String): List<CruxMetricPointEntity>
 
     @Query(
         "SELECT * FROM pagespeed_runs WHERE (:domain = 'all' OR url LIKE '%' || :domain || '%') " +
             "ORDER BY analysisUtc DESC",
     )
-    fun observePageSpeedRuns(domain: String): Flow<List<PageSpeedRunEntity>>
+    suspend fun readPageSpeedRuns(domain: String): List<PageSpeedRunEntity>
 
     @Query(
         "SELECT * FROM pagespeed_audits WHERE (:domain = 'all' OR url LIKE '%' || :domain || '%') " +
             "ORDER BY analysisUtc DESC, score ASC",
     )
-    fun observePageSpeedAudits(domain: String): Flow<List<PageSpeedAuditEntity>>
+    suspend fun readPageSpeedAudits(domain: String): List<PageSpeedAuditEntity>
 
-    @Query("SELECT * FROM uptime_checks WHERE (:domain = 'all' OR domain = :domain) ORDER BY checkedAt DESC LIMIT 500")
-    fun observeAllUptime(domain: String): Flow<List<UptimeCheckEntity>>
+    @Query("SELECT * FROM uptime_checks WHERE (:domain = 'all' OR domain = :domain) ORDER BY checkedAt DESC")
+    suspend fun readAllUptime(domain: String): List<UptimeCheckEntity>
+
+    @Query("SELECT * FROM connections ORDER BY source, id")
+    suspend fun readConnections(): List<ConnectionEntity>
+
+    @Query("SELECT * FROM search_page_queries ORDER BY periodEnd DESC, clicks DESC")
+    suspend fun readPageQueries(): List<SearchPageQueryEntity>
+
+    @Query("SELECT * FROM web_analytics_pages WHERE date BETWEEN :start AND :end")
+    suspend fun readWebPages(
+        start: String,
+        end: String,
+    ): List<WebAnalyticsPageEntity>
+
+    @Query("SELECT * FROM web_analytics_referrers WHERE date BETWEEN :start AND :end")
+    suspend fun readWebReferrers(
+        start: String,
+        end: String,
+    ): List<WebAnalyticsReferrerEntity>
+
+    @Query("SELECT * FROM web_analytics_countries WHERE date BETWEEN :start AND :end")
+    suspend fun readWebCountries(
+        start: String,
+        end: String,
+    ): List<WebAnalyticsCountryEntity>
+
+    @Query(
+        "SELECT siteUrl FROM search_console UNION SELECT siteUrl FROM search_devices UNION SELECT siteUrl " +
+            "FROM search_page_queries UNION SELECT siteUrl FROM bing_rank_traffic UNION SELECT siteUrl " +
+            "FROM bing_query_stats UNION SELECT siteUrl FROM bing_page_stats UNION SELECT siteUrl FROM " +
+            "bing_sites UNION SELECT url FROM performance_urls UNION SELECT domain FROM " +
+            "web_analytics_sites UNION SELECT target FROM crux_metric_points UNION SELECT url FROM " +
+            "pagespeed_runs UNION SELECT domain FROM cloudflare_traffic UNION SELECT domain FROM " +
+            "web_analytics_daily UNION SELECT domain FROM uptime_checks UNION SELECT domain FROM " +
+            "sitemap_urls ORDER BY 1",
+    )
+    suspend fun readIdentities(): List<String>
+
+    @Query(
+        "SELECT (SELECT COUNT(*) FROM connections) + (SELECT COUNT(*) FROM cloudflare_traffic) + (SELECT " +
+            "COUNT(*) FROM cloudflare_countries) + (SELECT COUNT(*) FROM cloudflare_pages) + (SELECT " +
+            "COUNT(*) FROM cloudflare_status_codes) + (SELECT COUNT(*) FROM web_analytics_daily) + " +
+            "(SELECT COUNT(*) FROM web_analytics_sites) + (SELECT COUNT(*) FROM web_analytics_pages) + " +
+            "(SELECT COUNT(*) FROM web_analytics_referrers) + (SELECT COUNT(*) FROM " +
+            "web_analytics_countries) + (SELECT COUNT(*) FROM search_console) + (SELECT COUNT(*) FROM " +
+            "search_devices) + (SELECT COUNT(*) FROM search_page_queries) + (SELECT COUNT(*) FROM " +
+            "sitemap_urls) + (SELECT COUNT(*) FROM bing_sites) + (SELECT COUNT(*) FROM bing_rank_traffic) " +
+            "+ (SELECT COUNT(*) FROM bing_query_stats) + (SELECT COUNT(*) FROM bing_page_stats) + (SELECT " +
+            "COUNT(*) FROM bing_raw_items) + (SELECT COUNT(*) FROM performance_urls) + (SELECT COUNT(*) " +
+            "FROM crux_metric_points) + (SELECT COUNT(*) FROM pagespeed_runs) + (SELECT COUNT(*) FROM " +
+            "pagespeed_audits) + (SELECT COUNT(*) FROM uptime_checks)",
+    )
+    fun observeChanges(): Flow<Long>
 }

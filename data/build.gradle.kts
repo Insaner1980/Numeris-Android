@@ -6,6 +6,7 @@ plugins {
 android { namespace = "com.emmah.numeris.data" }
 
 dependencies {
+    testImplementation(libs.junit)
     api(project(":core:model"))
     implementation(project(":core:common"))
     implementation(project(":core:database"))

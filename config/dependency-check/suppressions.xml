@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<suppressions xmlns="https://jeremylong.github.io/DependencyCheck/dependency-suppression.1.3.xsd">
+    <suppress until="2026-10-31Z">
+        <notes>Kotlin stdlib does not contain KAPT. The upstream fix is restricted to plugins/kapt/kapt-base incremental cache deserialization, and Numeris Android uses KSP without applying KAPT. https://github.com/JetBrains/kotlin/commit/bf51df6</notes>
+        <packageUrl>pkg:maven/org.jetbrains.kotlin/kotlin-stdlib@2.4.10</packageUrl>
+        <cve>CVE-2026-53914</cve>
+    </suppress>
+    <suppress until="2026-10-31Z">
+        <notes>These advisories affect the Tasks.org application and its VoiceCommandActivity and ShareLinkActivity components. This artifact is JetBrains' integration between Kotlin coroutines and Google Play Services Tasks; it is not the org.tasks application. https://github.com/tasks/tasks/security/advisories/GHSA-8x58-cg74-8jg8</notes>
+        <packageUrl>pkg:maven/org.jetbrains.kotlinx/kotlinx-coroutines-play-services@1.11.0</packageUrl>
+        <cve>CVE-2020-22475</cve>
+        <cve>CVE-2022-39349</cve>
+    </suppress>
+    <suppress until="2026-10-31Z">
+        <notes>These advisories affect GitHub Enterprise Server. This artifact is the Android runtime library for Skydoves Compose Stability Analyzer; OWASP incorrectly maps its com.github group and repository URL to the GitHub server product. https://github.com/skydoves/compose-stability-analyzer https://docs.github.com/en/enterprise-server@2.21/admin/release-notes</notes>
+        <packageUrl>pkg:maven/com.github.skydoves/compose-stability-runtime-android@0.12.0</packageUrl>
+        <cve>CVE-2020-10518</cve>
+        <cve>CVE-2020-10519</cve>
+        <cve>CVE-2012-2055</cve>
+        <cve>CVE-2020-10517</cve>
+    </suppress>
+    <suppress until="2026-10-31Z">
+        <notes>CVE-2025-29903 affects the OpenJDK-based JetBrains Runtime on macOS before 21.0.6b872.80. This artifact is an Android Compose Multiplatform UI runtime library, not that JVM distribution; OWASP incorrectly maps its runtime name to the JetBrains Runtime CPE. https://github.com/CVEProject/cvelistV5/blob/main/cves/2025/29xxx/CVE-2025-29903.json https://github.com/JetBrains/JetBrainsRuntime</notes>
+        <packageUrl>pkg:maven/org.jetbrains.compose.runtime/runtime-android@1.12.0</packageUrl>
+        <cve>CVE-2025-29903</cve>
+    </suppress>
+    <suppress until="2026-10-31Z">
+        <notes>CVE-2025-29903 affects the OpenJDK-based JetBrains Runtime on macOS before 21.0.6b872.80. This artifact is an Android Compose Multiplatform UI runtime library, not that JVM distribution; OWASP incorrectly maps its runtime name to the JetBrains Runtime CPE. https://github.com/CVEProject/cvelistV5/blob/main/cves/2025/29xxx/CVE-2025-29903.json https://github.com/JetBrains/JetBrainsRuntime</notes>
+        <packageUrl>pkg:maven/org.jetbrains.compose.runtime/runtime-saveable-android@1.12.0</packageUrl>
+        <cve>CVE-2025-29903</cve>
+    </suppress>
+</suppressions>

@@ -4,6 +4,7 @@ import com.emmah.numeris.core.database.NumerisDatabase
 import com.emmah.numeris.core.database.SyncRunEntity
 import com.emmah.numeris.core.database.UptimeCheckEntity
 import com.emmah.numeris.core.database.writeTransaction
+import com.emmah.numeris.core.model.ConnectionId
 import com.emmah.numeris.core.model.ConnectionTestResult
 import com.emmah.numeris.core.model.SiteIdentity
 import com.emmah.numeris.core.model.SourceId
@@ -11,6 +12,7 @@ import com.emmah.numeris.core.model.SourceSyncService
 import com.emmah.numeris.core.model.SyncRequest
 import com.emmah.numeris.core.model.SyncResult
 import com.emmah.numeris.core.network.UptimeClient
+import kotlinx.coroutines.flow.first
 import java.time.Clock
 import java.time.Instant
 import java.util.UUID
@@ -22,14 +24,17 @@ class UptimeSyncService(
 ) : SourceSyncService {
     override val source = SourceId.Uptime
 
-    override suspend fun testConnection(): ConnectionTestResult = ConnectionTestResult.Success
+    override suspend fun testConnection(connectionId: ConnectionId?) = ConnectionTestResult.Success
 
     override suspend fun sync(request: SyncRequest): SyncResult {
         val runId = UUID.randomUUID().toString()
         val startedAt = Instant.now(clock).toString()
         val targets =
             request.domain?.let { listOf(SiteIdentity.fromDomainOrUrl(it).homePageUrl) }
-                ?: database.performanceDao().enabledUrls().map { it.url }
+                ?: ReportRepository(
+                    database,
+                    clock,
+                ).observeDomains().first().map { SiteIdentity.fromDomainOrUrl(it).homePageUrl }
         database.syncRunDao().upsert(SyncRunEntity(runId, source.name, startedAt, state = "running"))
         return runCatching {
             val rows =
@@ -61,6 +66,7 @@ class UptimeSyncService(
         }.fold(
             onSuccess = { rowsWritten -> SyncResult.Success(rowsWritten) },
             onFailure = { failure ->
+                if (failure is kotlinx.coroutines.CancellationException) throw failure
                 val safeMessage = failure.message ?: "Uptime sync failed."
                 database.syncRunDao().upsert(
                     SyncRunEntity(

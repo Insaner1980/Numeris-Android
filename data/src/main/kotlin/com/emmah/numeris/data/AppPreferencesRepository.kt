@@ -86,6 +86,7 @@ class AppPreferencesRepository(
 
     private fun String.toAndroidPage(): String =
         when (lowercase()) {
+            "overview", "traffic", "search" -> lowercase()
             "dashboard" -> "overview"
             "cloudflare", "googleanalytics" -> "traffic"
             "searchconsole", "bing" -> "search"

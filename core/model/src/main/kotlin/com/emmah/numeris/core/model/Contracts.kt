@@ -43,23 +43,13 @@ data class SyncBatchResult(
 interface SourceSyncService {
     val source: SourceId
 
-    suspend fun testConnection(): ConnectionTestResult
+    suspend fun testConnection(connectionId: ConnectionId? = null): ConnectionTestResult
 
     suspend fun sync(request: SyncRequest): SyncResult
 }
 
 interface SyncOrchestrator {
     fun observeState(): Flow<SyncState>
-
-    suspend fun syncSource(
-        source: SourceId,
-        request: SyncRequest,
-    ): SyncBatchResult
-
-    suspend fun syncReportingGroup(
-        group: ReportingGroup,
-        request: SyncRequest,
-    ): SyncBatchResult
 
     suspend fun syncAll(request: SyncRequest): SyncBatchResult
 }
