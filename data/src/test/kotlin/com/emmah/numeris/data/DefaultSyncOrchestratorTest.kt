@@ -23,6 +23,25 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DefaultSyncOrchestratorTest {
+    @Test fun freshInstallAndDisconnectedSourcesCompleteWithoutRetry() =
+        runBlocking {
+            val fresh = DefaultSyncOrchestrator(emptyList())
+            assertTrue(fresh.syncEverything().state is SyncState.Success)
+            assertTrue(fresh.observeState().first() is SyncState.Success)
+
+            val service =
+                object : SourceSyncService {
+                    override val source = SourceId.Uptime
+
+                    override suspend fun testConnection(connectionId: ConnectionId?) = ConnectionTestResult.Success
+
+                    override suspend fun sync(request: SyncRequest): SyncResult = error("Unexpected sync")
+                }
+            val disconnected = DefaultSyncOrchestrator(listOf(service), configuredSources = { emptySet() })
+            assertTrue(disconnected.syncEverything().state is SyncState.Success)
+            assertTrue(disconnected.observeState().first() is SyncState.Success)
+        }
+
     @Test fun identicalConcurrentRefreshesAreCoalesced() =
         runBlocking {
             val entered = CompletableDeferred<Unit>()

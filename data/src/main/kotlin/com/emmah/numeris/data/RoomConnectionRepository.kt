@@ -40,6 +40,9 @@ class RoomConnectionRepository(
     override suspend fun save(command: SaveConnectionCommand) =
         serialize {
             val existing = dao.find(command.id.value)
+            if (command.source == SourceId.CloudflareZone) {
+                command.validateCloudflareDomain(dao.bySource(command.source.storageName))
+            }
             val webSites =
                 if (command.source ==
                     SourceId.CloudflareWebAnalytics

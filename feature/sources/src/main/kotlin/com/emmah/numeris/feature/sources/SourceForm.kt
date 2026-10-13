@@ -69,9 +69,10 @@ internal fun SourceForm(
                         { value -> onValues(setupValues + (field to value)) },
                         Modifier.fillMaxWidth(),
                         label = { Text(fieldLabel(field, selected.source)) },
+                        readOnly = hasExistingConnection && selected.source == SourceId.CloudflareZone && field == "domain",
                     )
                 }
-                if (selected.source in discoverableSources) {
+                if (selected.source in discoverableSources && !(hasExistingConnection && selected.source == SourceId.CloudflareZone)) {
                     DiscoverTargets(selected, setupValues, state, onValues, onDiscover)
                 }
                 selected.secretField?.let { label ->
