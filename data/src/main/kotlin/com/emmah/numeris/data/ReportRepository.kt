@@ -1,146 +1,189 @@
 package com.emmah.numeris.data
 
-import com.emmah.numeris.core.database.BingPageStatEntity
-import com.emmah.numeris.core.database.BingQueryStatEntity
-import com.emmah.numeris.core.database.BingRankTrafficEntity
-import com.emmah.numeris.core.database.BingRawItemEntity
-import com.emmah.numeris.core.database.CloudflareCountryEntity
-import com.emmah.numeris.core.database.CloudflarePageEntity
-import com.emmah.numeris.core.database.CloudflareStatusEntity
-import com.emmah.numeris.core.database.CloudflareTrafficEntity
-import com.emmah.numeris.core.database.CruxMetricPointEntity
-import com.emmah.numeris.core.database.GoogleAnalyticsDailyEntity
-import com.emmah.numeris.core.database.GoogleAnalyticsDeviceEntity
-import com.emmah.numeris.core.database.GoogleAnalyticsEventEntity
-import com.emmah.numeris.core.database.GoogleAnalyticsPageEntity
-import com.emmah.numeris.core.database.GoogleAnalyticsSourceEntity
-import com.emmah.numeris.core.database.PageSpeedAuditEntity
-import com.emmah.numeris.core.database.PageSpeedRunEntity
+import androidx.room3.withReadTransaction
+import com.emmah.numeris.core.database.NumerisDatabase
 import com.emmah.numeris.core.database.PerformanceUrlEntity
-import com.emmah.numeris.core.database.ReportDao
-import com.emmah.numeris.core.database.SearchConsoleEntity
-import com.emmah.numeris.core.database.SearchDeviceEntity
-import com.emmah.numeris.core.database.SitemapUrlEntity
-import com.emmah.numeris.core.database.UptimeCheckEntity
-import com.emmah.numeris.core.database.WebAnalyticsDailyEntity
+import com.emmah.numeris.core.model.DateRange
+import com.emmah.numeris.core.model.HealthReport
+import com.emmah.numeris.core.model.LabRun
+import com.emmah.numeris.core.model.MetricWindow
+import com.emmah.numeris.core.model.PageDetailReport
+import com.emmah.numeris.core.model.PerformanceReport
+import com.emmah.numeris.core.model.PerformanceUrl
+import com.emmah.numeris.core.model.Period
+import com.emmah.numeris.core.model.PortfolioReport
+import com.emmah.numeris.core.model.ProviderDate
+import com.emmah.numeris.core.model.ReportMath
+import com.emmah.numeris.core.model.ReportSeries
+import com.emmah.numeris.core.model.SearchObservation
+import com.emmah.numeris.core.model.SearchReport
+import com.emmah.numeris.core.model.TrafficDay
+import com.emmah.numeris.core.model.TrafficReport
+import com.emmah.numeris.core.model.contains
+import com.emmah.numeris.core.model.previous
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.mapLatest
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDate
 
-@Suppress("TooManyFunctions")
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class ReportRepository(
-    private val dao: ReportDao,
+    private val database: NumerisDatabase,
+    private val clock: Clock = Clock.systemDefaultZone(),
 ) {
-    fun observeDomains(): Flow<List<String>> = dao.observeDomains()
+    private val reader = ReportReader(database, clock)
+    private val dao get() = database.reportSnapshotDao()
 
-    fun observeCloudflareTraffic(
+    private fun <T> observe(read: suspend () -> T): Flow<T> =
+        dao
+            .observeChanges()
+            .mapLatest {
+                database.withReadTransaction { read() }
+            }.flowOn(Dispatchers.IO)
+
+    fun observeDomains(): Flow<List<String>> = observe { reader.domains() }
+
+    fun observeTraffic(
         domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<CloudflareTrafficEntity>> = dao.observeCloudflareTraffic(domain, start, end)
+        period: Period,
+    ): Flow<TrafficReport> = observe { reader.traffic(domain, period.toDateRange(clock)) }
 
-    fun observeCloudflareCountries(
+    fun observeSearch(
         domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<CloudflareCountryEntity>> = dao.observeCloudflareCountries(domain, start, end)
+        period: Period,
+        provider: String,
+    ): Flow<SearchReport> =
+        observe {
+            reader.search(domain, period.toDateRange(clock), provider)
+        }
 
-    fun observeCloudflarePages(
+    fun observePerformance(domain: String): Flow<PerformanceReport> = observe { reader.performance(domain) }
+
+    fun observeHealth(
         domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<CloudflarePageEntity>> = dao.observeCloudflarePages(domain, start, end)
+        period: Period,
+    ): Flow<HealthReport> = observe { reader.health(domain, period.toDateRange(clock)) }
 
-    fun observeCloudflareStatuses(
+    fun observePortfolio(
         domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<CloudflareStatusEntity>> = dao.observeCloudflareStatuses(domain, start, end)
+        period: Period,
+    ): Flow<PortfolioReport> =
+        observe {
+            reader.portfolio(domain, period.toDateRange(clock))
+        }
 
-    fun observeWebAnalytics(
+    fun observePage(
         domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<WebAnalyticsDailyEntity>> = dao.observeWebAnalytics(domain, start, end)
+        path: String,
+        period: Period,
+    ): Flow<PageDetailReport> = observe { reader.page(domain, path, period.toDateRange(clock)) }
 
-    fun observeAnalyticsDaily(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<GoogleAnalyticsDailyEntity>> = dao.observeAnalyticsDaily(domain, start, end)
-
-    fun observeAnalyticsPages(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<GoogleAnalyticsPageEntity>> = dao.observeAnalyticsPages(domain, start, end)
-
-    fun observeAnalyticsSources(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<GoogleAnalyticsSourceEntity>> = dao.observeAnalyticsSources(domain, start, end)
-
-    fun observeAnalyticsEvents(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<GoogleAnalyticsEventEntity>> = dao.observeAnalyticsEvents(domain, start, end)
-
-    fun observeAnalyticsDevices(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<GoogleAnalyticsDeviceEntity>> = dao.observeAnalyticsDevices(domain, start, end)
-
-    fun observeSearchConsole(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<SearchConsoleEntity>> = dao.observeSearchConsole(domain, start, end)
-
-    fun observeSearchDevices(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<SearchDeviceEntity>> = dao.observeSearchDevices(domain, start, end)
-
-    fun observeBingTraffic(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<BingRankTrafficEntity>> = dao.observeBingTraffic(domain, start, end)
-
-    fun observeBingQueries(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<BingQueryStatEntity>> = dao.observeBingQueries(domain, start, end)
-
-    fun observeBingPages(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<BingPageStatEntity>> = dao.observeBingPages(domain, start, end)
-
-    fun observeBingRaw(domain: String): Flow<List<BingRawItemEntity>> = dao.observeBingRaw(domain)
-
-    fun observeSitemap(domain: String): Flow<List<SitemapUrlEntity>> = dao.observeSitemap(domain)
-
-    fun observePerformanceUrls(domain: String): Flow<List<PerformanceUrlEntity>> = dao.observePerformanceUrls(domain)
-
-    fun observeCrux(domain: String): Flow<List<CruxMetricPointEntity>> = dao.observeCrux(domain)
-
-    fun observePageSpeedRuns(domain: String): Flow<List<PageSpeedRunEntity>> = dao.observePageSpeedRuns(domain)
-
-    fun observePageSpeedAudits(domain: String): Flow<List<PageSpeedAuditEntity>> = dao.observePageSpeedAudits(domain)
-
-    fun observeAllUptime(domain: String): Flow<List<UptimeCheckEntity>> = dao.observeAllUptime(domain)
-
-    suspend fun upsertUrls(rows: List<PerformanceUrlEntity>) = dao.upsertUrls(rows)
+    suspend fun addUrl(value: String) {
+        val url = PerformanceUrl.normalizePageUrl(value)
+        if (dao.readPerformanceUrls("all").none { it.url == url }) {
+            database.performanceDao().upsertUrls(
+                listOf(
+                    PerformanceUrlEntity(
+                        url = url,
+                        origin = PerformanceUrl.normalizeOrigin(url),
+                        createdAt = Instant.now(clock).toString(),
+                    ),
+                ),
+            )
+        }
+    }
 
     suspend fun setUrlEnabled(
         id: Long,
         enabled: Boolean,
-    ) = dao.setUrlEnabled(id, enabled)
+    ) = database.performanceDao().setUrlEnabled(id, enabled)
 
-    suspend fun deleteUrl(id: Long) = dao.deleteUrl(id)
+    suspend fun deleteUrl(id: Long) = database.performanceDao().deleteUrl(id)
+}
+
+fun trafficWindow(
+    rows: List<TrafficDay>,
+    range: DateRange,
+    expectedSites: Set<String> =
+        rows
+            .map {
+                it.domain
+            }.toSet(),
+    value: (TrafficDay) -> Number,
+): MetricWindow =
+    ReportMath.window(
+        rows.map {
+            SearchObservation(it.domain, it.date, "daily", "", value(it).toLong(), null)
+        },
+        range,
+        expectedSites,
+    ) { it.clicks }
+
+fun cacheWindow(
+    rows: List<TrafficDay>,
+    range: DateRange,
+    expectedSites: Set<String> = rows.map { it.domain }.toSet(),
+): MetricWindow {
+    fun ratio(period: DateRange): Double? =
+        rows.filter { it.date in period }.takeIf { it.isNotEmpty() }?.let {
+            ReportMath.ratio(
+                it.sumOf { row ->
+                    row.cachedRequests
+                },
+                it.sumOf { row -> row.requests },
+            )
+        }
+    val current = ratio(range)
+    val previous = ratio(range.previous())
+    return trafficWindow(rows, range, expectedSites) { it.requests }.copy(
+        current = current ?: 0.0,
+        previous = previous ?: 0.0,
+        hasCurrent =
+            current != null,
+        hasPrevious = previous != null,
+    )
+}
+
+fun comparisonSeries(
+    label: String,
+    rows: List<SearchObservation>,
+    range: DateRange,
+): List<ReportSeries> {
+    fun points(period: DateRange): Map<LocalDate, Double> =
+        rows
+            .filter { it.date in period }
+            .groupBy { it.date }
+            .mapNotNull { (date, records) ->
+                records.mapNotNull { it.clicks }.takeIf { it.isNotEmpty() }?.let { date to it.sum().toDouble() }
+            }.toMap()
+    val previous = ReportMath.series("Previous $label", "count", points(range.previous()), range.previous())
+    return listOf(ReportMath.series(label, "count", points(range), range), previous.copy(previous = true))
+}
+
+internal fun mobileScoreWindow(
+    runs: List<LabRun>,
+    range: DateRange,
+    domain: String,
+): MetricWindow {
+    if (domain == "all") return MetricWindow(0.0, 0.0, false, false, false)
+    val home = runs.filter { it.device == "mobile" && it.url == "https://$domain/" && it.performance != null }
+
+    fun latest(period: DateRange) =
+        home
+            .firstOrNull {
+                ProviderDate.normalize(it.time)?.let(LocalDate::parse)?.let { date -> date in period } ==
+                    true
+            }?.performance
+    val current = latest(range)
+    val previous = latest(range.previous())
+    return MetricWindow(
+        current ?: 0.0,
+        previous ?: 0.0,
+        current != null,
+        previous != null,
+        current != null && previous != null,
+    )
 }

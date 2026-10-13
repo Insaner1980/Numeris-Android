@@ -4,6 +4,12 @@ import kotlin.math.max
 
 enum class InsightSeverity { Info, Warning, Critical }
 
+data class InsightTarget(
+    val page: String,
+    val tab: String,
+    val label: String,
+)
+
 data class InsightCard(
     val title: String,
     val message: String,
@@ -11,6 +17,7 @@ data class InsightCard(
     val nextStep: String,
     val severity: InsightSeverity,
     val priority: Int,
+    val target: InsightTarget,
 )
 
 data class StatusCodeSummary(
@@ -54,19 +61,16 @@ data class SearchPageTrend(
 }
 
 data class InsightMetrics(
-    val cloudflareVisitors: MetricWindow = MetricWindow(0.0, 0.0),
-    val ga4Users: MetricWindow = MetricWindow(0.0, 0.0),
-    val googleImpressions: MetricWindow = MetricWindow(0.0, 0.0),
-    val googleClicks: MetricWindow = MetricWindow(0.0, 0.0),
-    val googleMobileClicks: MetricWindow = MetricWindow(0.0, 0.0),
-    val googleMobileImpressions: MetricWindow = MetricWindow(0.0, 0.0),
-    val pageSpeedMobileScore: MetricWindow = MetricWindow(0.0, 0.0),
-    val bingImpressions: MetricWindow = MetricWindow(0.0, 0.0),
-    val bingClicks: MetricWindow = MetricWindow(0.0, 0.0),
-    val ga4EngagementRate: MetricWindow = MetricWindow(0.0, 0.0),
-    val ga4KeyEvents: MetricWindow = MetricWindow(0.0, 0.0),
-    val cloudflareCacheHitRatio: MetricWindow = MetricWindow(0.0, 0.0),
-    val cloudflareThreats: MetricWindow = MetricWindow(0.0, 0.0),
+    val cloudflareVisitors: MetricWindow = MetricWindow(0.0, 0.0, false, false, false),
+    val googleImpressions: MetricWindow = MetricWindow(0.0, 0.0, false, false, false),
+    val googleClicks: MetricWindow = MetricWindow(0.0, 0.0, false, false, false),
+    val googleMobileClicks: MetricWindow = MetricWindow(0.0, 0.0, false, false, false),
+    val googleMobileImpressions: MetricWindow = MetricWindow(0.0, 0.0, false, false, false),
+    val pageSpeedMobileScore: MetricWindow = MetricWindow(0.0, 0.0, false, false, false),
+    val bingImpressions: MetricWindow = MetricWindow(0.0, 0.0, false, false, false),
+    val bingClicks: MetricWindow = MetricWindow(0.0, 0.0, false, false, false),
+    val cloudflareCacheHitRatio: MetricWindow = MetricWindow(0.0, 0.0, false, false, false),
+    val cloudflareThreats: MetricWindow = MetricWindow(0.0, 0.0, false, false, false),
     val httpStatus: StatusCodeSummary = StatusCodeSummary(0, 0, 0),
     val indexing: IndexingSummary = IndexingSummary(0, 0, 0),
     val freshness: SourceFreshnessSummary = SourceFreshnessSummary(0, 0, 0),

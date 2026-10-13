@@ -12,9 +12,10 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.json.put
-import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
+import java.time.Clock
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 data class CloudflareDailyWire(
     val date: String,
@@ -48,12 +49,19 @@ data class CloudflareTrafficWire(
 
 class CloudflareApiClient(
     private val http: NumerisHttpClient,
+    private val clock: Clock = Clock.systemUTC(),
 ) {
+    private val graphql = CloudflareGraphql(http, "Cloudflare")
+
     suspend fun validateZone(
         token: CharArray,
         zoneId: String,
     ): String {
-        val result = http.execute("Cloudflare", authorizedRequest("$API_BASE/zones/${zoneId.trim()}", token).get().build())
+        val result =
+            http.execute(
+                "Cloudflare",
+                authorizedRequest("$API_BASE/zones/${zoneId.trim()}", token).get().build(),
+            )
         val root = Json.parseToJsonElement(result.body).jsonObject
         require(root["success"]?.jsonPrimitive?.content == "true") { "Cloudflare could not validate this zone." }
         return root
@@ -69,37 +77,40 @@ class CloudflareApiClient(
         since: String,
         until: String,
     ): CloudflareTrafficWire {
+        val limits =
+            graphql.limits(
+                token,
+                SETTINGS_QUERY,
+                buildJsonObject { put("zoneTag", zoneId) },
+                "zones",
+                listOf(DAILY_DATASET, ADAPTIVE_DATASET),
+            )
+        val now = clock.instant()
+        val end = LocalDate.parse(until)
+        val dailySince = CloudflareQueryWindow.dailyStart(LocalDate.parse(since), end, now, limits[DAILY_DATASET])
+        // Adaptiivinen erittely (maat, sivut) on rajattu enintään 30 päivään myös Windows-versiossa.
+        val adaptiveUntil = end.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant()
+        val requestedAdaptive =
+            maxOf(LocalDate.parse(since), end.minusDays(ADAPTIVE_MAX_DAYS - 1))
+                .atStartOfDay(ZoneOffset.UTC)
+                .toInstant()
+        val adaptiveSince =
+            CloudflareQueryWindow.adaptiveStart(requestedAdaptive, adaptiveUntil, now, limits[ADAPTIVE_DATASET])
         val variables =
             buildJsonObject {
                 put("zoneTag", zoneId)
-                put("since", since)
+                put("since", dailySince.toString())
                 put("until", until)
-                put("adaptiveSince", "${since}T00:00:00Z")
-                put("adaptiveUntil", "${java.time.LocalDate.parse(until).plusDays(1)}T00:00:00Z")
+                put("adaptiveSince", adaptiveSince.toString())
+                put("adaptiveUntil", adaptiveUntil.toString())
             }
-        val body =
-            buildJsonObject {
-                put("query", DAILY_QUERY)
-                put("variables", variables)
-            }.toString()
-        val response =
-            http.execute(
-                "Cloudflare",
-                authorizedRequest(GRAPHQL_ENDPOINT, token)
-                    .post(body.toRequestBody(JSON_MEDIA_TYPE))
-                    .build(),
-            )
-        return parseTraffic(response.body, until)
+        return parseTraffic(graphql.query(token, DAILY_QUERY, variables), until)
     }
 
     private fun parseTraffic(
-        raw: String,
+        root: JsonObject,
         breakdownDate: String,
     ): CloudflareTrafficWire {
-        val root = Json.parseToJsonElement(raw).jsonObject
-        root["errors"]?.jsonArray?.firstOrNull()?.jsonObject?.get("message")?.jsonPrimitive?.contentOrNull?.let {
-            error("Cloudflare analytics request failed.")
-        }
         val zone =
             root["data"]
                 ?.jsonObject
@@ -118,7 +129,8 @@ class CloudflareApiClient(
                 val sum = group.objectValue("sum")
                 sum.array("responseStatusMap").forEach { statusValue ->
                     val status = statusValue.jsonObject
-                    statuses += CloudflareStatusWire(date, status.long("edgeResponseStatus").toInt(), status.long("requests"))
+                    statuses +=
+                        CloudflareStatusWire(date, status.long("edgeResponseStatus").toInt(), status.long("requests"))
                 }
                 CloudflareDailyWire(
                     date,
@@ -168,7 +180,8 @@ class CloudflareApiClient(
                     ?.get("visits")
                     ?.jsonPrimitive
                     ?.longOrNull
-            CloudflareBreakdownWire(date, name, visits ?: group.long("count"))
+            val groupDate = group.objectValue("dimensions").string("date").ifBlank { date }
+            CloudflareBreakdownWire(groupDate, name, visits ?: group.long("count"))
         }
 
     private fun JsonObject.array(name: String): JsonArray = get(name)?.jsonArray ?: JsonArray(emptyList())
@@ -180,9 +193,18 @@ class CloudflareApiClient(
     private fun JsonObject.long(name: String): Long = get(name)?.jsonPrimitive?.longOrNull ?: 0
 
     private companion object {
+        const val DAILY_DATASET = "httpRequests1dGroups"
+        const val ADAPTIVE_DATASET = "httpRequestsAdaptiveGroups"
+        const val ADAPTIVE_MAX_DAYS = 30L
+        const val SETTINGS_QUERY = """
+            query NumerisZoneLimits(${"$"}zoneTag: String!) {
+              viewer { zones(filter: { zoneTag: ${"$"}zoneTag }) { settings {
+                httpRequests1dGroups { maxDuration notOlderThan }
+                httpRequestsAdaptiveGroups { maxDuration notOlderThan }
+              } } }
+            }
+        """
         const val API_BASE = "https://api.cloudflare.com/client/v4"
-        const val GRAPHQL_ENDPOINT = "$API_BASE/graphql"
-        val JSON_MEDIA_TYPE = "application/json".toMediaType()
         const val DAILY_QUERY = """
             query NumerisDailyTraffic(${"$"}zoneTag: String!, ${"$"}since: Date!, ${"$"}until: Date!, ${"$"}adaptiveSince: Time!, ${"$"}adaptiveUntil: Time!) {
               viewer { zones(filter: { zoneTag: ${"$"}zoneTag }) {
@@ -191,11 +213,11 @@ class CloudflareApiClient(
                   sum { pageViews requests cachedRequests cachedBytes bytes threats responseStatusMap { edgeResponseStatus requests } }
                   uniq { uniques }
                 }
-                topCountries: httpRequestsAdaptiveGroups(limit: 10, orderBy: [count_DESC], filter: { datetime_geq: ${"$"}adaptiveSince, datetime_lt: ${"$"}adaptiveUntil, requestSource: "eyeball" }) {
-                  count sum { visits } dimensions { clientCountryName }
+                topCountries: httpRequestsAdaptiveGroups(limit: 10000, orderBy: [count_DESC], filter: { datetime_geq: ${"$"}adaptiveSince, datetime_lt: ${"$"}adaptiveUntil, requestSource: "eyeball" }) {
+                  count sum { visits } dimensions { date clientCountryName }
                 }
-                topPages: httpRequestsAdaptiveGroups(limit: 10, orderBy: [count_DESC], filter: { datetime_geq: ${"$"}adaptiveSince, datetime_lt: ${"$"}adaptiveUntil, requestSource: "eyeball" }) {
-                  count sum { visits } dimensions { clientRequestPath }
+                topPages: httpRequestsAdaptiveGroups(limit: 10000, orderBy: [count_DESC], filter: { datetime_geq: ${"$"}adaptiveSince, datetime_lt: ${"$"}adaptiveUntil, requestSource: "eyeball" }) {
+                  count sum { visits } dimensions { date clientRequestPath }
                 }
               } }
             }

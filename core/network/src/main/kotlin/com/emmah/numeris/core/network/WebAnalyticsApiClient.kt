@@ -2,7 +2,6 @@
 
 package com.emmah.numeris.core.network
 
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
@@ -12,9 +11,9 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.json.put
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
+import java.time.Clock
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 data class WebAnalyticsDailyWire(
     val date: String,
@@ -25,6 +24,7 @@ data class WebAnalyticsDailyWire(
 data class WebAnalyticsBreakdownWire(
     val name: String,
     val value: Long,
+    val date: String,
 )
 
 data class WebAnalyticsRollupWire(
@@ -35,8 +35,11 @@ data class WebAnalyticsRollupWire(
 )
 
 class WebAnalyticsApiClient(
-    private val http: NumerisHttpClient,
+    http: NumerisHttpClient,
+    private val clock: Clock = Clock.systemUTC(),
 ) {
+    private val graphql = CloudflareGraphql(http, "Cloudflare Web Analytics")
+
     suspend fun fetch(
         token: CharArray,
         accountId: String,
@@ -44,29 +47,31 @@ class WebAnalyticsApiClient(
         startDate: String,
         endDate: String,
     ): WebAnalyticsRollupWire {
+        val limit =
+            graphql.limits(
+                token,
+                SETTINGS_QUERY,
+                buildJsonObject { put("accountTag", accountId) },
+                "accounts",
+                listOf(DATASET),
+            )[DATASET]
+        val end = LocalDate.parse(endDate)
+        val until = end.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant()
+        val requested = LocalDate.parse(startDate).atStartOfDay(ZoneOffset.UTC).toInstant()
+        val since = CloudflareQueryWindow.adaptiveStart(requested, until, clock.instant(), limit)
+        // Päiväsuodatin alkaa ensimmäisestä kokonaisesta päivästä rajatun alun jälkeen.
+        val sinceDay = since.atZone(ZoneOffset.UTC).toLocalDate()
+        val sinceDate = if (sinceDay.atStartOfDay(ZoneOffset.UTC).toInstant() == since) sinceDay else sinceDay.plusDays(1)
         val variables =
             buildJsonObject {
                 put("accountTag", accountId)
                 put("siteTag", siteTag)
-                put("since", "${startDate}T00:00:00Z")
+                put("since", since.toString())
                 put("until", "${endDate}T23:59:59Z")
-                put("sinceDate", startDate)
+                put("sinceDate", sinceDate.toString())
                 put("untilDate", endDate)
             }
-        val body =
-            buildJsonObject {
-                put("query", QUERY)
-                put("variables", variables)
-            }.toString()
-        val request =
-            Request
-                .Builder()
-                .url(ENDPOINT)
-                .header("Authorization", "Bearer ${token.concatToString().removePrefix("Bearer ").trim()}")
-                .post(body.toRequestBody(JSON_MEDIA_TYPE))
-                .build()
-        val root = Json.parseToJsonElement(http.execute("Cloudflare Web Analytics", request).body).jsonObject
-        if (root["errors"]?.jsonArray?.isNotEmpty() == true) error("Cloudflare Web Analytics request failed.")
+        val root = graphql.query(token, QUERY, variables)
         val account =
             root["data"]
                 ?.jsonObject
@@ -97,8 +102,12 @@ class WebAnalyticsApiClient(
     ): List<WebAnalyticsBreakdownWire> =
         array(name).mapNotNull { value ->
             val row = value.jsonObject
-            val label = row.dimension(dimension).takeIf(String::isNotBlank) ?: return@mapNotNull null
-            WebAnalyticsBreakdownWire(label, if (useCount) row.long("count") else row.sum(sumName))
+            val label = row.dimension(dimension)
+            WebAnalyticsBreakdownWire(
+                label,
+                if (useCount) row.long("count") else row.sum(sumName),
+                row.dimension("date"),
+            )
         }
 
     private fun JsonObject.array(name: String): JsonArray = get(name)?.jsonArray ?: JsonArray(emptyList())
@@ -121,15 +130,21 @@ class WebAnalyticsApiClient(
     private fun JsonObject.long(name: String): Long = get(name)?.jsonPrimitive?.longOrNull ?: 0
 
     private companion object {
-        const val ENDPOINT = "https://api.cloudflare.com/client/v4/graphql"
-        val JSON_MEDIA_TYPE = "application/json".toMediaType()
+        const val DATASET = "rumPageloadEventsAdaptiveGroups"
+        const val SETTINGS_QUERY = """
+            query NumerisWebAnalyticsLimits(${"$"}accountTag: String!) {
+              viewer { accounts(filter: { accountTag: ${"$"}accountTag }) { settings {
+                rumPageloadEventsAdaptiveGroups { maxDuration notOlderThan }
+              } } }
+            }
+        """
         const val QUERY = """
             query NumerisWebAnalytics(${"$"}accountTag: String!, ${"$"}siteTag: String!, ${"$"}since: Time!, ${"$"}until: Time!, ${"$"}sinceDate: Date!, ${"$"}untilDate: Date!) {
               viewer { accounts(filter: { accountTag: ${"$"}accountTag }) {
                 daily: rumPageloadEventsAdaptiveGroups(limit: 10000, filter: { siteTag: ${"$"}siteTag, date_geq: ${"$"}sinceDate, date_leq: ${"$"}untilDate, bot: 0 }, orderBy: [date_ASC]) { dimensions { date } sum { visits } count }
-                referrers: rumPageloadEventsAdaptiveGroups(limit: 100, filter: { siteTag: ${"$"}siteTag, datetime_geq: ${"$"}since, datetime_leq: ${"$"}until, bot: 0 }, orderBy: [sum_visits_DESC]) { dimensions { refererHost } sum { visits } }
-                pages: rumPageloadEventsAdaptiveGroups(limit: 100, filter: { siteTag: ${"$"}siteTag, datetime_geq: ${"$"}since, datetime_leq: ${"$"}until, bot: 0 }, orderBy: [count_DESC]) { dimensions { requestPath } count }
-                countries: rumPageloadEventsAdaptiveGroups(limit: 100, filter: { siteTag: ${"$"}siteTag, datetime_geq: ${"$"}since, datetime_leq: ${"$"}until, bot: 0 }, orderBy: [sum_visits_DESC]) { dimensions { countryName } sum { visits } }
+                referrers: rumPageloadEventsAdaptiveGroups(limit: 10000, filter: { siteTag: ${"$"}siteTag, datetime_geq: ${"$"}since, datetime_leq: ${"$"}until, bot: 0 }, orderBy: [sum_visits_DESC]) { dimensions { date refererHost } sum { visits } }
+                pages: rumPageloadEventsAdaptiveGroups(limit: 10000, filter: { siteTag: ${"$"}siteTag, datetime_geq: ${"$"}since, datetime_leq: ${"$"}until, bot: 0 }, orderBy: [count_DESC]) { dimensions { date requestPath } count }
+                countries: rumPageloadEventsAdaptiveGroups(limit: 10000, filter: { siteTag: ${"$"}siteTag, datetime_geq: ${"$"}since, datetime_leq: ${"$"}until, bot: 0 }, orderBy: [sum_visits_DESC]) { dimensions { date countryName } sum { visits } }
               } }
             }
         """

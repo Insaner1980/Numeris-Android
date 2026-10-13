@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Numeris-logo (sama lähde kuin Windows-versiossa: Assets/Logo/numeris-logo.svg). Logo mahtuu
+     mukautuvan kuvakkeen 66 dp:n turva-alueelle 108 dp:n pohjalla. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="1843"
+    android:viewportHeight="1843">
+    <group android:translateX="410" android:translateY="410">
+        <path android:fillColor="#F56E0F" android:fillType="evenOdd" android:pathData="M363.9,87.3 A768.8,536.5 0 0 0 382.7,989.7 A647.7,632.8 0 0 1 363.9,87.3 Z" />
+        <path android:fillColor="#F56E0F" android:fillType="evenOdd" android:pathData="M608.3,169.7 A180.8,492.5 0 1 0 605.6,893.1 A162.4,441.5 0 0 1 589.4,857.2 A106.2,349.5 0 1 1 589.9,209.5 A162.4,441.5 0 0 1 608.3,169.7 Z" />
+        <path android:fillColor="#F56E0F" android:fillType="evenOdd" android:pathData="M862.5,534.0 A162.4,441.5 0 0 1 537.6,534.0 A162.4,441.5 0 0 1 862.5,534.0 Z M822.3,536.3 A76.6,240.2 0 0 1 669.0,536.3 A76.6,240.2 0 0 1 822.3,536.3 Z" />
+        <path android:fillColor="#F56E0F" android:fillType="evenOdd" android:pathData="M997.9,535.3 A58.8,135.4 0 0 1 880.3,535.3 A58.8,135.4 0 0 1 997.9,535.3 Z" />    </group>
+</vector>

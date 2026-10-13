@@ -48,6 +48,8 @@ import kotlinx.coroutines.Dispatchers
 abstract class NumerisDatabase : RoomDatabase() {
     abstract fun connectionDao(): ConnectionDao
 
+    abstract fun webAnalyticsDao(): WebAnalyticsDao
+
     abstract fun cloudflareDao(): CloudflareDao
 
     abstract fun searchDao(): SearchDao
@@ -62,9 +64,7 @@ abstract class NumerisDatabase : RoomDatabase() {
 
     abstract fun syncRunDao(): SyncRunDao
 
-    abstract fun overviewDao(): OverviewDao
-
-    abstract fun reportDao(): ReportDao
+    abstract fun reportSnapshotDao(): ReportSnapshotDao
 }
 
 fun buildNumerisDatabase(context: Context): NumerisDatabase =

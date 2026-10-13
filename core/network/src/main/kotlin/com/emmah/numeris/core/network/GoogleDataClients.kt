@@ -34,13 +34,49 @@ data class GoogleAnalyticsRowWire(
 class SearchConsoleApiClient(
     private val http: NumerisHttpClient,
 ) {
+    suspend fun sites(accessToken: String): List<String> {
+        val raw =
+            http
+                .execute(
+                    "Google Search Console",
+                    authorizedRequest(SITES_ENDPOINT, accessToken).get().build(),
+                ).body
+        return Json
+            .parseToJsonElement(raw)
+            .jsonObject["siteEntry"]
+            ?.jsonArray
+            .orEmpty()
+            .mapNotNull { it.jsonObject["siteUrl"]?.jsonPrimitive?.contentOrNull }
+    }
+
+    /**
+     * Search Analytics -rivit sivuttain. Yksi 25 000 rivin vastaus voi pitkällä jaksolla ylittää HTTP-kerroksen
+     * kokorajan, joten rivit haetaan [PAGE_SIZE] kerrallaan `startRow`-siirtymällä, enintään [MAX_ROWS] riviin.
+     */
     suspend fun query(
         accessToken: String,
         propertyUrl: String,
         startDate: String,
         endDate: String,
         dimensions: List<String>,
-        rowLimit: Int = DEFAULT_ROW_LIMIT,
+    ): List<SearchAnalyticsRowWire> {
+        val rows = mutableListOf<SearchAnalyticsRowWire>()
+        var startRow = 0
+        do {
+            val page = queryPage(accessToken, propertyUrl, startDate, endDate, dimensions, startRow)
+            rows += page
+            startRow += PAGE_SIZE
+        } while (page.size == PAGE_SIZE && rows.size < MAX_ROWS)
+        return rows
+    }
+
+    private suspend fun queryPage(
+        accessToken: String,
+        propertyUrl: String,
+        startDate: String,
+        endDate: String,
+        dimensions: List<String>,
+        startRow: Int,
     ): List<SearchAnalyticsRowWire> {
         val url =
             SITES_ENDPOINT
@@ -54,7 +90,8 @@ class SearchConsoleApiClient(
             buildJsonObject {
                 put("startDate", startDate)
                 put("endDate", endDate)
-                put("rowLimit", rowLimit)
+                put("rowLimit", PAGE_SIZE)
+                put("startRow", startRow)
                 put("dimensions", buildJsonArray { dimensions.forEach { add(JsonPrimitive(it)) } })
             }.toString()
         val raw =
@@ -63,8 +100,7 @@ class SearchConsoleApiClient(
                     "Google Search Console",
                     authorizedRequest(url.toString(), accessToken).post(body.toRequestBody(JSON_MEDIA_TYPE)).build(),
                 ).body
-        return Json.parseToJsonElement(raw).jsonObject["rows"]?.jsonArray.orEmpty().map { value ->
-            val row = value.jsonObject
+        return googleRows(raw).map { row ->
             SearchAnalyticsRowWire(
                 keys = row["keys"]?.jsonArray.orEmpty().map { it.jsonPrimitive.content },
                 clicks =
@@ -99,7 +135,10 @@ class SearchConsoleApiClient(
             http
                 .execute(
                     "Google URL Inspection",
-                    authorizedRequest(INSPECTION_ENDPOINT, accessToken).post(body.toRequestBody(JSON_MEDIA_TYPE)).build(),
+                    authorizedRequest(
+                        INSPECTION_ENDPOINT,
+                        accessToken,
+                    ).post(body.toRequestBody(JSON_MEDIA_TYPE)).build(),
                 ).body
         return Json.parseToJsonElement(raw).jsonObject
     }
@@ -107,7 +146,8 @@ class SearchConsoleApiClient(
     private companion object {
         const val SITES_ENDPOINT = "https://www.googleapis.com/webmasters/v3/sites"
         const val INSPECTION_ENDPOINT = "https://searchconsole.googleapis.com/v1/urlInspection/index:inspect"
-        const val DEFAULT_ROW_LIMIT = 25_000
+        const val PAGE_SIZE = 5_000
+        const val MAX_ROWS = 500_000
     }
 }
 
@@ -136,8 +176,22 @@ class GoogleAnalyticsApiClient(
                         )
                     },
                 )
-                put("dimensions", buildJsonArray { dimensions.forEach { name -> add(buildJsonObject { put("name", name) }) } })
-                put("metrics", buildJsonArray { metrics.forEach { name -> add(buildJsonObject { put("name", name) }) } })
+                put(
+                    "dimensions",
+                    buildJsonArray {
+                        dimensions.forEach { name ->
+                            add(buildJsonObject { put("name", name) })
+                        }
+                    },
+                )
+                put(
+                    "metrics",
+                    buildJsonArray {
+                        metrics.forEach { name ->
+                            add(buildJsonObject { put("name", name) })
+                        }
+                    },
+                )
                 put("limit", limit.toString())
                 put("returnPropertyQuota", true)
             }.toString()
@@ -149,8 +203,7 @@ class GoogleAnalyticsApiClient(
                         .post(body.toRequestBody(JSON_MEDIA_TYPE))
                         .build(),
                 ).body
-        return Json.parseToJsonElement(raw).jsonObject["rows"]?.jsonArray.orEmpty().map { value ->
-            val row = value.jsonObject
+        return googleRows(raw).map { row ->
             GoogleAnalyticsRowWire(
                 dimensions = row.values("dimensionValues"),
                 metrics = row.values("metricValues"),
@@ -180,3 +233,11 @@ private fun authorizedRequest(
 private val JSON_MEDIA_TYPE = "application/json".toMediaType()
 
 private fun JsonArray?.orEmpty(): JsonArray = this ?: JsonArray(emptyList())
+
+private fun googleRows(raw: String): List<JsonObject> =
+    Json
+        .parseToJsonElement(raw)
+        .jsonObject["rows"]
+        ?.jsonArray
+        .orEmpty()
+        .map { it.jsonObject }

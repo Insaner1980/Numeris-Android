@@ -5,17 +5,151 @@
 //   ./gradlew :sources:stabilityDump
 
 @Composable
-private fun com.emmah.numeris.feature.sources.ConnectionCard(connection: com.emmah.numeris.core.model.Connection, busy: kotlin.Boolean, onTest: kotlin.Function0<kotlin.Unit>, onDelete: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+internal fun com.emmah.numeris.feature.sources.AddSourceButton(onClick: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - onClick: STABLE (function type)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+internal fun com.emmah.numeris.feature.sources.AddSourceSheet(onDismiss: kotlin.Function0<kotlin.Unit>, onChoose: kotlin.Function1<com.emmah.numeris.feature.sources.ConnectionSetup, kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - onDismiss: STABLE (function type)
+    - onChoose: STABLE (function type)
+
+@Composable
+internal fun com.emmah.numeris.feature.sources.ConnectionGroup(connections: kotlin.collections.List<com.emmah.numeris.core.model.Connection>, actions: com.emmah.numeris.feature.sources.ConnectionActions, modifier: androidx.compose.ui.Modifier, hasFooter: kotlin.Boolean, footer: @[Composable] androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - connections: RUNTIME (requires runtime check)
+    - actions: STABLE (class with no mutable properties)
+    - modifier: STABLE (marked @Stable or @Immutable)
+    - hasFooter: STABLE (primitive type)
+    - footer: STABLE (composable function type)
+
+@Composable
+private fun com.emmah.numeris.feature.sources.ConnectionMenu(connection: com.emmah.numeris.core.model.Connection, actions: com.emmah.numeris.feature.sources.ConnectionActions): kotlin.Unit
   skippable: false
   restartable: true
   params:
     - connection: UNSTABLE (has mutable properties or unstable members)
-    - busy: STABLE (primitive type)
-    - onTest: STABLE (function type)
-    - onDelete: STABLE (function type)
+    - actions: STABLE (class with no mutable properties)
 
 @Composable
-public fun com.emmah.numeris.feature.sources.SourcesScreen(connections: com.emmah.numeris.core.model.ConnectionRepository, imports: com.emmah.numeris.data.AndroidImportRepository, requireBiometric: kotlin.Function1<kotlin.Function0<kotlin.Unit>, kotlin.Unit>, authorizeGoogle: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier, viewModel: com.emmah.numeris.feature.sources.SourcesViewModel): kotlin.Unit
+private fun com.emmah.numeris.feature.sources.ConnectionRow(connection: com.emmah.numeris.core.model.Connection, actions: com.emmah.numeris.feature.sources.ConnectionActions, divider: kotlin.Boolean): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - connection: UNSTABLE (has mutable properties or unstable members)
+    - actions: STABLE (class with no mutable properties)
+    - divider: STABLE (primitive type)
+
+@Composable
+internal fun com.emmah.numeris.feature.sources.DisconnectDialog(connection: com.emmah.numeris.core.model.Connection, onConfirm: kotlin.Function0<kotlin.Unit>, onDismiss: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - connection: UNSTABLE (has mutable properties or unstable members)
+    - onConfirm: STABLE (function type)
+    - onDismiss: STABLE (function type)
+
+@Composable
+private fun com.emmah.numeris.feature.sources.DiscoverTargets(selected: com.emmah.numeris.feature.sources.ConnectionSetup, setupValues: kotlin.collections.Map<kotlin.String, kotlin.String>, state: com.emmah.numeris.feature.sources.SourcesUiState, onValues: kotlin.Function1<kotlin.collections.Map<kotlin.String, kotlin.String>, kotlin.Unit>, onDiscover: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - selected: RUNTIME (requires runtime check)
+    - setupValues: RUNTIME (requires runtime check)
+    - state: UNSTABLE (has mutable properties or unstable members)
+    - onValues: STABLE (function type)
+    - onDiscover: STABLE (function type)
+
+@Composable
+internal fun com.emmah.numeris.feature.sources.GoogleAuthorizationRow(feedback: com.emmah.numeris.data.GoogleAuthorizationFeedback?, authorizeGoogle: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - feedback: UNSTABLE (has mutable properties or unstable members)
+    - authorizeGoogle: STABLE (function type)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+internal fun com.emmah.numeris.feature.sources.ImportPassphraseDialog(importing: kotlin.Boolean, onInspect: kotlin.Function1<kotlin.CharArray, kotlin.Unit>, onDismiss: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - importing: STABLE (primitive type)
+    - onInspect: STABLE (function type)
+    - onDismiss: STABLE (function type)
+
+@Composable
+internal fun com.emmah.numeris.feature.sources.ImportPreviewDialog(preview: com.emmah.numeris.data.ImportPreview, importing: kotlin.Boolean, onConfirm: kotlin.Function0<kotlin.Unit>, onCancel: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - preview: UNSTABLE (has mutable properties or unstable members)
+    - importing: STABLE (primitive type)
+    - onConfirm: STABLE (function type)
+    - onCancel: STABLE (function type)
+
+@Composable
+internal fun com.emmah.numeris.feature.sources.ImportRow(enabled: kotlin.Boolean, onChooseFile: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - enabled: STABLE (primitive type)
+    - onChooseFile: STABLE (function type)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+private fun com.emmah.numeris.feature.sources.MeasuredUrlRow(url: com.emmah.numeris.core.model.MeasuredUrl, onEnableChange: kotlin.Function1<kotlin.Boolean, kotlin.Unit>, onRemove: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - url: UNSTABLE (has mutable properties or unstable members)
+    - onEnableChange: STABLE (function type)
+    - onRemove: STABLE (function type)
+
+@Composable
+internal fun com.emmah.numeris.feature.sources.MeasuredUrls(reports: com.emmah.numeris.data.ReportRepository, initialUrl: kotlin.String, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - reports: UNSTABLE (has mutable properties or unstable members)
+    - initialUrl: STABLE (String is immutable)
+    - modifier: STABLE (marked @Stable or @Immutable)
+
+@Composable
+internal fun com.emmah.numeris.feature.sources.SourceForm(selected: com.emmah.numeris.feature.sources.ConnectionSetup, setupValues: kotlin.collections.Map<kotlin.String, kotlin.String>, setupSecret: kotlin.String, hasExistingConnection: kotlin.Boolean, state: com.emmah.numeris.feature.sources.SourcesUiState, onValues: kotlin.Function1<kotlin.collections.Map<kotlin.String, kotlin.String>, kotlin.Unit>, onSecret: kotlin.Function1<kotlin.String, kotlin.Unit>, onDiscover: kotlin.Function0<kotlin.Unit>, onSave: kotlin.Function0<kotlin.Unit>, onDismiss: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - selected: RUNTIME (requires runtime check)
+    - setupValues: RUNTIME (requires runtime check)
+    - setupSecret: STABLE (String is immutable)
+    - hasExistingConnection: STABLE (primitive type)
+    - state: UNSTABLE (has mutable properties or unstable members)
+    - onValues: STABLE (function type)
+    - onSecret: STABLE (function type)
+    - onDiscover: STABLE (function type)
+    - onSave: STABLE (function type)
+    - onDismiss: STABLE (function type)
+
+@Composable
+private fun com.emmah.numeris.feature.sources.SourcesHeader(connections: kotlin.collections.List<com.emmah.numeris.core.model.Connection>, onBack: kotlin.Function0<kotlin.Unit>, onAdd: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: false
+  restartable: true
+  params:
+    - connections: RUNTIME (requires runtime check)
+    - onBack: STABLE (function type)
+    - onAdd: STABLE (function type)
+
+@Composable
+public fun com.emmah.numeris.feature.sources.SourcesScreen(connections: com.emmah.numeris.core.model.ConnectionRepository, imports: com.emmah.numeris.data.AndroidImportRepository, requireBiometric: kotlin.Function1<kotlin.Function0<kotlin.Unit>, kotlin.Unit>, authorizeGoogle: kotlin.Function0<kotlin.Unit>, reports: com.emmah.numeris.data.ReportRepository, discovery: com.emmah.numeris.data.SourceDiscovery, onBack: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier, initialUrl: kotlin.String, viewModel: com.emmah.numeris.feature.sources.SourcesViewModel, googleAuthorizationFeedback: com.emmah.numeris.data.GoogleAuthorizationFeedback?): kotlin.Unit
   skippable: false
   restartable: true
   params:
@@ -23,6 +157,11 @@ public fun com.emmah.numeris.feature.sources.SourcesScreen(connections: com.emma
     - imports: UNSTABLE (has mutable properties or unstable members)
     - requireBiometric: STABLE (function type)
     - authorizeGoogle: STABLE (function type)
+    - reports: UNSTABLE (has mutable properties or unstable members)
+    - discovery: UNSTABLE (has mutable properties or unstable members)
+    - onBack: STABLE (function type)
     - modifier: STABLE (marked @Stable or @Immutable)
+    - initialUrl: STABLE (String is immutable)
     - viewModel: UNSTABLE (has mutable properties or unstable members)
+    - googleAuthorizationFeedback: UNSTABLE (has mutable properties or unstable members)
 

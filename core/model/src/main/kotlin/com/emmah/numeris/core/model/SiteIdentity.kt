@@ -10,7 +10,7 @@ data class SiteIdentity(
     companion object {
         private val hostPattern =
             Regex(
-                pattern = "^(?=.{1,253}$)(?!-)([a-z0-9-]{1,63}\\.)+[a-z]{2,63}$",
+                pattern = "^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$",
                 option = RegexOption.IGNORE_CASE,
             )
 
@@ -43,19 +43,59 @@ data class SiteIdentity(
             require(isValid) {
                 "URL must be an absolute https:// URL"
             }
+            require(uri.rawUserInfo == null) { "Target URLs must not contain credentials" }
+            require(
+                uri.rawQuery.orEmpty().split('&').none { part ->
+                    java.net.URLDecoder
+                        .decode(part.substringBefore('='), "UTF-8")
+                        .lowercase()
+                        .replace("_", "")
+                        .replace("-", "") in
+                        secretQueryNames
+                },
+            ) { "Target URLs must not contain secret query parameters" }
             val path = uri.rawPath.ifBlank { "/" }
             val normalizedPath =
                 if (!path.endsWith('/') && '.' !in path.substringAfterLast('/')) "$path/" else path
-            return URI(
-                "https",
-                uri.rawUserInfo,
-                uri.host.lowercase(),
-                uri.port,
-                normalizedPath,
-                uri.rawQuery,
-                null,
-            ).toString()
+            val authority = uri.host.lowercase() + if (uri.port == -1 || uri.port == 443) "" else ":${uri.port}"
+            return "https://$authority$normalizedPath" + uri.rawQuery?.let { "?$it" }.orEmpty()
         }
+
+        fun pagePath(value: String): String {
+            val raw = value.trim()
+            val path = parseHttpUri(raw)?.rawPath ?: raw.substringBefore('?').substringBefore('#')
+            val canonical =
+                path.split('/').joinToString("/") { segment ->
+                    val decoded = java.net.URLDecoder.decode(segment.replace("+", "%2B"), "UTF-8")
+                    java.net.URLEncoder
+                        .encode(decoded, "UTF-8")
+                        .replace("+", "%20")
+                        .replace("%7E", "~")
+                }
+            val normalized = if (canonical.startsWith('/')) canonical else "/$canonical"
+            return if (!normalized.endsWith('/') &&
+                '.' !in normalized.substringAfterLast('/')
+            ) {
+                "$normalized/"
+            } else {
+                normalized
+            }
+        }
+
+        private val secretQueryNames =
+            setOf(
+                "key",
+                "apikey",
+                "token",
+                "accesstoken",
+                "refreshtoken",
+                "idtoken",
+                "clientsecret",
+                "secret",
+                "password",
+                "authorization",
+                "code",
+            )
 
         private fun parseHttpUri(value: String): URI? {
             val uri = runCatching { URI(value) }.getOrNull()

@@ -23,6 +23,11 @@ sealed class NumerisFailure(
         message: String,
     ) : NumerisFailure(message)
 
+    /** Palvelu vastasi HTTP 404. Joillekin rajapinnoille (esim. CrUX) se tarkoittaa "ei dataa". */
+    class NotFound(
+        message: String,
+    ) : NumerisFailure(message)
+
     class InvalidConfiguration(
         message: String,
     ) : NumerisFailure(message)

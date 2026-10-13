@@ -25,7 +25,6 @@ class InsightEngineTest {
             InsightEngine.generate(
                 InsightMetrics(
                     cloudflareVisitors = MetricWindow(200.0, 100.0),
-                    ga4Users = MetricWindow(101.0, 100.0),
                     googleImpressions = MetricWindow(300.0, 100.0),
                     googleClicks = MetricWindow(10.0, 10.0),
                     bingImpressions = MetricWindow(100.0, 0.0),
@@ -47,6 +46,9 @@ class InsightEngineTest {
                 freshness = SourceFreshnessSummary(1, 0, 0),
             )
 
-        assertEquals("All connected sources look consistent for this period.", InsightEngine.emptyStateText(metrics))
+        assertEquals(
+            "No insight rules were triggered by the stored data for this period.",
+            InsightEngine.emptyStateText(metrics),
+        )
     }
 }

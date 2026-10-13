@@ -7,6 +7,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStream
@@ -40,13 +41,17 @@ object ImportPackageReader {
         val payload = ExportCrypto.decrypt(packageBytes, passphrase)
         try {
             prepareEmptyDirectory(directory)
-            extractValidatedZip(payload, directory)
-            val database = directory.resolve("numeris.db").requireFile()
-            val manifest = readManifest(directory.resolve("manifest.json").requireFile())
-            require(manifest.exportVersion == SUPPORTED_VERSION) { "Import manifest version is unsupported" }
-            val settings = directory.resolve("settings.json").requireFile().readText()
-            val secrets = readSecrets(directory.resolve("secrets.json").requireFile())
-            return DecryptedExport(database, manifest, settings, secrets)
+            val metadata = extractValidatedZip(payload, directory)
+            try {
+                val database = directory.resolve("numeris.db").requireFile()
+                val manifest = readManifest(metadata.getValue("manifest.json").toString(Charsets.UTF_8))
+                require(manifest.exportVersion == SUPPORTED_VERSION) { "Import manifest version is unsupported" }
+                val settings = metadata.getValue("settings.json").toString(Charsets.UTF_8)
+                val secrets = readSecrets(metadata.getValue("secrets.json").toString(Charsets.UTF_8))
+                return DecryptedExport(database, manifest, settings, secrets)
+            } finally {
+                metadata.values.forEach { it.fill(0) }
+            }
         } catch (error: Exception) {
             directory.deleteRecursively()
             throw error
@@ -55,27 +60,56 @@ object ImportPackageReader {
         }
     }
 
+    @Suppress("TooGenericExceptionCaught")
     private fun extractValidatedZip(
         payload: ByteArray,
         directory: File,
-    ) {
+    ): Map<String, ByteArray> {
         var totalBytes = 0L
         val seen = mutableSetOf<String>()
-        ZipInputStream(ByteArrayInputStream(payload)).use { zip ->
-            while (true) {
-                val entry = zip.nextEntry ?: break
-                require(!entry.isDirectory && entry.name in allowedEntries && seen.add(entry.name)) {
-                    "Import package contains an invalid entry"
+        val metadata = mutableMapOf<String, ByteArray>()
+        try {
+            ZipInputStream(ByteArrayInputStream(payload)).use { zip ->
+                while (true) {
+                    val entry = zip.nextEntry ?: break
+                    require(!entry.isDirectory && entry.name in allowedEntries && seen.add(entry.name)) {
+                        "Import package contains an invalid entry"
+                    }
+                    totalBytes +=
+                        extractEntry(
+                            zip,
+                            entry.name,
+                            directory,
+                            metadata,
+                            MAX_UNCOMPRESSED_BYTES - totalBytes,
+                        )
+                    zip.closeEntry()
                 }
-                val target = directory.resolve(entry.name)
-                FileOutputStream(target).use { output ->
-                    totalBytes += copyLimited(zip, output, MAX_UNCOMPRESSED_BYTES - totalBytes)
-                }
-                zip.closeEntry()
+            }
+            require(seen == allowedEntries) { "Import package is incomplete" }
+            return metadata
+        } catch (error: Exception) {
+            metadata.values.forEach { it.fill(0) }
+            throw error
+        }
+    }
+
+    private fun extractEntry(
+        zip: ZipInputStream,
+        name: String,
+        directory: File,
+        metadata: MutableMap<String, ByteArray>,
+        remaining: Long,
+    ): Long =
+        if (name == "numeris.db") {
+            FileOutputStream(directory.resolve(name)).use { copyLimited(zip, it, remaining) }
+        } else {
+            ByteArrayOutputStream().use { output ->
+                val copied = copyLimited(zip, output, minOf(MAX_METADATA_BYTES, remaining))
+                metadata[name] = output.toByteArray()
+                copied
             }
         }
-        require(seen == allowedEntries) { "Import package is incomplete" }
-    }
 
     private fun copyLimited(
         input: InputStream,
@@ -97,8 +131,8 @@ object ImportPackageReader {
         }
     }
 
-    private fun readManifest(file: File): ImportManifest {
-        val root = json.parseToJsonElement(file.readText()).jsonObject
+    private fun readManifest(text: String): ImportManifest {
+        val root = json.parseToJsonElement(text).jsonObject
         return ImportManifest(
             exportVersion = root.requiredInt("exportVersion"),
             windowsSchemaVersion = root.requiredInt("windowsSchemaVersion"),
@@ -107,9 +141,9 @@ object ImportPackageReader {
         )
     }
 
-    private fun readSecrets(file: File): Map<String, CharArray> =
+    private fun readSecrets(text: String): Map<String, CharArray> =
         json
-            .parseToJsonElement(file.readText())
+            .parseToJsonElement(text)
             .jsonObject
             .mapValues { (_, value) -> value.jsonPrimitive.content.toCharArray() }
 
@@ -129,4 +163,5 @@ object ImportPackageReader {
     private const val SUPPORTED_VERSION = 1
     private const val BUFFER_SIZE = 8 * 1024
     private const val MAX_UNCOMPRESSED_BYTES = 1_000_000_000L
+    private const val MAX_METADATA_BYTES = 1_000_000L
 }

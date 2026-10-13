@@ -1,49 +1,59 @@
-@file:Suppress("ktlint:standard:function-naming")
+@file:Suppress("ktlint:standard:function-naming", "FunctionNaming")
 
 package com.emmah.numeris.feature.overview
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
+import com.emmah.numeris.core.designsystem.AttentionSummary
+import com.emmah.numeris.core.designsystem.ChangeText
+import com.emmah.numeris.core.designsystem.CompactKpiRow
+import com.emmah.numeris.core.designsystem.FreshnessStatus
+import com.emmah.numeris.core.designsystem.HeroMetric
+import com.emmah.numeris.core.designsystem.ListCard
+import com.emmah.numeris.core.designsystem.ListRow
+import com.emmah.numeris.core.designsystem.NoticeCard
 import com.emmah.numeris.core.designsystem.NumerisColors
-import com.emmah.numeris.core.designsystem.NumerisDropdownSelector
-import com.emmah.numeris.core.designsystem.NumerisEqualChoiceRow
 import com.emmah.numeris.core.designsystem.NumerisScreenHeader
 import com.emmah.numeris.core.designsystem.NumerisSpacing
+import com.emmah.numeris.core.designsystem.PillTone
+import com.emmah.numeris.core.designsystem.ReportFilters
+import com.emmah.numeris.core.designsystem.ReportList
+import com.emmah.numeris.core.designsystem.SectionHeader
+import com.emmah.numeris.core.designsystem.ShareBar
+import com.emmah.numeris.core.designsystem.ShowMoreButton
+import com.emmah.numeris.core.designsystem.SiteAvatar
+import com.emmah.numeris.core.designsystem.TrailingValue
+import com.emmah.numeris.core.designsystem.indexingLabel
+import com.emmah.numeris.core.designsystem.siteColor
+import com.emmah.numeris.core.model.DisplayFormat
+import com.emmah.numeris.core.model.InsightCard
+import com.emmah.numeris.core.model.InsightSeverity
+import com.emmah.numeris.core.model.InsightTarget
+import com.emmah.numeris.core.model.Metric
+import com.emmah.numeris.core.model.MetricWindow
 import com.emmah.numeris.core.model.Period
-import com.emmah.numeris.data.OverviewSnapshot
-import java.text.NumberFormat
-import java.util.Locale
-
-private data class KpiValue(
-    val label: String,
-    val value: String,
-    val detail: String,
-)
-
-private const val SCORE_SCALE = 100
+import com.emmah.numeris.core.model.PortfolioPage
+import com.emmah.numeris.core.model.PortfolioReport
+import com.emmah.numeris.core.model.ReportMath
+import com.emmah.numeris.core.model.SearchObservation
+import com.emmah.numeris.core.model.SiteSummary
+import com.emmah.numeris.core.model.contains
+import com.emmah.numeris.core.model.values
+import com.emmah.numeris.data.comparisonSeries
+import com.emmah.numeris.data.trafficWindow
 
 @Composable
-@Suppress("FunctionNaming", "LongMethod")
 fun OverviewScreen(
-    snapshot: OverviewSnapshot,
+    report: PortfolioReport,
     domain: String,
     domains: List<String>,
     period: Period,
@@ -52,178 +62,222 @@ fun OverviewScreen(
     onSelectDomain: (String) -> Unit,
     onRefresh: () -> Unit,
     onOpenSources: () -> Unit,
+    onPage: (PortfolioPage) -> Unit,
+    onInsight: (InsightTarget) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val numberFormat = NumberFormat.getIntegerInstance(Locale.US)
-    val kpis =
-        listOf(
-            KpiValue("Cloudflare visitors", numberFormat.format(snapshot.cloudflareVisitors), period.displayLabel),
-            KpiValue("Google Search clicks", numberFormat.format(snapshot.googleClicks), period.displayLabel),
-            KpiValue("Bing clicks", numberFormat.format(snapshot.bingClicks), period.displayLabel),
-            KpiValue("Core Web Vitals", "—", "No cached CrUX status"),
-            KpiValue("PageSpeed mobile", snapshot.pageSpeedMobile.scoreText(), "Latest cached run"),
-            KpiValue(
-                "Source health",
-                "${snapshot.configuredSources} / ${snapshot.totalSources}",
-                "Configured sources",
-            ),
-        )
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(NumerisSpacing.Lg),
-        verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Lg),
-    ) {
+    var attentionOpen by rememberSaveable { mutableStateOf(false) }
+    var allPages by rememberSaveable { mutableStateOf(false) }
+    ReportList(modifier) {
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Lg)) {
+            Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Md)) {
                 NumerisScreenHeader(
-                    title = "Numeris",
-                    subtitle = "Private site intelligence",
-                    syncing = syncing,
-                    onRefresh = onRefresh,
+                    "Overview",
+                    syncing,
+                    onRefresh,
+                    status = { FreshnessStatus(report.traffic.freshness) },
                 )
-                NumerisDropdownSelector(
-                    selected = domain,
-                    options = listOf("all") + domains,
-                    onSelect = onSelectDomain,
-                    label = { value -> if (value == "all") "All domains" else value },
-                )
-                NumerisEqualChoiceRow(
-                    options = Period.entries.map(Period::shortLabel),
-                    selected = period.shortLabel,
-                    onSelect = { label -> Period.entries.firstOrNull { it.shortLabel == label }?.let(onSelectPeriod) },
-                )
-                Text(
-                    snapshot.latestSuccessfulSync?.let { "Last successful sync $it" } ?: "No successful sync yet",
-                    color = NumerisColors.TertiaryText,
-                    style = MaterialTheme.typography.bodyMedium,
+                ReportFilters(domain, domains, period, onSelectDomain, onSelectPeriod)
+            }
+        }
+        if (!report.hasCache) {
+            item {
+                NoticeCard(
+                    "Build your first dashboard",
+                    "Connect a source, then refresh to cache your private reports. " +
+                        "Imported reports are available offline.",
+                    PillTone.Neutral,
+                    actionLabel = "Set up sources",
+                    onAction = onOpenSources,
                 )
             }
         }
-        if (snapshot.latestSuccessfulSync == null) {
+        item { VisitorsHero(report, domains, period) }
+        item { SummaryTiles(report) }
+        if (report.insights.isNotEmpty()) {
             item {
-                GetStartedCard(
-                    configuredSources = snapshot.configuredSources,
-                    syncing = syncing,
-                    onRefresh = onRefresh,
-                    onOpenSources = onOpenSources,
-                )
-            }
-        } else {
-            item {
-                BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                    val columns =
-                        if (maxWidth >= 700.dp) {
-                            3
-                        } else if (maxWidth >= 320.dp) {
-                            2
-                        } else {
-                            1
-                        }
-                    Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Md)) {
-                        kpis.chunked(columns).forEach { rowItems ->
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(NumerisSpacing.Md),
-                            ) {
-                                rowItems.forEach { kpi -> KpiCard(kpi, Modifier.weight(1f)) }
-                                repeat(columns - rowItems.size) { Column(modifier = Modifier.weight(1f)) {} }
-                            }
-                        }
+                AttentionSummary(report.insights.size, attentionOpen, { attentionOpen = !attentionOpen }) {
+                    Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm)) {
+                        report.insights.forEach { InsightNotice(it, onInsight) }
                     }
                 }
             }
-            item { SummaryCard("Traffic trend", "Trend data appears after a successful provider sync.") }
-            item { SummaryCard("Search trend", "Google and Bing history remains available offline.") }
-            item { SummaryCard("Insights", "No deterministic issues were found in the cached data.") }
         }
+        portfolioSites(report, domain, domains, onSelectDomain)
+        portfolioPages(report, domains, allPages, { allPages = !allPages }, onPage)
     }
 }
 
+private const val TOP_PAGE_PREVIEW = 5
+private const val TOP_PAGE_LIMIT = 10
+
 @Composable
-@Suppress("FunctionNaming")
-private fun GetStartedCard(
-    configuredSources: Int,
-    syncing: Boolean,
-    onRefresh: () -> Unit,
-    onOpenSources: () -> Unit,
+private fun VisitorsHero(
+    report: PortfolioReport,
+    domains: List<String>,
+    period: Period,
 ) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = NumerisColors.Card),
-    ) {
-        Column(
-            modifier = Modifier.padding(NumerisSpacing.Xl),
-            verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Md),
-        ) {
-            Text("Build your first dashboard", style = MaterialTheme.typography.titleLarge)
-            Text(
-                if (configuredSources == 0) {
-                    "Connect a data source, then refresh to cache your first private report."
-                } else {
-                    "$configuredSources sources are ready. Refresh to download your first private report."
-                },
-                color = NumerisColors.SecondaryText,
-                style = MaterialTheme.typography.bodyLarge,
-            )
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm),
-            ) {
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = onRefresh,
-                    enabled = !syncing,
-                ) {
-                    Text(if (syncing) "Refreshing…" else "Refresh now")
+    val visitors = trafficWindow(report.traffic.days, report.range, report.traffic.expectedSites) { it.visitors }
+    val series =
+        comparisonSeries(
+            "Visitors",
+            report.traffic.days.map { SearchObservation(it.domain, it.date, "daily", "", it.visitors, null) },
+            report.range,
+        )
+    val sites = report.sites.filter { (it.visitors ?: 0.0) > 0 }
+    HeroMetric(
+        "Visitors, ${period.displayLabel.lowercase()}",
+        DisplayFormat.number(visitors.current.takeIf { visitors.hasCurrent }),
+        change = ReportMath.change(visitors),
+        current = series.values(previous = false),
+        previous = series.values(previous = true),
+        footer =
+            if (sites.size > 1) {
+                { ShareBar(sites.map { siteColor(it.domain, domains) to (it.visitors ?: 0.0) }) }
+            } else {
+                null
+            },
+    )
+}
+
+@Composable
+private fun SummaryTiles(report: PortfolioReport) {
+    val google = ReportMath.window(report.google.daily, report.range, report.google.expectedSites) { it.clicks }
+    val bing = ReportMath.window(report.bing.daily, report.range, report.bing.expectedSites) { it.clicks }
+    val indexing = ReportMath.indexing(report.health.sitemap)
+    val toCheck = indexing.inspectedUrls - indexing.indexedUrls
+    val down =
+        report.health.probes
+            .groupBy { it.domain }
+            .values
+            .count { rows -> !rows.maxBy { it.time }.status.equals("up", true) }
+    CompactKpiRow(
+        listOf(
+            Metric("Search clicks", searchClicks(google, bing)),
+            Metric(
+                "Indexed",
+                ReportMath.ratio(indexing.indexedUrls, indexing.inspectedUrls),
+                "percent",
+            ),
+            Metric("Uptime", ReportMath.uptime(report.health.probes), "percent"),
+        ),
+        tones =
+            listOf(
+                ("Google ${DisplayFormat.number(google.current.takeIf { google.hasCurrent })}" to PillTone.Neutral),
+                if (toCheck > 0) "$toCheck to check" to PillTone.Warning else "All indexed" to PillTone.Positive,
+                if (down > 0) "$down down" to PillTone.Negative else "All up" to PillTone.Positive,
+            ),
+    )
+}
+
+private fun searchClicks(
+    google: MetricWindow,
+    bing: MetricWindow,
+): Double? =
+    if (google.hasCurrent || bing.hasCurrent) {
+        (if (google.hasCurrent) google.current else 0.0) + (if (bing.hasCurrent) bing.current else 0.0)
+    } else {
+        null
+    }
+
+private fun InsightSeverity.tone(): PillTone =
+    when (this) {
+        InsightSeverity.Critical -> PillTone.Negative
+        InsightSeverity.Warning -> PillTone.Warning
+        InsightSeverity.Info -> PillTone.Neutral
+    }
+
+@Composable
+private fun InsightNotice(
+    insight: InsightCard,
+    onInsight: (InsightTarget) -> Unit,
+) {
+    NoticeCard(
+        insight.title,
+        "${insight.message} ${insight.whyShown}",
+        insight.severity.tone(),
+        actionLabel = "Open ${insight.target.label}",
+        onAction = { onInsight(insight.target) },
+    )
+}
+
+private fun LazyListScope.portfolioSites(
+    report: PortfolioReport,
+    domain: String,
+    domains: List<String>,
+    onSelectDomain: (String) -> Unit,
+) {
+    if (report.sites.isEmpty()) return
+    item { SectionHeader("Your sites") }
+    item {
+        ListCard {
+            report.sites.forEachIndexed { index, site ->
+                SiteRow(site, domains, site.domain == domain, index < report.sites.lastIndex) {
+                    onSelectDomain(if (domain == site.domain) "all" else site.domain)
                 }
-                FilledTonalButton(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = onOpenSources,
-                ) { Text("Set up sources") }
             }
         }
     }
 }
 
 @Composable
-@Suppress("FunctionNaming")
-private fun KpiCard(
-    kpi: KpiValue,
-    modifier: Modifier = Modifier,
+private fun SiteRow(
+    site: SiteSummary,
+    domains: List<String>,
+    selected: Boolean,
+    divider: Boolean,
+    onClick: () -> Unit,
 ) {
-    Card(
-        modifier =
-            modifier.semantics {
-                contentDescription = "${kpi.label}, ${kpi.value}, ${kpi.detail}"
-            },
-        colors = CardDefaults.cardColors(containerColor = NumerisColors.Card),
-    ) {
-        Column(
-            modifier = Modifier.padding(NumerisSpacing.Lg),
-            verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm),
-        ) {
-            Text(kpi.label, color = NumerisColors.SecondaryText, style = MaterialTheme.typography.bodyMedium)
-            Text(kpi.value, style = MaterialTheme.typography.headlineSmall)
-            Text(kpi.detail, color = NumerisColors.TertiaryText, style = MaterialTheme.typography.bodyMedium)
+    ListRow(
+        site.domain,
+        supporting = if (selected) "Showing only this site" else null,
+        divider = divider,
+        onClick = onClick,
+        leading = { SiteAvatar(site.domain, domains) },
+        trailing = {
+            Column(horizontalAlignment = Alignment.End) {
+                TrailingValue(DisplayFormat.number(site.visitors), caption = "visitors")
+                site.change?.let { ChangeText(it) }
+            }
+        },
+    )
+}
+
+private fun LazyListScope.portfolioPages(
+    report: PortfolioReport,
+    domains: List<String>,
+    expanded: Boolean,
+    onToggle: () -> Unit,
+    onPage: (PortfolioPage) -> Unit,
+) {
+    item { SectionHeader("Top pages") }
+    val pages = report.pages.take(TOP_PAGE_LIMIT)
+    if (pages.isEmpty()) {
+        item { Text("No cached page reports", color = NumerisColors.TertiaryText) }
+        return
+    }
+    val visible = if (expanded) pages else pages.take(TOP_PAGE_PREVIEW)
+    item {
+        ListCard {
+            visible.forEachIndexed { index, page ->
+                ListRow(
+                    page.path.ifBlank { "/" },
+                    supporting = pageSupporting(page),
+                    divider = index < visible.lastIndex,
+                    onClick = { onPage(page) },
+                    leading = { SiteAvatar(page.domain, domains) },
+                    trailing = { TrailingValue(DisplayFormat.number(page.pageViews), caption = "views") },
+                )
+            }
+            if (pages.size > TOP_PAGE_PREVIEW) ShowMoreButton(expanded, pages.size, onToggle)
         }
     }
 }
 
-@Composable
-@Suppress("FunctionNaming")
-private fun SummaryCard(
-    title: String,
-    detail: String,
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = NumerisColors.Card),
-    ) {
-        Column(modifier = Modifier.padding(NumerisSpacing.Lg)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            Text(detail, color = NumerisColors.SecondaryText, style = MaterialTheme.typography.bodyMedium)
-        }
-    }
-}
-
-private fun Double?.scoreText(): String = this?.let { "${(it * SCORE_SCALE).toInt()}" } ?: "—"
+/** Vain toteutuneet hakuklikkaukset ja indeksointiongelma; tyhjät arvot jätetään pois. */
+private fun pageSupporting(page: PortfolioPage): String? =
+    listOfNotNull(
+        page.googleClicks?.takeIf { it > 0 }?.let { "Google ${DisplayFormat.number(it)} clicks" },
+        page.bingClicks?.takeIf { it > 0 }?.let { "Bing ${DisplayFormat.number(it)} clicks" },
+        indexingLabel(page.indexed).takeIf { page.indexed == "FAIL" },
+    ).joinToString(", ").ifEmpty { null }

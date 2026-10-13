@@ -1,4 +1,4 @@
-@file:Suppress("ktlint:standard:function-naming", "MaxLineLength")
+@file:Suppress("ktlint:standard:function-naming")
 
 package com.emmah.numeris.feature.sources
 
@@ -6,59 +6,38 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.emmah.numeris.core.designsystem.NoticeCard
 import com.emmah.numeris.core.designsystem.NumerisColors
 import com.emmah.numeris.core.designsystem.NumerisSpacing
+import com.emmah.numeris.core.designsystem.NumerisTopBar
+import com.emmah.numeris.core.designsystem.PillTone
+import com.emmah.numeris.core.designsystem.SectionHeader
 import com.emmah.numeris.core.model.Connection
 import com.emmah.numeris.core.model.ConnectionId
 import com.emmah.numeris.core.model.ConnectionRepository
 import com.emmah.numeris.core.model.SaveConnectionCommand
 import com.emmah.numeris.core.model.SecretKey
+import com.emmah.numeris.core.model.SiteIdentity
 import com.emmah.numeris.core.model.SourceId
 import com.emmah.numeris.data.AndroidImportRepository
-
-private data class ConnectionSetup(
-    val source: SourceId,
-    val title: String,
-    val fields: List<String>,
-    val secretField: String? = null,
-)
-
-private val connectionSetups =
-    listOf(
-        ConnectionSetup(SourceId.CloudflareZone, "Cloudflare Zone Analytics", listOf("domain", "zoneId"), "API token"),
-        ConnectionSetup(SourceId.CloudflareWebAnalytics, "Cloudflare Web Analytics", listOf("accountId"), "API token"),
-        ConnectionSetup(SourceId.SearchConsole, "Google Search Console", listOf("sites (comma separated)")),
-        ConnectionSetup(SourceId.GoogleAnalytics, "Google Analytics", listOf("domain", "propertyId")),
-        ConnectionSetup(SourceId.Crux, "Chrome UX Report", emptyList(), "API key"),
-        ConnectionSetup(SourceId.PageSpeed, "PageSpeed Insights", emptyList(), "API key"),
-        ConnectionSetup(SourceId.Bing, "Bing Webmaster", listOf("sites (comma separated)"), "API key"),
-        ConnectionSetup(SourceId.Uptime, "Uptime", emptyList()),
-        ConnectionSetup(SourceId.Sitemap, "Sitemap", emptyList()),
-    )
+import com.emmah.numeris.data.GoogleAuthorizationFeedback
+import com.emmah.numeris.data.ReportRepository
+import com.emmah.numeris.data.SourceDiscovery
 
 @Composable
 @Suppress("FunctionNaming", "LongMethod")
@@ -67,285 +46,207 @@ fun SourcesScreen(
     imports: AndroidImportRepository,
     requireBiometric: (() -> Unit) -> Unit,
     authorizeGoogle: () -> Unit,
+    reports: ReportRepository,
+    discovery: SourceDiscovery,
+    onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: SourcesViewModel = viewModel(factory = SourcesViewModel.factory(connections, imports)),
+    initialUrl: String = "",
+    viewModel: SourcesViewModel = viewModel(factory = SourcesViewModel.factory(connections, imports, discovery)),
+    googleAuthorizationFeedback: GoogleAuthorizationFeedback? = null,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var selectedUri by remember { mutableStateOf<android.net.Uri?>(null) }
-    var passphrase by remember { mutableStateOf("") }
-    var setup by remember { mutableStateOf<ConnectionSetup?>(null) }
-    var setupValues by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+    var setupSource by rememberSaveable { mutableStateOf<SourceId?>(null) }
+    val setup = connectionSetups.firstOrNull { it.source == setupSource }
+    var setupValues by rememberSaveable { mutableStateOf<Map<String, String>>(emptyMap()) }
     var setupSecret by remember { mutableStateOf("") }
     var deleteTarget by remember { mutableStateOf<Connection?>(null) }
+    var editingIdValue by rememberSaveable { mutableStateOf<String?>(null) }
+    var choosingSource by rememberSaveable { mutableStateOf(false) }
+    val editingId = editingIdValue?.let(::ConnectionId)
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> selectedUri = uri }
+    val openSetup: (ConnectionSetup, Connection?) -> Unit = { provider, connection ->
+        setupSource = provider.source
+        setupValues =
+            connection?.let { existing ->
+                provider.fields.associateWith { existing.metadata[it.substringBefore(' ')].orEmpty() }
+            } ?: emptyMap()
+        editingIdValue = connection?.id?.value
+        setupSecret = ""
+        viewModel.clearDiscovery()
+    }
+    val closeSetup = {
+        setupSecret = ""
+        setupSource = null
+    }
+    val actions =
+        ConnectionActions(
+            busy = state.busyConnection != null,
+            onTest = { viewModel.test(it.id) },
+            onDelete = { deleteTarget = it },
+            onEdit = { connection ->
+                connectionSetups.firstOrNull { it.source == connection.source }?.let { openSetup(it, connection) }
+            },
+        )
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding =
-            androidx.compose.foundation.layout
-                .PaddingValues(NumerisSpacing.Lg),
-        verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Md),
+        contentPadding = PaddingValues(start = NumerisSpacing.Lg, end = NumerisSpacing.Lg, bottom = NumerisSpacing.Xl),
+        verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Lg),
     ) {
-        item {
-            Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Xs)) {
-                Text("Sources", style = MaterialTheme.typography.headlineMedium)
-                Text(
-                    "Connections, credentials, and one-time Windows import",
-                    color = NumerisColors.SecondaryText,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                state.message?.let {
-                    Text(it, color = NumerisColors.Copper, style = MaterialTheme.typography.bodyMedium)
-                }
-            }
-        }
+        item { SourcesHeader(state.connections, onBack) { choosingSource = true } }
+        state.message?.let { message -> item { NoticeCard("Sources", message, PillTone.Neutral) } }
         if (state.connections.isEmpty()) {
             item {
-                Card(colors = CardDefaults.cardColors(containerColor = NumerisColors.Card)) {
-                    Column(
-                        modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Xl),
-                        verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm),
-                    ) {
-                        Text("No sources connected", style = MaterialTheme.typography.titleMedium)
-                        Text(
-                            "Choose a provider below or import an existing Numeris setup.",
-                            color = NumerisColors.SecondaryText,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
-                }
+                NoticeCard(
+                    "No sources connected",
+                    "Add a source to start caching private reports on this device.",
+                    PillTone.Neutral,
+                    actionLabel = "Add source",
+                    onAction = { choosingSource = true },
+                )
             }
         }
-        items(state.connections, key = { it.id.value }) { connection ->
-            ConnectionCard(
-                connection = connection,
-                busy = state.busyConnection == connection.id,
-                onTest = { viewModel.test(connection.id) },
-                onDelete = { deleteTarget = connection },
+        sourceGroups(state.connections, actions, reports, initialUrl) {
+            GoogleAuthorizationRow(googleAuthorizationFeedback, authorizeGoogle)
+        }
+        item { SectionHeader("Data transfer") }
+        item {
+            ImportRow(
+                enabled = !state.importing,
+                onChooseFile = { picker.launch(arrayOf("application/octet-stream", "application/zip")) },
             )
         }
-        item {
-            Card(colors = CardDefaults.cardColors(containerColor = NumerisColors.Card)) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Xl),
-                    verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm),
-                ) {
-                    Text("Add or update a source", style = MaterialTheme.typography.titleLarge)
-                    Text(
-                        "Secrets are encrypted with Android Keystore and never stored in Room.",
-                        color = NumerisColors.SecondaryText,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    connectionSetups.forEachIndexed { index, item ->
-                        if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                        TextButton(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                setup = item
-                                setupValues = emptyMap()
-                                setupSecret = ""
-                            },
-                        ) {
-                            Text("Configure ${item.title}", modifier = Modifier.weight(1f))
-                        }
-                    }
-                }
-            }
-        }
-        item {
-            Card(colors = CardDefaults.cardColors(containerColor = NumerisColors.Card)) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Xl),
-                    verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Md),
-                ) {
-                    Text("Google authorization", style = MaterialTheme.typography.titleLarge)
-                    Text(
-                        "Authorize Search Console and Analytics with read-only access. No client secret is stored.",
-                        color = NumerisColors.SecondaryText,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    Button(onClick = authorizeGoogle) { Text("Authorize Google") }
-                }
-            }
-        }
-        item {
-            Card(colors = CardDefaults.cardColors(containerColor = NumerisColors.Card)) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Xl),
-                    verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Md),
-                ) {
-                    Text("Import from Windows", style = MaterialTheme.typography.titleLarge)
-                    Text(
-                        "Choose a .numeris-export file. Existing Android data is changed only after preview and confirmation.",
-                        color = NumerisColors.SecondaryText,
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
-                    Button(onClick = { picker.launch(arrayOf("application/octet-stream", "application/zip")) }) {
-                        Text("Choose export file")
-                    }
-                }
-            }
-        }
     }
 
+    if (choosingSource) {
+        AddSourceSheet(
+            onDismiss = { choosingSource = false },
+            onChoose = { provider ->
+                choosingSource = false
+                openSetup(provider, null)
+            },
+        )
+    }
     selectedUri?.let { uri ->
-        AlertDialog(
-            onDismissRequest = {
+        ImportPassphraseDialog(
+            importing = state.importing,
+            onInspect = { secret ->
                 selectedUri = null
-                passphrase = ""
+                viewModel.inspectImport(uri, secret)
             },
-            title = { Text("Open encrypted export") },
-            text = {
-                OutlinedTextField(
-                    value = passphrase,
-                    onValueChange = { passphrase = it },
-                    label = { Text("Passphrase") },
-                    visualTransformation = PasswordVisualTransformation(),
-                    singleLine = true,
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    enabled = passphrase.length >= 12 && !state.importing,
-                    onClick = {
-                        val secret = passphrase.toCharArray()
-                        passphrase = ""
-                        selectedUri = null
-                        viewModel.inspectImport(uri, secret)
-                    },
-                ) { Text("Inspect") }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    selectedUri = null
-                    passphrase = ""
-                }) { Text("Cancel") }
-            },
+            onDismiss = { selectedUri = null },
         )
     }
-
     state.importPreview?.let { preview ->
-        AlertDialog(
-            onDismissRequest = viewModel::cancelImport,
-            title = { Text("Replace Android data?") },
-            text = {
-                Text(
-                    "${preview.connections} connections, ${preview.rowCounts.values.sum()} rows, " +
-                        "domains: ${preview.domains.joinToString().ifBlank { "none" }}",
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    enabled = !state.importing,
-                    onClick = { requireBiometric { viewModel.replaceImport() } },
-                ) { Text("Replace Android data") }
-            },
-            dismissButton = { TextButton(onClick = viewModel::cancelImport) { Text("Cancel") } },
+        ImportPreviewDialog(
+            preview,
+            state.importing,
+            onConfirm = { requireBiometric { viewModel.replaceImport() } },
+            onCancel = viewModel::cancelImport,
         )
     }
-
     setup?.let { selected ->
-        val valid = selected.fields.all { setupValues[it].orEmpty().isNotBlank() }
-        AlertDialog(
-            onDismissRequest = { setup = null },
-            title = { Text(selected.title) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm)) {
-                    selected.fields.forEach { field ->
-                        OutlinedTextField(
-                            value = setupValues[field].orEmpty(),
-                            onValueChange = { value -> setupValues = setupValues + (field to value) },
-                            label = { Text(field) },
-                            singleLine = true,
-                        )
-                    }
-                    selected.secretField?.let { label ->
-                        OutlinedTextField(
-                            value = setupSecret,
-                            onValueChange = { setupSecret = it },
-                            label = { Text(label) },
-                            supportingText = { Text("Leave empty to keep an existing secret.") },
-                            visualTransformation = PasswordVisualTransformation(),
-                            singleLine = true,
-                        )
-                    }
+        SourceForm(
+            selected,
+            setupValues,
+            setupSecret,
+            editingId != null,
+            state,
+            { setupValues = it },
+            { setupSecret = it },
+            {
+                viewModel.discover(
+                    selected.source,
+                    editingId,
+                    setupValues.mapKeys { it.key.substringBefore(' ') },
+                    setupSecret.toCharArray(),
+                )
+            },
+            {
+                val command = runCatching { selected.toCommand(setupValues, setupSecret, editingId) }.getOrNull()
+                if (command == null) {
+                    viewModel.showValidationError()
+                } else {
+                    viewModel.save(command)
+                    closeSetup()
                 }
             },
-            confirmButton = {
-                TextButton(
-                    enabled = valid,
-                    onClick = {
-                        viewModel.save(selected.toCommand(setupValues, setupSecret))
-                        setupSecret = ""
-                        setup = null
-                    },
-                ) { Text("Save") }
-            },
-            dismissButton = { TextButton(onClick = { setup = null }) { Text("Cancel") } },
+            closeSetup,
         )
     }
-
     deleteTarget?.let { connection ->
-        AlertDialog(
-            onDismissRequest = { deleteTarget = null },
-            title = { Text("Disconnect ${connection.displayName}?") },
-            text = { Text("Cached report data is preserved. The connection metadata and its stored secret are removed.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        deleteTarget = null
-                        viewModel.delete(connection.id)
-                    },
-                ) { Text("Disconnect") }
+        DisconnectDialog(
+            connection,
+            onConfirm = {
+                deleteTarget = null
+                viewModel.delete(connection.id)
             },
-            dismissButton = { TextButton(onClick = { deleteTarget = null }) { Text("Cancel") } },
+            onDismiss = { deleteTarget = null },
         )
+    }
+}
+
+/** Yhteydet ryhmittäin. Search-ryhmässä on aina Google-tilin rivi, Performance-ryhmässä mitatut URL:t. */
+private fun LazyListScope.sourceGroups(
+    connections: List<Connection>,
+    actions: ConnectionActions,
+    reports: ReportRepository,
+    initialUrl: String,
+    googleRow: @Composable () -> Unit,
+) {
+    SourceGroup.entries.forEach { group ->
+        val grouped = connections.filter { it.source.group == group }
+        val showsGoogle = group == SourceGroup.Search
+        if (grouped.isNotEmpty() || showsGoogle) {
+            item(key = "header-${group.name}") { SectionHeader(group.title) }
+            item(key = "group-${group.name}") {
+                ConnectionGroup(grouped, actions, hasFooter = showsGoogle) { if (showsGoogle) googleRow() }
+            }
+        }
+        if (group == SourceGroup.Performance) {
+            item(key = "measured-urls") { MeasuredUrls(reports, initialUrl) }
+        }
     }
 }
 
 @Composable
 @Suppress("FunctionNaming")
-private fun ConnectionCard(
-    connection: Connection,
-    busy: Boolean,
-    onTest: () -> Unit,
-    onDelete: () -> Unit,
+private fun SourcesHeader(
+    connections: List<Connection>,
+    onBack: () -> Unit,
+    onAdd: () -> Unit,
 ) {
-    Card(colors = CardDefaults.cardColors(containerColor = NumerisColors.Card)) {
-        Column(
-            modifier = Modifier.fillMaxWidth().padding(NumerisSpacing.Xl),
-            verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Md),
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Xs)) {
-                Text(connection.displayName, style = MaterialTheme.typography.titleMedium)
-                Text(
-                    if (connection.configured) "Configured" else "Disconnected",
-                    color = NumerisColors.SecondaryText,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                Text(
-                    connection.lastSuccessfulSync?.let { "Last sync $it" } ?: "Not synced yet",
-                    color = NumerisColors.TertiaryText,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-                connection.lastError?.let {
-                    Text(it, color = NumerisColors.Copper, style = MaterialTheme.typography.bodyMedium)
-                }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(NumerisSpacing.Sm)) {
-                TextButton(enabled = !busy, onClick = onTest) { Text(if (busy) "Testing…" else "Test") }
-                TextButton(enabled = !busy, onClick = onDelete) { Text("Disconnect") }
-            }
+    val attention =
+        connections.count {
+            it.source != SourceId.GoogleAnalytics && connectionStatus(it).second != PillTone.Positive
         }
+    Column {
+        NumerisTopBar("Sources", onBack, actions = { AddSourceButton(onAdd) })
+        Text(
+            when {
+                connections.isEmpty() -> "Connections, credentials, and Windows import"
+                attention == 0 -> "${connections.size} connected, all up to date"
+                else -> "${connections.size} connected, $attention need attention"
+            },
+            color = NumerisColors.TertiaryText,
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
 }
 
 private fun ConnectionSetup.toCommand(
     values: Map<String, String>,
     secret: String,
+    existingId: ConnectionId?,
 ): SaveConnectionCommand {
-    val normalized = values.mapKeys { (key, _) -> key.substringBefore(' ') }
-    val identity = normalized["domain"] ?: normalized["propertyId"] ?: normalized["accountId"] ?: source.name.lowercase()
-    val id = ConnectionId("${source.storageName}:$identity")
+    require(secretField == null || secret.isNotBlank() || existingId != null) { "A new connection requires a secret" }
+    val normalized =
+        values.mapKeys { (key, _) -> key.substringBefore(' ') }.mapValues { (key, value) ->
+            if (key == "domain") SiteIdentity.normalizeDomain(value) else value.trim()
+        }
+    val identity =
+        normalized["domain"] ?: normalized["propertyId"] ?: normalized["accountId"] ?: source.name.lowercase()
+    val id = existingId ?: ConnectionId("${source.storageName}:$identity")
     val secrets =
         if (secret.isBlank()) {
             emptyMap()
@@ -364,17 +265,3 @@ private fun ConnectionSetup.secretKey(id: ConnectionId): SecretKey =
         SourceId.Bing -> SecretKey("bing:bing:api_key")
         else -> SecretKey("unused:${id.value}")
     }
-
-private val SourceId.storageName: String
-    get() =
-        when (this) {
-            SourceId.CloudflareZone -> "cloudflare"
-            SourceId.CloudflareWebAnalytics -> "web_analytics"
-            SourceId.SearchConsole -> "search_console"
-            SourceId.GoogleAnalytics -> "google_analytics"
-            SourceId.Crux -> "crux"
-            SourceId.PageSpeed -> "pagespeed"
-            SourceId.Bing -> "bing_webmaster"
-            SourceId.Uptime -> "uptime"
-            SourceId.Sitemap -> "sitemap"
-        }

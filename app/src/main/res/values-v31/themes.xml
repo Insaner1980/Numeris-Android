@@ -1,0 +1,7 @@
+<resources>
+    <!-- Android 12+ näyttää käynnistyksessä järjestelmän splash-näkymän: uusi logo tummalla taustalla. -->
+    <style name="Theme.Numeris" parent="Base.Theme.Numeris">
+        <item name="android:windowSplashScreenBackground">@color/numeris_icon_background</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_numeris_logo</item>
+    </style>
+</resources>

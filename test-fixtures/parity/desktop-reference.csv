@@ -1,0 +1,28 @@
+trend|125|100|true|Up|+25%|25
+trend|90|100|true|Down|-10%|-10
+trend|10|0|true|NewActivity|0%|missing
+trend|0|0|true|NoData|0%|missing
+trend|120|100|false|NoData|0%|missing
+trend|100.5|100|true|Flat|+1%|0.5
+trend|99.5|100|true|Flat|-1%|-0.5
+number|2.5|2
+number|3.5|4
+number|-2.5|-2
+number|1000000000000|1,000,000,000,000
+path|/Some Page|/Some%20Page/
+path|https://EXAMPLE.com/Some%20Page?q=1#frag|/Some%20Page/
+path|/a%2fb|/a%2Fb/
+path|/a+b|/a%2Bb/
+path|/UpperCase/file.pdf?x=1|/UpperCase/file.pdf
+path|/|/
+http|99|9|none|none|none|none
+http|99|10|none|none|none|none
+http|100|9|none|none|none|none
+http|100|10|Some visitors may be hitting errors|Critical|5|10 server error responses, 10.0% of Cloudflare requests.
+http|1000|9|none|none|none|none
+http|1000|10|Some visitors may be hitting errors|Critical|5|10 server error responses, 1.0% of Cloudflare requests.
+http|10000|9|none|none|none|none
+http|10000|10|Some visitors may be hitting errors|Warning|30|10 server error responses, 0.1% of Cloudflare requests.
+freshness|1|0|1 connected source never synced.
+freshness|0|1|1 connected source last synced more than 48 hours ago.
+freshness|2|3|2 connected sources never synced, and 3 connected sources last synced more than 48 hours ago.

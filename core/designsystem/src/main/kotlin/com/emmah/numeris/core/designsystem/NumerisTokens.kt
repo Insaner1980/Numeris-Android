@@ -3,6 +3,7 @@ package com.emmah.numeris.core.designsystem
 import androidx.compose.ui.unit.dp
 
 object NumerisSpacing {
+    val Xxs = 2.dp
     val Xs = 4.dp
     val Sm = 8.dp
     val Md = 12.dp
@@ -14,16 +15,25 @@ object NumerisSpacing {
 }
 
 object NumerisShapes {
-    val ControlRadius = 14.dp
-    val CardRadius = 20.dp
-    val HeroRadius = 28.dp
+    val ControlRadius = 8.dp
+    val CardRadius = 14.dp
+    val HeroRadius = 16.dp
+    val TileRadius = 12.dp
     val PillRadius = 100.dp
 }
 
 object NumerisSizes {
     val Icon = 24.dp
+    val SmallIcon = 18.dp
     val TouchTarget = 48.dp
     val EmptyStateIcon = 56.dp
+    val Avatar = 32.dp
+    val BarHeight = 2.dp
+    val ShareBarHeight = 6.dp
+    val Hairline = 1.dp
+    val StatusDot = 6.dp
+    val ChartHeight = 200.dp
+    val TabIndicator = 2.dp
 }
 
 object NumerisMotion {
