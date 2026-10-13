@@ -5,6 +5,7 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import com.emmah.numeris.core.model.SecretKey
 import com.emmah.numeris.core.model.SecretStore
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -24,6 +25,7 @@ import javax.crypto.SecretKey as CryptoSecretKey
 
 class AndroidSecretStore(
     context: Context,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : SecretStore {
     private val directory = context.noBackupFilesDir.resolve(STORE_DIRECTORY)
     private val mutex = Mutex()
@@ -32,7 +34,7 @@ class AndroidSecretStore(
         key: SecretKey,
         value: CharArray,
     ): Unit =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             mutex.withLock {
                 Files.createDirectories(directory.toPath())
                 val plaintext = encode(value)
@@ -58,7 +60,7 @@ class AndroidSecretStore(
         }
 
     override suspend fun get(key: SecretKey): CharArray? =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             mutex.withLock {
                 val file = fileFor(key)
                 if (!file.exists()) return@withLock null
@@ -91,17 +93,17 @@ class AndroidSecretStore(
         }
 
     override suspend fun contains(key: SecretKey): Boolean =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             mutex.withLock { fileFor(key).isFile }
         }
 
     override suspend fun delete(key: SecretKey): Unit =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             mutex.withLock { Files.deleteIfExists(fileFor(key).toPath()) }
         }
 
     override suspend fun clearAll(): Unit =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             mutex.withLock {
                 directory.listFiles()?.forEach { file ->
                     if (file.isFile && file.name.endsWith(FILE_SUFFIX)) Files.deleteIfExists(file.toPath())
@@ -111,6 +113,9 @@ class AndroidSecretStore(
 
     private fun fileFor(key: SecretKey) = directory.resolve(hashName(key.value) + FILE_SUFFIX)
 
+    // Background sync must read credentials without an interactive authentication prompt.
+    // The app-private Keystore key protects encrypted files in noBackupFilesDir.
+    @Suppress("kotlin:S6288")
     private fun getOrCreateKey(): CryptoSecretKey {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
         (keyStore.getKey(KEY_ALIAS, null) as? CryptoSecretKey)?.let { return it }

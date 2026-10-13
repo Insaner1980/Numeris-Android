@@ -1,6 +1,7 @@
 package com.emmah.numeris
 
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -422,7 +423,6 @@ class MobileReportsTest {
                                 SourcesScreen(
                                     connections,
                                     imports,
-                                    { it() },
                                     {},
                                     reports = reports,
                                     discovery = discovery,
@@ -623,7 +623,9 @@ class MobileReportsTest {
         show("Search", "Overview")
         val chart = hasContentDescription("Select a chart point")
         compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(chart)
+        drawFrame()
         compose.onNode(chart).performTouchInput { click(center) }
+        drawFrame()
         compose.waitForIdle()
         val selectedValue = hasText("This period, ", substring = true)
         compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(selectedValue)
@@ -709,6 +711,20 @@ class MobileReportsTest {
         compose.onAllNodes(hasText("Add source") and hasClickAction()).onFirst().performClick()
         compose.waitForIdle()
         compose.onAllNodes(hasText(label) and hasClickAction()).onLast().performClick()
+        compose.waitForIdle()
+    }
+
+    private fun drawFrame() {
+        // Chart hit targets and marker callbacks are calculated during drawing.
+        compose.runOnIdle {
+            val view = compose.activity.window.decorView
+            val bitmap = Bitmap.createBitmap(view.width, view.height, Bitmap.Config.ARGB_8888)
+            try {
+                view.draw(Canvas(bitmap))
+            } finally {
+                bitmap.recycle()
+            }
+        }
         compose.waitForIdle()
     }
 

@@ -1,3 +1,7 @@
+import com.android.build.api.dsl.ApplicationExtension
+import org.gradle.testing.jacoco.tasks.JacocoReport
+import javax.inject.Inject
+
 buildscript {
     val securityBuildModules =
         mapOf(
@@ -33,6 +37,7 @@ buildscript {
 }
 
 plugins {
+    jacoco
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.sonarqube)
     alias(libs.plugins.kotlin.serialization) apply false
@@ -99,5 +104,124 @@ sonar {
         val settings = java.util.Properties()
         rootProject.file("sonar-project.properties").reader(Charsets.UTF_8).use(settings::load)
         settings.forEach { key, value -> property(key.toString(), value.toString()) }
+    }
+}
+
+subprojects {
+    sonar {
+        properties {
+            property(
+                "sonar.coverage.jacoco.xmlReportPaths",
+                "${rootProject.layout.buildDirectory.get()}/reports/jacoco/coverage/coverage.xml",
+            )
+        }
+    }
+}
+
+jacoco {
+    toolVersion = libs.versions.jacoco.get()
+}
+
+abstract class InstrumentHostCoverage : DefaultTask() {
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val classDirectories: ConfigurableFileCollection
+
+    @get:Classpath
+    abstract val antClasspath: ConfigurableFileCollection
+
+    @get:OutputDirectory
+    abstract val destinationDirectory: DirectoryProperty
+
+    @get:Inject
+    abstract val fileSystemOperations: FileSystemOperations
+
+    @TaskAction
+    fun instrument() {
+        fileSystemOperations.delete { delete(destinationDirectory) }
+        ant.withGroovyBuilder {
+            "taskdef"(
+                "name" to "instrument",
+                "classname" to "org.jacoco.ant.InstrumentTask",
+                "classpath" to antClasspath.asPath,
+            )
+            "instrument"("destdir" to destinationDirectory.get().asFile.path) {
+                classDirectories.filter { it.isDirectory }.forEach { directory ->
+                    "fileset"("dir" to directory.path) {
+                        "include"("name" to "com/emmah/numeris/**/*.class")
+                    }
+                }
+            }
+        }
+    }
+}
+
+val jacocoOfflineAnt = configurations.create("jacocoOfflineAnt")
+dependencies.add(jacocoOfflineAnt.name, libs.jacoco.ant)
+
+val coverageClassDirectories =
+    files(
+        subprojects.flatMap { module ->
+            listOf(
+                module.layout.buildDirectory.dir("intermediates/built_in_kotlinc/debug/compileDebugKotlin/classes"),
+                module.layout.buildDirectory.dir("intermediates/javac/debug/compileDebugJavaWithJavac/classes"),
+                module.layout.buildDirectory.dir("classes/kotlin/main"),
+            )
+        },
+    )
+val hostCoverageClasses = layout.buildDirectory.dir("jacoco/host-classes")
+val instrumentHostCoverage =
+    tasks.register<InstrumentHostCoverage>("instrumentHostCoverage") {
+        group = "verification"
+        description = "Instruments application classes before Robolectric transforms them."
+        dependsOn(
+            provider {
+                subprojects.flatMap { module ->
+                    listOf("compileDebugKotlin", "compileDebugJavaWithJavac", "compileKotlin")
+                        .mapNotNull(module.tasks::findByName)
+                }
+            },
+        )
+        classDirectories.from(coverageClassDirectories)
+        antClasspath.from(jacocoOfflineAnt)
+        destinationDirectory.set(hostCoverageClasses)
+    }
+
+project(":app") {
+    plugins.withId("com.android.application") {
+        extensions.configure<ApplicationExtension> {
+            testOptions.unitTests.all { test ->
+                if (test.name == "testDebugUnitTest") {
+                    test.dependsOn(instrumentHostCoverage)
+                    test.classpath = files(hostCoverageClasses) + test.classpath
+                }
+            }
+        }
+    }
+}
+
+tasks.register<JacocoReport>("coverageReport") {
+    group = "verification"
+    description = "Combines JVM and host Android test coverage without an emulator."
+    dependsOn(
+        ":app:testDebugUnitTest",
+        ":core:model:test",
+        ":core:network:testDebugUnitTest",
+        ":core:security:testDebugUnitTest",
+        ":data:testDebugUnitTest",
+    )
+    classDirectories.setFrom(coverageClassDirectories)
+    sourceDirectories.setFrom(subprojects.flatMap { listOf(it.file("src/main/kotlin"), it.file("src/main/java")) })
+    executionData.setFrom(
+        subprojects.map {
+            it.fileTree(it.layout.buildDirectory) {
+                include("jacoco/test.exec", "outputs/unit_test_code_coverage/debugUnitTest/*.exec")
+            }
+        },
+    )
+    reports {
+        xml.required.set(true)
+        xml.outputLocation.set(layout.buildDirectory.file("reports/jacoco/coverage/coverage.xml"))
+        html.required.set(true)
     }
 }

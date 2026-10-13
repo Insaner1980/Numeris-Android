@@ -15,7 +15,7 @@
 - `:core:model` on pure Kotlin ja sisältää domain-tyypit sekä julkiset rajapinnat.
 - `:core:database` omistaa Room 3 -skeeman, DAO:t, migraatiot ja transaktiot.
 - `:core:network` omistaa HTTP:n, redaktoinnin ja provider-wire-tyypit.
-- `:core:security` omistaa SecretStoren, Keystoren, biometrian ja tuontipaketin purun.
+- `:core:security` omistaa SecretStoren, Keystoren ja tuontipaketin purun.
 - `:data` omistaa repositoryt, provider-clientit ja sync-palvelut.
 - `ReportRepository` on raporttinäkymien Room-lukuraja; se palauttaa core:model-raportteja yhtenäisestä read-transaktiosta IO-dispatcherilla. Käyttöliittymä ei kutsu DAO:ita suoraan.
 - `DefaultSyncOrchestrator` suorittaa vain configured-lähteet, sarjallistaa ajot ja päivittää status-, virhe- ja last-sync-metadatan keskitetysti.
@@ -24,7 +24,7 @@
 - Feature-moduulit saavat käyttää vain `core:model`-, `core:designsystem`- ja `data`-rajapintoja. UI ei käytä DAO:ta, HTTP-clientiä tai SecretStorea suoraan.
 - Room on raportti-UI:n ainoa datalähde. Onnistunut looginen provider-tulos kirjoitetaan yhtenä transaktiona; virhe ei saa poistaa cached-dataa.
 - Feature-moduulit omistavat raportti-UI:n; app omistaa shellin, detail-reitit ja palautettavan raporttikontekstin. Sources ei tallenna salaisuuksia saved stateen.
-- Yhteysmuutokset, Indexing ja import kulkevat saman exclusive-portin kautta kuin sync. Windowsin AndroidReportExporter tuottaa salatun schema-11-paketin, jossa yhteydet, API-avaimet ja raporttivalinnat ovat valinnaisia. Google OAuth -tunnuksia ei siirretä. Android näyttää esikatselun ennen tuontia; raportit ja tuotu yhteysmetadata korvataan yhdessä Room-transaktiossa. WindowsConfigurationTransfer tallentaa salatun palautusjournalin SecretStoreen ja palauttaa keskeytyneen tuonnin Roomin commit-tunnisteen perusteella ennen UI:ta ja taustasynkkiä. Muu Android-konfiguraatio, lukko/taustasynkkivalinnat ja vanha GA4-historia säilyvät. GA4 ei ole aktiivinen lähde. Snapshot luetaan read-only-yhteydellä; plaintext-avaintiedostoa ei tehdä.
+- Yhteysmuutokset, Indexing ja import kulkevat saman exclusive-portin kautta kuin sync. Windowsin AndroidReportExporter tuottaa salatun schema-11-paketin, jossa yhteydet, API-avaimet ja raporttivalinnat ovat valinnaisia. Google OAuth -tunnuksia ei siirretä. Android näyttää esikatselun ennen tuontia; raportit ja tuotu yhteysmetadata korvataan yhdessä Room-transaktiossa. WindowsConfigurationTransfer tallentaa salatun palautusjournalin SecretStoreen ja palauttaa keskeytyneen tuonnin Roomin commit-tunnisteen perusteella ennen UI:ta ja taustasynkkiä. Muu Android-konfiguraatio ja taustasynkkivalinnat säilyvät. GA4 on poistettu kokonaan käyttäjän pyynnöstä: Room 1→2 poistaa sen viisi historiataulua, yhteydet ja sync-run-metadatan; muut tiedot säilyvät. Snapshot luetaan read-only-yhteydellä; plaintext-avaintiedostoa ei tehdä.
 
 ## Yhden totuuden lähteet
 
@@ -43,11 +43,14 @@
 
 ```powershell
 .\gradlew.bat test
+.\gradlew.bat coverageReport
 .\gradlew.bat lint
 .\gradlew.bat detektCheck
 .\gradlew.bat ktlintCheck
 .\gradlew.bat assembleDebug
 .\gradlew.bat assembleRelease
 ```
+
+`coverageReport` ajaa JVM-yksikkötestit ja Robolectric-isäntätestit ilman emulaattoria sekä yhdistää niiden JaCoCo-kattavuuden Sonaria varten. App-moduulin `*HostTest`-luokat käynnistävät isäntätestit; yhteiset `androidTest`-testit ajetaan niiden kautta Robolectricilla.
 
 Jokaisesta Room-skeemamuutoksesta lisätään migraatio ja migraatiotesti. Destructive migrationia ei sallita. Kun moduuleja, datavirtaa tai vastuita muutetaan, päivitä tämä tiedosto ja Windows-repon `AGENTS.md` sekä `memory/MEMORY.md`.

@@ -1,3 +1,5 @@
+> Historical acceptance evidence below predates the user-approved GA4 removal on 2026-10-13. The current Android schema is 2; migration 1 to 2 removes GA4 history and metadata. Earlier schema-1 preservation results are not current-version evidence.
+
 # Android–desktop-pariteetin hyväksyntä, 2026-10-11
 
 Androidin toteutus on tehty suunnitelman P0–P9:n Android-osuuksien mukaan. Koko suunnitelman hyväksyntä on **avoin**. Windows-vienti ja yhteys-/avainsiirto on nyt toteutettu ja testattu API 28/36:lla; allekirjoitettu release on Pixelissä. Alla oleva jatkotarkistus kertoo tuoreemman näytön. Esimerkkikuvat `docs/design-preview` ohjasivat ulkoasua; ne eivät ole desktopin runtime-todiste.

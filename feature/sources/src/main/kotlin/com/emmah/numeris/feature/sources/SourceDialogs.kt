@@ -5,6 +5,7 @@ package com.emmah.numeris.feature.sources
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
@@ -16,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.emmah.numeris.core.designsystem.NumerisSpacing
 import com.emmah.numeris.core.model.Connection
@@ -44,6 +46,7 @@ internal fun ImportPassphraseDialog(
                 onValueChange = { passphrase = it },
                 label = { Text("Passphrase") },
                 visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
                 singleLine = true,
             )
         },

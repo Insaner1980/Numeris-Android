@@ -6,10 +6,10 @@
 
 @Composable
 private fun com.emmah.numeris.feature.overview.InsightNotice(insight: com.emmah.numeris.core.model.InsightCard, onInsight: kotlin.Function1<com.emmah.numeris.core.model.InsightTarget, kotlin.Unit>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - insight: UNSTABLE (has mutable properties or unstable members)
+    - insight: STABLE (stability configuration file type)
     - onInsight: STABLE (function type)
 
 @Composable
@@ -52,7 +52,7 @@ private fun com.emmah.numeris.feature.overview.SiteRow(site: com.emmah.numeris.c
   skippable: false
   restartable: true
   params:
-    - site: UNSTABLE (has mutable properties or unstable members)
+    - site: STABLE (stability configuration file type)
     - domains: RUNTIME (requires runtime check)
     - selected: STABLE (primitive type)
     - divider: STABLE (primitive type)

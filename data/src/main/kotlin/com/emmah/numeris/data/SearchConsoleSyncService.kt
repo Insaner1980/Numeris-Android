@@ -3,11 +3,6 @@
 package com.emmah.numeris.data
 
 import com.emmah.numeris.core.common.NumerisFailure
-import com.emmah.numeris.core.database.GoogleAnalyticsDailyEntity
-import com.emmah.numeris.core.database.GoogleAnalyticsDeviceEntity
-import com.emmah.numeris.core.database.GoogleAnalyticsEventEntity
-import com.emmah.numeris.core.database.GoogleAnalyticsPageEntity
-import com.emmah.numeris.core.database.GoogleAnalyticsSourceEntity
 import com.emmah.numeris.core.database.NumerisDatabase
 import com.emmah.numeris.core.database.SearchConsoleEntity
 import com.emmah.numeris.core.database.SearchDeviceEntity
@@ -21,8 +16,6 @@ import com.emmah.numeris.core.model.SyncRequest
 import com.emmah.numeris.core.model.SyncResult
 import com.emmah.numeris.core.model.previous
 import com.emmah.numeris.core.model.reportDomain
-import com.emmah.numeris.core.network.GoogleAnalyticsApiClient
-import com.emmah.numeris.core.network.GoogleAnalyticsRowWire
 import com.emmah.numeris.core.network.SearchAnalyticsRowWire
 import com.emmah.numeris.core.network.SearchConsoleApiClient
 import kotlinx.serialization.json.Json
@@ -34,22 +27,20 @@ import kotlinx.serialization.json.jsonPrimitive
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 class SearchConsoleSyncService(
     private val database: NumerisDatabase,
-    private val authorization: GoogleAuthorizationManager,
+    private val authorize: suspend () -> GoogleAuthorizationState,
     private val client: SearchConsoleApiClient,
     private val clock: Clock = Clock.systemUTC(),
 ) : SourceSyncService {
     override val source = SourceId.SearchConsole
 
     override suspend fun testConnection(connectionId: ConnectionId?): ConnectionTestResult {
-        val auth = authorization.authorize()
+        val auth = authorize()
         if (auth !is GoogleAuthorizationState.Authorized) {
             return ConnectionTestResult.Failure(
-                "Google authorization is required.",
+                GOOGLE_AUTHORIZATION_REQUIRED,
             )
         }
         val properties = configuredSites()
@@ -68,7 +59,7 @@ class SearchConsoleSyncService(
     }
 
     override suspend fun sync(request: SyncRequest): SyncResult {
-        val token = authorization.authorize().syncToken { return it }
+        val token = authorize().syncToken { return it }
         val sites = configuredSites().filter { request.domain == null || reportDomain(it) == request.domain }
         if (sites.isEmpty()) return SyncResult.Failure("No Search Console property is configured.", false)
         val range = request.period.toDateRange(clock)
@@ -149,7 +140,7 @@ class SearchConsoleSyncService(
                 .sortedBy { it.lastInspectedAt.orEmpty() }
                 .take(MAX_INSPECTIONS_PER_RUN)
         if (due.isEmpty()) return SyncResult.Success(0)
-        val token = authorization.authorize().syncToken { return it }
+        val token = authorize().syncToken { return it }
         // Onnistuneet tarkistukset tallennetaan aina. Googlen palvelinvirhe (5xx) koskee yleensä yksittäistä URL:ia,
         // joten se ohitetaan ja tarkistetaan seuraavalla päivityksellä; oikeus-, kirjautumis- ja kiintiövirhe pysäyttää.
         val run = inspectAll(token, property, due, Instant.now(clock).toString())
@@ -270,178 +261,6 @@ class SearchConsoleSyncService(
     )
 }
 
-class GoogleAnalyticsSyncService(
-    private val database: NumerisDatabase,
-    private val authorization: GoogleAuthorizationManager,
-    private val client: GoogleAnalyticsApiClient,
-    private val clock: Clock = Clock.systemUTC(),
-) : SourceSyncService {
-    override val source = SourceId.GoogleAnalytics
-
-    override suspend fun testConnection(connectionId: ConnectionId?): ConnectionTestResult =
-        when (authorization.authorize()) {
-            is GoogleAuthorizationState.Authorized -> ConnectionTestResult.Success
-            is GoogleAuthorizationState.UserActionRequired ->
-                ConnectionTestResult.Failure(
-                    "Google authorization is required.",
-                )
-            is GoogleAuthorizationState.Failure -> ConnectionTestResult.Failure("Google authorization is unavailable.")
-        }
-
-    override suspend fun sync(request: SyncRequest): SyncResult {
-        val token = authorization.authorize().syncToken { return it }
-        val configs = analyticsConfigs().filter { request.domain == null || it.domain == request.domain }
-        if (configs.isEmpty()) return SyncResult.Failure("No Google Analytics property is configured.", false)
-        val range = request.period.toDateRange(clock)
-        val start = range.start.toString()
-        val end = range.end.toString()
-        val aggregateStart = range.end.minusDays(27).toString()
-        return runCatching {
-            var written = 0
-            configs.forEach { config ->
-                val fetchedAt = Instant.now(clock).toString()
-                val daily =
-                    client.runReport(token, config.propertyId, start, end, listOf("date"), DAILY_METRICS).map { row ->
-                        GoogleAnalyticsDailyEntity(
-                            config.domain,
-                            config.propertyId,
-                            row.dimensions[0].gaDate(),
-                            row.long(0),
-                            row.long(1),
-                            row.long(2),
-                            row.long(3),
-                            row.long(4),
-                            row.double(5),
-                            fetchedAt,
-                        )
-                    }
-                val pages =
-                    client.runReport(token, config.propertyId, start, end, listOf("pagePath"), PAGE_METRICS).map { row ->
-                        GoogleAnalyticsPageEntity(
-                            config.domain,
-                            config.propertyId,
-                            aggregateStart,
-                            end,
-                            row.dimensions[0],
-                            row.long(0),
-                            row.long(1),
-                            row.long(2),
-                            row.long(3),
-                            row.double(4),
-                            fetchedAt,
-                        )
-                    }
-                val sources =
-                    client
-                        .runReport(
-                            token,
-                            config.propertyId,
-                            start,
-                            end,
-                            listOf("sessionSourceMedium"),
-                            SOURCE_METRICS,
-                        ).map { row ->
-                            GoogleAnalyticsSourceEntity(
-                                config.domain,
-                                config.propertyId,
-                                aggregateStart,
-                                end,
-                                row.dimensions[0],
-                                row.long(0),
-                                row.long(1),
-                                row.long(2),
-                                fetchedAt,
-                            )
-                        }
-                val events =
-                    client.runReport(token, config.propertyId, start, end, listOf("eventName"), EVENT_METRICS).map { row ->
-                        GoogleAnalyticsEventEntity(
-                            config.domain,
-                            config.propertyId,
-                            aggregateStart,
-                            end,
-                            row.dimensions[0],
-                            row.long(0),
-                            row.long(1),
-                            fetchedAt,
-                        )
-                    }
-                val devices =
-                    client
-                        .runReport(
-                            token,
-                            config.propertyId,
-                            start,
-                            end,
-                            listOf("date", "deviceCategory"),
-                            DEVICE_METRICS,
-                        ).map { row ->
-                            GoogleAnalyticsDeviceEntity(
-                                config.domain,
-                                config.propertyId,
-                                row.dimensions[0].gaDate(),
-                                row.dimensions[1],
-                                row.long(0),
-                                row.long(1),
-                                fetchedAt,
-                            )
-                        }
-                database.writeTransaction {
-                    googleAnalyticsDao().upsertGoogleAnalytics(daily)
-                    googleAnalyticsDao().upsertGoogleAnalyticsPages(pages)
-                    googleAnalyticsDao().upsertGoogleAnalyticsSources(sources)
-                    googleAnalyticsDao().upsertGoogleAnalyticsEvents(events)
-                    googleAnalyticsDao().upsertGoogleAnalyticsDevices(devices)
-                }
-                written += daily.size + pages.size + sources.size + events.size + devices.size
-            }
-            written
-        }.fold(
-            onSuccess = { SyncResult.Success(it) },
-            onFailure = {
-                if (it is kotlinx.coroutines.CancellationException) throw it
-                SyncResult.Failure(it.message ?: "Google Analytics sync failed.", true)
-            },
-        )
-    }
-
-    private suspend fun analyticsConfigs(): List<AnalyticsConfig> =
-        database.connectionDao().bySource("google_analytics").mapNotNull { connection ->
-            runCatching {
-                val root = Json.parseToJsonElement(connection.config.orEmpty()).jsonObject
-                AnalyticsConfig(
-                    domain =
-                        root
-                            .getValue("domain")
-                            .jsonPrimitive.content
-                            .lowercase(),
-                    propertyId = root.getValue("propertyId").jsonPrimitive.content,
-                )
-            }.getOrNull()
-        }
-
-    private fun String.gaDate(): String = runCatching { LocalDate.parse(this, GA_DATE).toString() }.getOrDefault(this)
-
-    private fun GoogleAnalyticsRowWire.long(index: Int) = metrics.getOrNull(index)?.toDoubleOrNull()?.toLong() ?: 0
-
-    private fun GoogleAnalyticsRowWire.double(index: Int) = metrics.getOrNull(index)?.toDoubleOrNull() ?: 0.0
-
-    private data class AnalyticsConfig(
-        val domain: String,
-        val propertyId: String,
-    )
-
-    private companion object {
-        val GA_DATE: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd")
-        val DAILY_METRICS =
-            listOf("activeUsers", "sessions", "screenPageViews", "engagedSessions", "eventCount", "engagementRate")
-        val PAGE_METRICS = listOf("activeUsers", "sessions", "screenPageViews", "engagedSessions", "engagementRate")
-        val SOURCE_METRICS = listOf("sessions", "activeUsers", "keyEvents")
-        val EVENT_METRICS = listOf("eventCount", "keyEvents")
-        val DEVICE_METRICS = listOf("sessions", "activeUsers")
-    }
-}
-
 private fun JsonArray?.orEmpty(): JsonArray = this ?: JsonArray(emptyList())
 
 private const val INSPECTION_MAX_AGE_DAYS = 7L
@@ -455,6 +274,8 @@ private fun String?.inspectedBefore(limit: Instant): Boolean =
 internal inline fun GoogleAuthorizationState.syncToken(onFailure: (SyncResult.Failure) -> Nothing): String =
     when (this) {
         is GoogleAuthorizationState.Authorized -> accessToken
-        is GoogleAuthorizationState.UserActionRequired -> onFailure(SyncResult.Failure("Google authorization is required.", false))
+        is GoogleAuthorizationState.UserActionRequired -> onFailure(SyncResult.Failure(GOOGLE_AUTHORIZATION_REQUIRED, false))
         is GoogleAuthorizationState.Failure -> onFailure(SyncResult.Failure(safeMessage, false))
     }
+
+private const val GOOGLE_AUTHORIZATION_REQUIRED = "Google authorization is required."

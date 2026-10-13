@@ -5,19 +5,28 @@
 //   ./gradlew :search:stabilityDump
 
 @Composable
-public fun com.emmah.numeris.feature.search.InspectionRow(row: com.emmah.numeris.core.model.SitemapPage, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+private fun com.emmah.numeris.feature.search.DiscoveryRows(report: com.emmah.numeris.core.model.SearchReport, tab: kotlin.String, kind: kotlin.String): kotlin.Unit
   skippable: false
   restartable: true
   params:
-    - row: UNSTABLE (has mutable properties or unstable members)
+    - report: UNSTABLE (has mutable properties or unstable members)
+    - tab: STABLE (String is immutable)
+    - kind: STABLE (String is immutable)
+
+@Composable
+public fun com.emmah.numeris.feature.search.InspectionRow(row: com.emmah.numeris.core.model.SitemapPage, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - row: STABLE (stability configuration file type)
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
 public fun com.emmah.numeris.feature.search.SearchDataRow(row: com.emmah.numeris.core.model.SearchRow, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - row: UNSTABLE (has mutable properties or unstable members)
+    - row: STABLE (stability configuration file type)
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable

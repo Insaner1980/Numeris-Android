@@ -7,6 +7,42 @@ import org.junit.Test
 import java.net.URI
 
 class NetworkPolicyTest {
+    @Test fun `redaction handles every credential spelling and bearer alphabet`() {
+        val names =
+            listOf(
+                "access_token",
+                "ACCESS-TOKEN",
+                "accesstoken",
+                "refresh_token",
+                "refresh-token",
+                "refreshtoken",
+                "api_key",
+                "api-key",
+                "apikey",
+                "client_secret",
+                "client-secret",
+                "clientsecret",
+                "password",
+                "authorization",
+            )
+        names.forEach { name ->
+            assertEquals(
+                "\"$name\": \"[REDACTED]\"",
+                RawJsonStoragePolicy.redactAndLimit("\"$name\": \"private-value\""),
+            )
+        }
+        assertEquals("Bearer [REDACTED]", RawJsonStoragePolicy.redactAndLimit("Bearer aAzZ09._~+/=-"))
+    }
+
+    @Test fun `sitemap rejects doctype and external entities`() {
+        assertThrows(org.xml.sax.SAXParseException::class.java) {
+            SitemapClient(NumerisHttpClient()).parseLocations(
+                """<!DOCTYPE urlset [<!ENTITY xxe SYSTEM "file:///nonexistent-secret">]>
+                <urlset><loc>&xxe;</loc></urlset>""",
+            )
+        }
+    }
+
     @Test fun `provider errors expose only enum-like codes, never free text`() {
         val body =
             """{"error":{"code":403,"message":"private-detail user@example.com","status":"PERMISSION_DENIED",

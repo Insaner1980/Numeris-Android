@@ -33,16 +33,11 @@ import kotlinx.coroutines.Dispatchers
         BingQueryStatEntity::class,
         BingPageStatEntity::class,
         BingRawItemEntity::class,
-        GoogleAnalyticsDailyEntity::class,
-        GoogleAnalyticsPageEntity::class,
-        GoogleAnalyticsSourceEntity::class,
-        GoogleAnalyticsEventEntity::class,
-        GoogleAnalyticsDeviceEntity::class,
         UptimeCheckEntity::class,
         SyncRunEntity::class,
         MetaEntity::class,
     ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class NumerisDatabase : RoomDatabase() {
@@ -55,8 +50,6 @@ abstract class NumerisDatabase : RoomDatabase() {
     abstract fun searchDao(): SearchDao
 
     abstract fun performanceDao(): PerformanceDao
-
-    abstract fun googleAnalyticsDao(): GoogleAnalyticsDao
 
     abstract fun bingDao(): BingDao
 
@@ -74,6 +67,7 @@ fun buildNumerisDatabase(context: Context): NumerisDatabase =
             NumerisDatabase::class.java,
             "numeris.db",
         ).setDriver(AndroidSQLiteDriver())
+        .addMigrations(MIGRATION_1_2)
         .setQueryCoroutineContext(Dispatchers.IO)
         .build()
 

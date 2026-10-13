@@ -89,11 +89,10 @@ fun SearchReportScreen(
         }
         when (tab) {
             "Overview" -> searchOverview(report, period)
-            "Queries", "Pages" ->
-                searchRows(report, provider, tab, rows, kind, filter, sort, { filter = it }, {
-                    sort =
-                        it
-                })
+            "Queries", "Pages" -> {
+                searchRowFilters(tab, rows.size, filter, sort, { filter = it }, { sort = it })
+                searchRows(report, provider, tab, rows, kind)
+            }
             "Devices" -> searchDevices(report)
             "Indexing" -> searchIndexing(report, showIndexed) { showIndexed = !showIndexed }
             else -> bingCrawl(report)
@@ -212,12 +211,9 @@ private fun secondaryMetrics(
         ),
     )
 
-private fun LazyListScope.searchRows(
-    report: SearchReport,
-    provider: String,
+private fun LazyListScope.searchRowFilters(
     tab: String,
-    rows: List<SearchRow>,
-    kind: String,
+    rowCount: Int,
     filter: String,
     sort: String,
     onFilter: (String) -> Unit,
@@ -239,12 +235,21 @@ private fun LazyListScope.searchRows(
                 { "Sort by $it" },
             )
             Text(
-                "${rows.size} matching ${tab.lowercase()}",
+                "$rowCount matching ${tab.lowercase()}",
                 color = NumerisColors.TertiaryText,
                 style = MaterialTheme.typography.bodySmall,
             )
         }
     }
+}
+
+private fun LazyListScope.searchRows(
+    report: SearchReport,
+    provider: String,
+    tab: String,
+    rows: List<SearchRow>,
+    kind: String,
+) {
     items(rows, key = { it.key }) { SearchDataRow(it) }
     if (rows.isEmpty()) item { Text("No matching cached ${tab.lowercase()}", color = NumerisColors.TertiaryText) }
     legacySnapshots(report, kind)

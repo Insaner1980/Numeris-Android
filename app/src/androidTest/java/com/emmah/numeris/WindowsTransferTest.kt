@@ -32,7 +32,7 @@ class WindowsTransferTest {
             val context = instrumentation.targetContext
             val name = "windows-transfer-${UUID.randomUUID()}.db"
             val packageFile = File(context.cacheDir, "$name.nmrx")
-            instrumentation.context.assets.open("windows-report.nmrx").use { input ->
+            testFixture("windows-report.nmrx").use { input ->
                 packageFile.outputStream().use(input::copyTo)
             }
             val original = packageFile.readBytes()

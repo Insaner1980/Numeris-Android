@@ -68,30 +68,7 @@ class WebAnalyticsSyncService(
                             it.domain == request.domain
                     }
                 if (sites.isEmpty()) return@syncTargets 0
-                runCatching {
-                    withRequiredToken(connection.id) { token ->
-                        val account = requireNotNull(connection.accountId()) { "Web Analytics account ID is missing." }
-                        val rows = syncTargets(sites) { site -> syncSite(token, account, site, range) }
-                        // A selected site refresh is not proof that every site in this connection was refreshed.
-                        val timestamp =
-                            if (request.domain ==
-                                null
-                            ) {
-                                Instant.now(clock).toString()
-                            } else {
-                                connection.lastSync
-                            }
-                        database.connectionDao().upsert(
-                            listOf(connection.copy(status = "connected", lastSync = timestamp, lastError = null)),
-                        )
-                        rows
-                    }
-                }.onFailure { failure ->
-                    if (failure is kotlinx.coroutines.CancellationException) throw failure
-                    database.connectionDao().upsert(
-                        listOf(connection.copy(status = "error", lastError = "Web Analytics sync failed.")),
-                    )
-                }.getOrThrow()
+                syncConnection(connection, sites, range, request.domain == null)
             }
         }.fold(
             onSuccess = { SyncResult.Success(it) },
@@ -101,6 +78,35 @@ class WebAnalyticsSyncService(
             },
         )
     }
+
+    private suspend fun syncConnection(
+        connection: ConnectionEntity,
+        sites: List<com.emmah.numeris.core.database.WebAnalyticsSiteEntity>,
+        range: DateRange,
+        allSites: Boolean,
+    ): Int =
+        runCatching {
+            withRequiredToken(connection.id) { token ->
+                val account = requireNotNull(connection.accountId()) { "Web Analytics account ID is missing." }
+                val rows = syncTargets(sites) { site -> syncSite(token, account, site, range) }
+                // A selected site refresh is not proof that every site in this connection was refreshed.
+                val timestamp =
+                    if (allSites) {
+                        Instant.now(clock).toString()
+                    } else {
+                        connection.lastSync
+                    }
+                database.connectionDao().upsert(
+                    listOf(connection.copy(status = "connected", lastSync = timestamp, lastError = null)),
+                )
+                rows
+            }
+        }.onFailure { failure ->
+            if (failure is kotlinx.coroutines.CancellationException) throw failure
+            database.connectionDao().upsert(
+                listOf(connection.copy(status = "error", lastError = "Web Analytics sync failed.")),
+            )
+        }.getOrThrow()
 
     private suspend fun syncSite(
         token: CharArray,

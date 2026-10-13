@@ -42,7 +42,6 @@ import com.emmah.numeris.core.designsystem.PillTone
 import com.emmah.numeris.core.designsystem.StatusPill
 import com.emmah.numeris.core.model.CompactFormat
 import com.emmah.numeris.core.model.Connection
-import com.emmah.numeris.core.model.SourceId
 import com.emmah.numeris.core.model.displayName
 import com.emmah.numeris.data.GoogleAuthorizationFeedback
 import java.time.Duration
@@ -62,7 +61,6 @@ internal fun connectionStatus(
 ): Pair<String, PillTone> {
     val synced = connection.lastSuccessfulSync
     return when {
-        connection.source == SourceId.GoogleAnalytics -> "Retired" to PillTone.Neutral
         !connection.configured -> "Disconnected" to PillTone.Neutral
         connection.lastError != null -> "Action needed" to PillTone.Warning
         synced == null -> "Not synced" to PillTone.Neutral
@@ -76,7 +74,6 @@ private fun connectionSupporting(connection: Connection): String {
     val provider = connection.source.displayName.takeIf { it != connectionTitle(connection) }
     val status =
         when {
-            connection.source == SourceId.GoogleAnalytics -> "Cached history and credentials are preserved"
             connection.lastSuccessfulSync == null -> "Not synced yet"
             else -> "Synced ${CompactFormat.relative(connection.lastSuccessfulSync.toString())}"
         }
@@ -140,16 +137,14 @@ private fun ConnectionMenu(
             }
         }
         DropdownMenu(expanded, { expanded = false }, containerColor = NumerisColors.Control) {
-            if (connection.source != SourceId.GoogleAnalytics) {
-                DropdownMenuItem({ Text("Edit") }, {
-                    expanded = false
-                    actions.onEdit(connection)
-                })
-                DropdownMenuItem({ Text("Test connection") }, {
-                    expanded = false
-                    actions.onTest(connection)
-                })
-            }
+            DropdownMenuItem({ Text("Edit") }, {
+                expanded = false
+                actions.onEdit(connection)
+            })
+            DropdownMenuItem({ Text("Test connection") }, {
+                expanded = false
+                actions.onTest(connection)
+            })
             DropdownMenuItem({ Text("Disconnect", color = NumerisColors.Negative) }, {
                 expanded = false
                 actions.onDelete(connection)

@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.Uri
 import com.emmah.numeris.core.security.DecryptedExport
 import com.emmah.numeris.core.security.ImportPackageReader
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -34,6 +35,7 @@ class AndroidImportRepository(
     private val databaseImporter: WindowsDatabaseImporter,
     private val syncOrchestrator: DefaultSyncOrchestrator,
     private val configurationTransfer: WindowsConfigurationTransfer? = null,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     private val mutex = Mutex()
     private var pending: PendingImport? = null
@@ -47,7 +49,7 @@ class AndroidImportRepository(
         uri: Uri,
         passphrase: CharArray,
     ): ImportPreview =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             mutex.withLock {
                 clearPending()
                 var packageBytes = byteArrayOf()
@@ -90,7 +92,7 @@ class AndroidImportRepository(
         }
 
     suspend fun replace(previewId: String): ImportResult =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             mutex.withLock {
                 val current = requireNotNull(pending?.takeIf { it.id == previewId }) { "Import preview has expired" }
                 try {
@@ -135,12 +137,11 @@ class AndroidImportRepository(
             }
         }
 
-    suspend fun cancel() = withContext(Dispatchers.IO) { mutex.withLock { clearPending() } }
+    suspend fun cancel() = withContext(ioDispatcher) { mutex.withLock { clearPending() } }
 
-    suspend fun recoverInterruptedTransfer() =
-        withContext(Dispatchers.IO) {
-            mutex.withLock { syncOrchestrator.exclusive { configurationTransfer?.recover() } }
-        }
+    suspend fun recoverInterruptedTransfer() {
+        mutex.withLock { syncOrchestrator.exclusive { configurationTransfer?.recover() } }
+    }
 
     private fun readPackage(uri: Uri): ByteArray {
         val input = requireNotNull(context.contentResolver.openInputStream(uri)) { "Import file could not be opened" }

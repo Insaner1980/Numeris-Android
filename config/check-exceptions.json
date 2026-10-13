@@ -126,6 +126,24 @@
       ]
     },
     {
+      "id": "numeris-mobsf-database-migration-test-sql",
+      "tool": "mobsfscan",
+      "rule": "android_kotlin_sql_raw_query",
+      "scope": "Robolectric schema-one fixture creation in DatabaseMigrationHostTest.kt",
+      "reason": "This host test creates a temporary database from the bundled Room schema 1.json. SQL, table names and column names come only from that version-controlled schema; inserted values are fixed test literals, with no application input.",
+      "owner": "project-maintainers",
+      "added": "2026-10-13",
+      "expires": "2026-10-31",
+      "tracking": "local-review:numeris-mobsf-database-migration-test-sql",
+      "sourcePath": "app/src/test/java/com/emmah/numeris/DatabaseMigrationHostTest.kt",
+      "selector": "private fun createVersionOneDatabase(",
+      "findingPath": "app/src/test/java/com/emmah/numeris/DatabaseMigrationHostTest.kt",
+      "findingSelectors": [
+        "android.database.sqlite",
+        "execSQL("
+      ]
+    },
+    {
       "id": "numeris-mobsf-import-recovery-test-sql",
       "tool": "mobsfscan",
       "rule": "android_kotlin_sql_raw_query",
@@ -142,20 +160,6 @@
         "android.database.sqlite",
         "execSQL("
       ]
-    },
-    {
-      "id": "numeris-codeql-ui-app-lock-accepted-risk",
-      "tool": "codeql",
-      "rule": "java/android/insecure-local-authentication",
-      "scope": "BiometricAppLock.kt UI app unlock and explicit import confirmation",
-      "reason": "Accepted risk through 2026-10-31: this local UI privacy gate is not cryptographic protection against privileged process hooking. Report data remains readable by the app and the independent AndroidKeyStore secret key deliberately permits unattended background sync and import recovery. Existing biometric, API 28-29 device-credential fallback and background behavior are preserved. A crypto-only dummy challenge would not protect the actual data or import action. Full cryptographic data protection requires a separate decision about background access and legacy device credentials.",
-      "owner": "project-maintainers",
-      "added": "2026-10-12",
-      "expires": "2026-10-31",
-      "tracking": "local-review:numeris-codeql-ui-app-lock-accepted-risk",
-      "sourcePath": "core/security/src/main/kotlin/com/emmah/numeris/core/security/BiometricAppLock.kt",
-      "selector": "override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult)",
-      "findingPath": "core/security/src/main/kotlin/com/emmah/numeris/core/security/BiometricAppLock.kt"
     }
   ]
 }

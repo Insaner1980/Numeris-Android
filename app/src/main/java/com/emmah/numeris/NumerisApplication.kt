@@ -76,7 +76,7 @@ class AppContainer(
     private val http = NumerisHttpClient()
     val googleAuthorization = GoogleAuthorizationManager(application)
     private val searchConsoleSyncService =
-        SearchConsoleSyncService(database, googleAuthorization, SearchConsoleApiClient(http))
+        SearchConsoleSyncService(database, googleAuthorization::authorize, SearchConsoleApiClient(http))
     private val sourceServices: List<SourceSyncService> =
         listOf(
             UptimeSyncService(database, UptimeClient(http)),

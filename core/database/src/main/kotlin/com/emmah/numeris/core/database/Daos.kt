@@ -18,7 +18,7 @@ interface ConnectionDao {
     @Query("SELECT * FROM connections WHERE source = :source ORDER BY id")
     suspend fun bySource(source: String): List<ConnectionEntity>
 
-    @Query("SELECT DISTINCT source FROM connections WHERE status != 'disconnected' AND source != 'google_analytics'")
+    @Query("SELECT DISTINCT source FROM connections WHERE status != 'disconnected'")
     suspend fun configuredSourceNames(): List<String>
 
     @Query("DELETE FROM connections WHERE id = :id")
@@ -153,26 +153,6 @@ interface PerformanceDao {
 }
 
 @Dao
-interface GoogleAnalyticsDao {
-    @Query("SELECT * FROM google_analytics_daily WHERE domain = :domain AND date BETWEEN :start AND :end ORDER BY date")
-    fun observeGoogleAnalytics(
-        domain: String,
-        start: String,
-        end: String,
-    ): Flow<List<GoogleAnalyticsDailyEntity>>
-
-    @Upsert suspend fun upsertGoogleAnalytics(rows: List<GoogleAnalyticsDailyEntity>)
-
-    @Upsert suspend fun upsertGoogleAnalyticsPages(rows: List<GoogleAnalyticsPageEntity>)
-
-    @Upsert suspend fun upsertGoogleAnalyticsSources(rows: List<GoogleAnalyticsSourceEntity>)
-
-    @Upsert suspend fun upsertGoogleAnalyticsEvents(rows: List<GoogleAnalyticsEventEntity>)
-
-    @Upsert suspend fun upsertGoogleAnalyticsDevices(rows: List<GoogleAnalyticsDeviceEntity>)
-}
-
-@Dao
 interface BingDao {
     @Query("SELECT * FROM bing_sites WHERE enabled = 1 ORDER BY siteUrl")
     suspend fun enabledSites(): List<BingSiteEntity>
@@ -209,7 +189,7 @@ interface HealthDao {
 }
 
 @Dao
-interface SyncRunDao {
+fun interface SyncRunDao {
     @Upsert suspend fun upsert(row: SyncRunEntity)
 }
 

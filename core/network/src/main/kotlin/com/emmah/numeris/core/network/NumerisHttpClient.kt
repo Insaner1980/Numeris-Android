@@ -1,5 +1,6 @@
 package com.emmah.numeris.core.network
 
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -10,13 +11,14 @@ import java.time.Duration
 
 class NumerisHttpClient(
     private val client: OkHttpClient = defaultClient(),
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     suspend fun execute(
         source: String,
         request: Request,
         acceptRedirect: Boolean = false,
     ): HttpResult =
-        withContext(Dispatchers.IO) {
+        withContext(ioDispatcher) {
             val response =
                 try {
                     client.newCall(request).execute()

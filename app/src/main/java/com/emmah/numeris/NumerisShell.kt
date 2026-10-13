@@ -113,7 +113,6 @@ private fun routeForPage(page: String): NavKey =
 @Composable
 fun NumerisShell(
     container: AppContainer,
-    requireBiometric: (() -> Unit) -> Unit,
     authorizeGoogle: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -139,7 +138,6 @@ fun NumerisShell(
             syncState is SyncState.Running,
             rememberCoroutineScope(),
             backStack,
-            requireBiometric,
             authorizeGoogle,
         )
     ShellNavigation(context, syncState, modifier)
@@ -188,7 +186,6 @@ internal class ShellContext(
     val syncing: Boolean,
     val scope: CoroutineScope,
     val backStack: MutableList<NavKey>,
-    val requireBiometric: (() -> Unit) -> Unit,
     val authorizeGoogle: () -> Unit,
 ) {
     val domain get() = preferences.selectedDomain

@@ -49,6 +49,7 @@ import java.time.LocalDate
 @Composable
 fun HealthReportScreen(
     report: HealthReport,
+    // CPD-OFF: Report screens intentionally expose the same filter and navigation callbacks.
     domain: String,
     domains: List<String>,
     period: Period,
@@ -58,6 +59,7 @@ fun HealthReportScreen(
     onPeriod: (Period) -> Unit,
     onTab: (String) -> Unit,
     onRefresh: () -> Unit,
+    // CPD-ON
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -101,7 +103,7 @@ private fun LazyListScope.uptimeReport(
             listOf(
                 Metric("Success rate", ReportMath.uptime(report.probes), "percent", detail = "All stored history"),
                 Metric(
-                    "Failed checks",
+                    FAILED_CHECKS,
                     probes.count { !it.isUp() }.toDouble(),
                     detail = "In the selected period",
                     higherIsBetter = false,
@@ -200,10 +202,10 @@ private fun LazyListScope.siteCharts(
             NoticeCard("No failed checks", "$site responded to every check in this period.", PillTone.Positive)
         } else {
             DatedChart(
-                "Failed checks",
+                FAILED_CHECKS,
                 listOf(
                     ReportMath.series(
-                        "Failed checks",
+                        FAILED_CHECKS,
                         "count",
                         records
                             .groupBy(::probeDate)
@@ -251,3 +253,5 @@ private fun LazyListScope.sitemapReport(report: HealthReport) {
 }
 
 private const val ISO_DAY_LENGTH = 10
+
+private const val FAILED_CHECKS = "Failed checks"

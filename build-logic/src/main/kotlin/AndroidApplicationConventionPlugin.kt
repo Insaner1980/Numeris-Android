@@ -8,6 +8,7 @@ class AndroidApplicationConventionPlugin : Plugin<Project> {
         pluginManager.apply("com.android.application")
         pluginManager.apply("org.jetbrains.kotlin.plugin.compose")
         pluginManager.apply("com.github.skydoves.compose.stability.analyzer")
+        configureComposeStability()
         extensions.configure<ApplicationExtension> {
             configureAndroid(this)
             defaultConfig.targetSdk = 36

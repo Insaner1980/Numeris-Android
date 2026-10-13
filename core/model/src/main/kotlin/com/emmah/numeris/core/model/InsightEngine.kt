@@ -76,7 +76,7 @@ object InsightEngine {
                 "snippet, or ranking position.",
             "Google impressions increased by ${positiveRatio(metrics.googleImpressions)}, while clicks changed by " +
                 "${changedRatio(metrics.googleClicks)}.",
-            "Open Google Search and review Queries, Pages, and Indexing.",
+            REVIEW_SEARCH,
             InsightSeverity.Warning,
             40,
         )
@@ -92,7 +92,7 @@ object InsightEngine {
             "One page that used to bring Google clicks is now bringing fewer clicks.",
             "${if (page.page.length > 80) page.page.take(77) + "..." else page.page} changed from " +
                 "${page.previousClicks} to ${page.currentClicks} Google clicks.",
-            "Open Google Search and review Queries, Pages, and Indexing.",
+            REVIEW_SEARCH,
             InsightSeverity.Warning,
             45,
         )
@@ -104,7 +104,7 @@ object InsightEngine {
             "New search queries are bringing traffic",
             "Google is sending clicks from queries that were not visible in the previous period.",
             "${metrics.newSearchQueryCount} new queries brought Google clicks in this period.",
-            "Open Google Search and review Queries, Pages, and Indexing.",
+            REVIEW_SEARCH,
             InsightSeverity.Info,
             120,
         )
@@ -142,7 +142,7 @@ object InsightEngine {
             "Some sitemap pages may not be indexed",
             "Numeris found sitemap URLs that do not currently have a passing Google URL Inspection result.",
             "${value.indexedUrls} of ${value.inspectedUrls} inspected sitemap URLs are indexed.",
-            "Open Google Search and review Queries, Pages, and Indexing.",
+            REVIEW_SEARCH,
             InsightSeverity.Warning,
             25,
         )
@@ -155,7 +155,7 @@ object InsightEngine {
             "Indexing data is missing",
             "Numeris knows about sitemap URLs, but they have not been inspected through Google URL Inspection yet.",
             "${value.activeSitemapUrls} active sitemap URLs have no inspection result yet.",
-            "Open Google Search and review Queries, Pages, and Indexing.",
+            REVIEW_SEARCH,
             InsightSeverity.Info,
             90,
         )
@@ -167,12 +167,12 @@ object InsightEngine {
         if (value.serverErrorResponses >= 10) {
             val critical = value.serverErrorShare >= 0.01
             return card(
-                "Some visitors may be hitting errors",
+                VISITOR_ERRORS,
                 "Cloudflare recorded HTTP error responses during this period.",
                 "${number(
                     value.serverErrorResponses.toDouble(),
                 )} server error responses, ${percent(value.serverErrorShare)} of Cloudflare requests.",
-                "Open Cloudflare and review Traffic, Cache, or Status Codes.",
+                REVIEW_CLOUDFLARE,
                 if (critical) InsightSeverity.Critical else InsightSeverity.Warning,
                 if (critical) 5 else 30,
             )
@@ -216,7 +216,7 @@ object InsightEngine {
             "Cloudflare is serving fewer requests from cache than before.",
             "Cache hit ratio changed by ${changedRatio(metrics.cloudflareCacheHitRatio)} and is now " +
                 "${percent(metrics.cloudflareCacheHitRatio.current)}.",
-            "Open Cloudflare and review Traffic, Cache, or Status Codes.",
+            REVIEW_CLOUDFLARE,
             InsightSeverity.Warning,
             70,
         )
@@ -234,7 +234,7 @@ object InsightEngine {
             "Threat events increased during this period.",
             "Cloudflare threat events changed from ${number(metrics.cloudflareThreats.previous)} to " +
                 "${number(metrics.cloudflareThreats.current)}.",
-            "Open Cloudflare and review Traffic, Cache, or Status Codes.",
+            REVIEW_CLOUDFLARE,
             InsightSeverity.Warning,
             20,
         )
@@ -244,10 +244,10 @@ object InsightEngine {
         why: String,
         critical: Boolean,
     ) = card(
-        "Some visitors may be hitting errors",
+        VISITOR_ERRORS,
         "Cloudflare recorded HTTP error responses during this period.",
         why,
-        "Open Cloudflare and review Traffic, Cache, or Status Codes.",
+        REVIEW_CLOUDFLARE,
         if (critical) InsightSeverity.Critical else InsightSeverity.Warning,
         if (critical) 5 else 55,
     )
@@ -277,7 +277,7 @@ object InsightEngine {
                     "Google Search, Indexing",
                 )
             "Mobile traffic may need attention" -> InsightTarget("performance", "PageSpeed", "Performance, PageSpeed")
-            "Some visitors may be hitting errors" ->
+            VISITOR_ERRORS ->
                 InsightTarget(
                     "cloudflare",
                     "Status codes",
@@ -355,3 +355,9 @@ object InsightEngine {
 
     private fun number(value: Double) = String.format(Locale.ROOT, "%.0f", value)
 }
+
+private const val VISITOR_ERRORS = "Some visitors may be hitting errors"
+
+private const val REVIEW_SEARCH = "Open Google Search and review Queries, Pages, and Indexing."
+
+private const val REVIEW_CLOUDFLARE = "Open Cloudflare and review Traffic, Cache, or Status Codes."

@@ -44,7 +44,6 @@ private val backgroundSyncIntervals = listOf(6, 12, 24)
 internal fun MoreScreen(
     preferences: AppPreferences,
     onSetBackgroundSync: (Boolean, Int) -> Unit,
-    onSetBiometricLock: (Boolean) -> Unit,
     openHealth: () -> Unit,
     openSources: () -> Unit,
 ) {
@@ -60,8 +59,8 @@ internal fun MoreScreen(
                 NavigationRow("Sources", "Connections, credentials, sync, and Windows import", openSources)
             }
         }
-        item { SectionHeader("Privacy and sync") }
-        item { PrivacySyncCard(preferences, onSetBackgroundSync, onSetBiometricLock) }
+        item { SectionHeader("Sync") }
+        item { SyncCard(preferences, onSetBackgroundSync) }
     }
 }
 
@@ -89,19 +88,11 @@ private fun NavigationRow(
 
 @Composable
 @Suppress("FunctionNaming")
-private fun PrivacySyncCard(
+private fun SyncCard(
     preferences: AppPreferences,
     onSetBackgroundSync: (Boolean, Int) -> Unit,
-    onSetBiometricLock: (Boolean) -> Unit,
 ) {
     ListCard {
-        SettingSwitchRow(
-            title = "Biometric app lock",
-            detail = "Require your fingerprint or device credential after leaving the app.",
-            checked = preferences.biometricLockEnabled,
-            onCheckedChange = onSetBiometricLock,
-            divider = true,
-        )
         SettingSwitchRow(
             title = "Periodic sync",
             detail = "Refresh configured sources in the background.",

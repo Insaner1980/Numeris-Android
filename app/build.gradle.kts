@@ -8,6 +8,13 @@ plugins {
 android {
     namespace = "com.emmah.numeris"
     sourceSets.getByName("androidTest").assets.srcDir(rootProject.file("test-fixtures/parity"))
+    sourceSets.getByName("test").apply {
+        kotlin.directories.add(file("src/androidTest/java").absolutePath)
+        resources.directories.add(rootProject.file("test-fixtures/parity").absolutePath)
+        resources.directories.add(rootProject.file("core/database/schemas").absolutePath)
+        resources.directories.add(rootProject.file("config/compose").absolutePath)
+    }
+    testOptions.unitTests.isIncludeAndroidResources = true
 
     defaultConfig {
         applicationId = "com.emmah.numeris"
@@ -92,6 +99,13 @@ tasks.withType<org.owasp.dependencycheck.gradle.tasks.ConfiguredTask>().configur
 }
 
 dependencies {
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.junit)
+    testImplementation(libs.androidx.test.runner)
+    testImplementation(libs.androidx.compose.ui.test.junit4)
+    testImplementation(libs.okhttp)
+    testImplementation(libs.play.services.auth)
     constraints {
         implementation(libs.androidx.concurrent.futures) {
             because("Keep the application and Android test runtime on compatible Concurrent versions.")
@@ -119,7 +133,6 @@ dependencies {
     implementation(project(":feature:health"))
     implementation(project(":feature:sources"))
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.fragment)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
@@ -134,4 +147,21 @@ dependencies {
     implementation(libs.vico.compose.m3)
     debugImplementation(libs.androidx.compose.ui.tooling)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+}
+
+tasks.withType<Test>().configureEach {
+    include("**/*HostTest.class")
+    maxParallelForks = 1
+    maxHeapSize = "1g"
+    jvmArgs(
+        "--add-opens=java.base/java.lang=ALL-UNNAMED",
+        "--add-opens=java.base/java.util=ALL-UNNAMED",
+        "--add-opens=java.base/java.io=ALL-UNNAMED",
+        "--add-opens=java.base/java.net=ALL-UNNAMED",
+        "--add-opens=java.base/java.security=ALL-UNNAMED",
+        "--add-opens=java.base/java.text=ALL-UNNAMED",
+        "--add-opens=java.base/jdk.internal.access=ALL-UNNAMED",
+        "--add-opens=java.desktop/java.awt.font=ALL-UNNAMED",
+        "--add-opens=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+    )
 }

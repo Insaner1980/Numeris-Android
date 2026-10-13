@@ -21,7 +21,6 @@ data class AppPreferences(
     val lastPage: String = "overview",
     val backgroundSyncEnabled: Boolean = true,
     val backgroundSyncHours: Int = 12,
-    val biometricLockEnabled: Boolean = true,
 )
 
 class AppPreferencesRepository(
@@ -35,7 +34,6 @@ class AppPreferencesRepository(
                 lastPage = values[lastPageKey] ?: "overview",
                 backgroundSyncEnabled = values[backgroundSyncEnabledKey] ?: true,
                 backgroundSyncHours = values[backgroundSyncHoursKey]?.coerceIn(MIN_SYNC_HOURS, MAX_SYNC_HOURS) ?: 12,
-                biometricLockEnabled = values[biometricLockEnabledKey] ?: true,
             )
         }
 
@@ -55,8 +53,6 @@ class AppPreferencesRepository(
         }
     }
 
-    suspend fun setBiometricLock(enabled: Boolean) = update(biometricLockEnabledKey, enabled)
-
     suspend fun importWindowsSettings(jsonText: String) {
         val values = runCatching { Json.parseToJsonElement(jsonText).jsonObject }.getOrNull() ?: return
         context.numerisPreferences.edit { preferences ->
@@ -73,13 +69,6 @@ class AppPreferencesRepository(
         context.numerisPreferences.edit { it[key] = value }
     }
 
-    private suspend fun update(
-        key: androidx.datastore.preferences.core.Preferences.Key<Boolean>,
-        value: Boolean,
-    ) {
-        context.numerisPreferences.edit { it[key] = value }
-    }
-
     private fun String.toPeriod(): Period =
         Period.entries.firstOrNull { it.name.equals(this, ignoreCase = true) }
             ?: Period.Last7Days
@@ -88,7 +77,7 @@ class AppPreferencesRepository(
         when (lowercase()) {
             "overview", "traffic", "search" -> lowercase()
             "dashboard" -> "overview"
-            "cloudflare", "googleanalytics" -> "traffic"
+            "cloudflare" -> "traffic"
             "searchconsole", "bing" -> "search"
             "performance" -> "performance"
             "health" -> "health"
@@ -104,6 +93,5 @@ class AppPreferencesRepository(
         val lastPageKey = stringPreferencesKey("last_page")
         val backgroundSyncEnabledKey = booleanPreferencesKey("background_sync_enabled")
         val backgroundSyncHoursKey = intPreferencesKey("background_sync_hours")
-        val biometricLockEnabledKey = booleanPreferencesKey("biometric_lock_enabled")
     }
 }

@@ -27,13 +27,12 @@ internal fun com.emmah.numeris.MoreDestination(context: com.emmah.numeris.ShellC
     - context: UNSTABLE (has mutable properties or unstable members)
 
 @Composable
-internal fun com.emmah.numeris.MoreScreen(preferences: com.emmah.numeris.data.AppPreferences, onSetBackgroundSync: kotlin.Function2<kotlin.Boolean, kotlin.Int, kotlin.Unit>, onSetBiometricLock: kotlin.Function1<kotlin.Boolean, kotlin.Unit>, openHealth: kotlin.Function0<kotlin.Unit>, openSources: kotlin.Function0<kotlin.Unit>): kotlin.Unit
-  skippable: false
+internal fun com.emmah.numeris.MoreScreen(preferences: com.emmah.numeris.data.AppPreferences, onSetBackgroundSync: kotlin.Function2<kotlin.Boolean, kotlin.Int, kotlin.Unit>, openHealth: kotlin.Function0<kotlin.Unit>, openSources: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+  skippable: true
   restartable: true
   params:
-    - preferences: UNSTABLE (has mutable properties or unstable members)
+    - preferences: STABLE (stability configuration file type)
     - onSetBackgroundSync: STABLE (function type)
-    - onSetBiometricLock: STABLE (function type)
     - openHealth: STABLE (function type)
     - openSources: STABLE (function type)
 
@@ -48,22 +47,19 @@ private fun com.emmah.numeris.NavigationRow(title: kotlin.String, detail: kotlin
     - divider: STABLE (primitive type)
 
 @Composable
-private fun com.emmah.numeris.NumerisContent(lockState: com.emmah.numeris.core.security.AppLockState, appLock: com.emmah.numeris.core.security.BiometricAppLock, container: com.emmah.numeris.AppContainer, authorizeGoogle: kotlin.Function0<kotlin.Unit>): kotlin.Unit
+private fun com.emmah.numeris.NumerisContent(container: com.emmah.numeris.AppContainer, authorizeGoogle: kotlin.Function0<kotlin.Unit>): kotlin.Unit
   skippable: false
   restartable: true
   params:
-    - lockState: UNSTABLE (has mutable properties or unstable members)
-    - appLock: UNSTABLE (has mutable properties or unstable members)
     - container: UNSTABLE (has mutable properties or unstable members)
     - authorizeGoogle: STABLE (function type)
 
 @Composable
-public fun com.emmah.numeris.NumerisShell(container: com.emmah.numeris.AppContainer, requireBiometric: kotlin.Function1<kotlin.Function0<kotlin.Unit>, kotlin.Unit>, authorizeGoogle: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
+public fun com.emmah.numeris.NumerisShell(container: com.emmah.numeris.AppContainer, authorizeGoogle: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
   skippable: false
   restartable: true
   params:
     - container: UNSTABLE (has mutable properties or unstable members)
-    - requireBiometric: STABLE (function type)
     - authorizeGoogle: STABLE (function type)
     - modifier: STABLE (marked @Stable or @Immutable)
 
@@ -88,15 +84,6 @@ internal fun com.emmah.numeris.PerformanceDestination(context: com.emmah.numeris
   restartable: true
   params:
     - context: UNSTABLE (has mutable properties or unstable members)
-
-@Composable
-private fun com.emmah.numeris.PrivacySyncCard(preferences: com.emmah.numeris.data.AppPreferences, onSetBackgroundSync: kotlin.Function2<kotlin.Boolean, kotlin.Int, kotlin.Unit>, onSetBiometricLock: kotlin.Function1<kotlin.Boolean, kotlin.Unit>): kotlin.Unit
-  skippable: false
-  restartable: true
-  params:
-    - preferences: UNSTABLE (has mutable properties or unstable members)
-    - onSetBackgroundSync: STABLE (function type)
-    - onSetBiometricLock: STABLE (function type)
 
 @Composable
 internal fun com.emmah.numeris.ReportDestination(route: androidx.navigation3.runtime.NavKey, context: com.emmah.numeris.ShellContext): kotlin.Unit
@@ -148,6 +135,14 @@ internal fun com.emmah.numeris.SourcesDestination(route: com.emmah.numeris.Sourc
   params:
     - route: STABLE (class with no mutable properties)
     - context: UNSTABLE (has mutable properties or unstable members)
+
+@Composable
+private fun com.emmah.numeris.SyncCard(preferences: com.emmah.numeris.data.AppPreferences, onSetBackgroundSync: kotlin.Function2<kotlin.Boolean, kotlin.Int, kotlin.Unit>): kotlin.Unit
+  skippable: true
+  restartable: true
+  params:
+    - preferences: STABLE (stability configuration file type)
+    - onSetBackgroundSync: STABLE (function type)
 
 @Composable
 private fun com.emmah.numeris.SyncNotice(state: com.emmah.numeris.core.model.SyncState, onOpenSources: kotlin.Function0<kotlin.Unit>): kotlin.Unit

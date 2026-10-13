@@ -29,7 +29,7 @@ data class DecryptedExport(
 )
 
 object ImportPackageReader {
-    private val allowedEntries = setOf("numeris.db", "manifest.json", "settings.json", "secrets.json")
+    private val allowedEntries = setOf(DATABASE_ENTRY, "manifest.json", "settings.json", "secrets.json")
     private val json = Json { ignoreUnknownKeys = true }
 
     @Suppress("TooGenericExceptionCaught")
@@ -43,7 +43,7 @@ object ImportPackageReader {
             prepareEmptyDirectory(directory)
             val metadata = extractValidatedZip(payload, directory)
             try {
-                val database = directory.resolve("numeris.db").requireFile()
+                val database = directory.resolve(DATABASE_ENTRY).requireFile()
                 val manifest = readManifest(metadata.getValue("manifest.json").toString(Charsets.UTF_8))
                 require(manifest.exportVersion == SUPPORTED_VERSION) { "Import manifest version is unsupported" }
                 val settings = metadata.getValue("settings.json").toString(Charsets.UTF_8)
@@ -101,7 +101,7 @@ object ImportPackageReader {
         metadata: MutableMap<String, ByteArray>,
         remaining: Long,
     ): Long =
-        if (name == "numeris.db") {
+        if (name == DATABASE_ENTRY) {
             FileOutputStream(directory.resolve(name)).use { copyLimited(zip, it, remaining) }
         } else {
             ByteArrayOutputStream().use { output ->
@@ -165,3 +165,5 @@ object ImportPackageReader {
     private const val MAX_UNCOMPRESSED_BYTES = 1_000_000_000L
     private const val MAX_METADATA_BYTES = 1_000_000L
 }
+
+private const val DATABASE_ENTRY = "numeris.db"

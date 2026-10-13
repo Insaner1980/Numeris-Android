@@ -33,7 +33,7 @@ import org.junit.Test
 import java.time.Instant
 import java.time.LocalDate
 
-class ShellJourneyTest {
+open class ShellJourneyTest {
     private val tab = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Tab)
     private val filterChip = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.DropdownList)
 
@@ -42,7 +42,6 @@ class ShellJourneyTest {
 
     @Before fun seed() =
         runBlocking {
-            container.preferences.setBiometricLock(false)
             container.preferences.selectDomain("all")
             container.preferences.selectPeriod(Period.Last7Days)
             container.preferences.setBackgroundSync(false, 24)
@@ -160,7 +159,7 @@ class ShellJourneyTest {
             .performClick()
         compose.waitForIdle()
         compose.onNode(hasContentDescription("Back")).performClick()
-        compose.onNode(hasText("Privacy and sync")).assertIsDisplayed()
+        compose.onNode(hasText("Sync")).assertIsDisplayed()
     }
 
     private fun navigate(label: String) {

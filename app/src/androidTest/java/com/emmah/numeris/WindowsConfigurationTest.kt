@@ -38,8 +38,7 @@ class WindowsConfigurationTest {
             val preferences = AppPreferencesRepository(context)
             val originalPreferences = preferences.preferences.first()
             val file = File(context.cacheDir, "windows-connections-${UUID.randomUUID()}.nmrx")
-            instrumentation.context.assets
-                .open("windows-connections.nmrx")
+            testFixture("windows-connections.nmrx")
                 .use { input -> file.outputStream().use(input::copyTo) }
             val database = testDatabase()
             var interruptKey: SecretKey? = null
@@ -58,7 +57,7 @@ class WindowsConfigurationTest {
                 preferences.selectDomain("all")
                 preferences.selectPeriod(Period.Last7Days)
                 preferences.selectPage("overview")
-                database.connectionDao().upsert(listOf(ConnectionEntity("android:kept", "google_analytics", "configured")))
+                database.connectionDao().upsert(listOf(ConnectionEntity("android:kept", "uptime", "configured")))
                 database.cloudflareDao().upsertTraffic(
                     listOf(CloudflareTrafficEntity("kept.com", "2026-10-10", uniqueVisitors = 999, fetchedAt = "2026-10-11T00:00:00Z")),
                 )
@@ -110,7 +109,6 @@ class WindowsConfigurationTest {
                 }
                 assertFalse(secrets.contains(journal))
                 assertNotNull(database.connectionDao().find("android:kept"))
-                assertEquals(originalPreferences.biometricLockEnabled, preferences.preferences.first().biometricLockEnabled)
                 assertEquals(originalPreferences.backgroundSyncEnabled, preferences.preferences.first().backgroundSyncEnabled)
                 assertTrue(file.isFile)
             } finally {
