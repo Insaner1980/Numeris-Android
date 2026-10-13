@@ -78,6 +78,14 @@ dependencyCheck {
 }
 
 dependencies {
+    constraints {
+        implementation(libs.androidx.concurrent.futures) {
+            because("Keep the application and Android test runtime on compatible Concurrent versions.")
+        }
+        implementation(libs.androidx.concurrent.futures.ktx) {
+            because("Keep the application and Android test runtime on compatible Concurrent versions.")
+        }
+    }
     lintChecks(libs.android.security.lints)
     implementation(project(":core:model"))
     implementation(project(":core:database"))
