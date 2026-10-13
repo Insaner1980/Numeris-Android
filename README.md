@@ -2,7 +2,7 @@
 
 Numeriksen itsenäinen, henkilökohtaiseen käyttöön tarkoitettu Android-versio. Sovellus tallentaa raporttidatan paikalliseen Room-tietokantaan ja synkronoi providerit suoraan ilman Windows-konetta tai etäpalvelinta.
 
-Raportit: portfolio-Overview ja Page detail, Cloudflare/Web Analytics, Google/Bing, CrUX/PageSpeed sekä Uptime/Sitemap. Sources hallitsee provider-kohtaiset yhteydet ja mitatut URL:t. GA4 on poistunut aktiivisista toiminnoista; vanha Android-historia säilyy. Windowsin Sources → Android data transfer vie salatun `.nmrx`-paketin: raportit sekä valinnaisesti yhteydet, API-avaimet ja raporttivalinnat. Androidin Sources → Import from Windows näyttää sisällön ennen tuontia. Google-kirjautuminen tehdään Androidissa uudelleen.
+Raportit: portfolio-Overview ja Page detail, Cloudflare/Web Analytics, Google/Bing, CrUX/PageSpeed sekä Uptime/Sitemap. Sources hallitsee provider-kohtaiset yhteydet ja mitatut URL:t. GA4 on poistettu kokonaan; Room-migraatio 1→2 poistaa myös vanhan GA4-historian ja yhteydet. Windowsin Sources → Android data transfer vie salatun `.nmrx`-paketin: raportit sekä valinnaisesti yhteydet, API-avaimet ja raporttivalinnat. Androidin Sources → Import from Windows näyttää sisällön ennen tuontia. Google-kirjautuminen tehdään Androidissa uudelleen.
 
 Toteutuksen hyväksyntänäyttö ja avoimet rajat: [parity acceptance](docs/parity-acceptance.md). Havainnekuvat ovat [design-preview](docs/design-preview/README.md)-hakemistossa.
 

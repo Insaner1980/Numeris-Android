@@ -8,61 +8,26 @@ param(
 
 $ErrorActionPreference = "Stop"
 $projectRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
-$branch = & git -C $projectRoot branch --show-current
-if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($branch)) {
-    throw "Sonar analysis requires a named Git branch."
-}
-$gradleArguments = @("--no-daemon", "--console=plain", "assembleDebug", "sonar")
-$analysisMode = "main branch"
-$blocker = $null
-if ($branch -eq "main") {
-    $gradleArguments += "-Dsonar.branch.name=main"
-} else {
-    $analysisMode = "pull request"
-    if (-not (Get-Command gh -CommandType Application -ErrorAction SilentlyContinue)) {
-        throw "GitHub CLI (gh) is required to find the pull request for Sonar analysis."
-    }
-    $prJson = & gh pr list --repo Insaner1980/Numeris-Android --head $branch --base main `
-        --state open --json number,headRefName,baseRefName,headRepository
-    if ($LASTEXITCODE -ne 0) {
-        throw "GitHub pull request lookup failed. Check gh auth status."
-    }
-    $pullRequests = @($prJson | ConvertFrom-Json | Where-Object {
-        $_.headRefName -eq $branch -and $_.baseRefName -eq "main" -and
-        $_.headRepository.nameWithOwner -eq "Insaner1980/Numeris-Android"
-    })
-    if ($pullRequests.Count -eq 0) {
-        $blocker = "Nykyinen SonarCloud-tilaus tarvitsee haaralle '$branch' avoimen PR:n main-haaraan. Luo PR itse GitHubissa ja aja sonar uudelleen. Buildia tai analyysia ei käynnistetty."
-    } elseif ($pullRequests.Count -gt 1) {
-        throw "Multiple open pull requests matched branch '$branch'; Sonar analysis cannot choose one."
-    } else {
-        $pullRequest = $pullRequests[0]
-        $analysisMode = "pull request #$($pullRequest.number) -> main"
-        $gradleArguments += @(
-            "-Dsonar.pullrequest.key=$($pullRequest.number)",
-            "-Dsonar.pullrequest.branch=$branch",
-            "-Dsonar.pullrequest.base=main"
-        )
-    }
-}
+$gradleArguments = @(
+    "--no-daemon", "--no-configuration-cache", "--console=plain", "--max-workers=1",
+    "-Pkotlin.compiler.execution.strategy=in-process",
+    "-Dorg.gradle.jvmargs=-Xmx2g -Dfile.encoding=UTF-8",
+    "assembleDebug", "coverageReport", "sonar"
+)
+$analysisMode = "local working tree -> SonarCloud main branch"
 if ($PlanOnly) {
     Write-Output @(
         "sonar",
         "  - root: $projectRoot",
         "  - project: Insaner1980_Numeris-Android (organization: insaner1980)",
         "  - server: https://sonarcloud.io",
-        "  - branch: $branch",
         "  - mode: $analysisMode",
-        $(if ($blocker) { "  - BLOCKED: $blocker" } else { "  - Gradle: $($gradleArguments -join ' ')" }),
+        "  - Gradle: $($gradleArguments -join ' ')",
         "  - uploads source and analysis metadata; waits for the quality gate",
         "  - report: reports/sonar.txt",
         "  - actual execution requires -AllowExternalUpload and SONAR_TOKEN"
     )
-    exit $(if ($blocker) { 2 } else { 0 })
-}
-if ($blocker) {
-    Write-Error $blocker -ErrorAction Continue
-    exit 2
+    exit 0
 }
 if (-not $AllowExternalUpload) {
     throw "External upload requires -AllowExternalUpload. Use sonar -PlanOnly to review the scope."
@@ -74,7 +39,7 @@ $reportDirectory = Join-Path $projectRoot "reports"
 New-Item -ItemType Directory -Force -Path $reportDirectory | Out-Null
 $reportPath = Join-Path $reportDirectory "sonar.txt"
 Set-Content -LiteralPath $reportPath -Encoding utf8 -Value @(
-    "sonar", "Root: $projectRoot", "Branch: $branch", "Mode: $analysisMode", "Started: $(Get-Date -Format o)"
+    "sonar", "Root: $projectRoot", "Mode: $analysisMode", "Started: $(Get-Date -Format o)"
 )
 try {
     Import-Module "C:\Dev\Android-check\tools\CheckRuntime.psm1" -Force -ErrorAction Stop
@@ -91,7 +56,14 @@ try {
         throw "Sonar analysis timed out after $GradleTimeoutSeconds seconds."
     }
     if ($result.ExitCode -ne 0) {
-        throw "Sonar analysis or quality gate failed (exit $($result.ExitCode))."
+        if (($result.StandardOutput + "`n" + $result.StandardError) -match '(?m)^QUALITY GATE STATUS: FAILED\b') {
+            $summary = "sonar: FINDINGS - analysis completed, but the SonarCloud quality gate failed. " +
+                "See https://sonarcloud.io/dashboard?id=Insaner1980_Numeris-Android and $reportPath"
+            Add-Content -LiteralPath $reportPath -Encoding utf8 -Value $summary
+            Write-Output $summary
+            exit 1
+        }
+        throw "Sonar analysis failed (exit $($result.ExitCode)). See $reportPath"
     }
     Write-Output "sonar: analysis and quality gate passed -> $reportPath"
     exit 0

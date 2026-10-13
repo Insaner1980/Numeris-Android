@@ -167,20 +167,6 @@ data class BingRankTrafficEntity(
     val fetchedAt: String,
 )
 
-@Entity(tableName = "google_analytics_daily", primaryKeys = ["domain", "propertyId", "date"])
-data class GoogleAnalyticsDailyEntity(
-    val domain: String,
-    val propertyId: String,
-    val date: String,
-    val activeUsers: Long,
-    val sessions: Long,
-    val pageViews: Long,
-    val engagedSessions: Long,
-    val eventCount: Long,
-    val engagementRate: Double,
-    val fetchedAt: String,
-)
-
 @Entity(tableName = "uptime_checks", primaryKeys = ["domain", "checkedAt"])
 data class UptimeCheckEntity(
     val domain: String,

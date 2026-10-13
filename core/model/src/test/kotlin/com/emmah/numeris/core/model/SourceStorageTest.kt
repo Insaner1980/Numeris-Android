@@ -11,7 +11,6 @@ class SourceStorageTest {
                 "cloudflare",
                 "web_analytics",
                 "search_console",
-                "google_analytics",
                 "crux",
                 "pagespeed",
                 "bing_webmaster",

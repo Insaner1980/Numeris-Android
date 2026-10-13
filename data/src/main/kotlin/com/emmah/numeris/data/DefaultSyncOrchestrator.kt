@@ -114,7 +114,7 @@ class DefaultSyncOrchestrator(
     ): SyncBatchResult =
         exclusive {
             val eligible = configuredSources()
-            val requested = sources.filter { it in eligible && it != SourceId.GoogleAnalytics }
+            val requested = sources.filter { it in eligible }
             if (requested.isEmpty()) {
                 val finalState = SyncState.Success(Instant.now())
                 state.value = finalState

@@ -16,7 +16,6 @@ enum class SourceId(
     CloudflareZone("cloudflare"),
     CloudflareWebAnalytics("web_analytics"),
     SearchConsole("search_console"),
-    GoogleAnalytics("google_analytics"),
     Crux("crux"),
     PageSpeed("pagespeed"),
     Bing("bing_webmaster"),
@@ -32,7 +31,6 @@ val SourceId.displayName: String
             SourceId.CloudflareZone -> "Cloudflare Zone Analytics"
             SourceId.CloudflareWebAnalytics -> "Cloudflare Web Analytics"
             SourceId.SearchConsole -> "Google Search Console"
-            SourceId.GoogleAnalytics -> "Google Analytics"
             SourceId.Crux -> "Chrome UX Report"
             SourceId.PageSpeed -> "PageSpeed Insights"
             SourceId.Bing -> "Bing Webmaster"

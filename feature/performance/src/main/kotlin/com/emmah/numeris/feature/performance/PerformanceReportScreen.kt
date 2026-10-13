@@ -48,6 +48,7 @@ import java.time.LocalDate
 @Composable
 fun PerformanceReportScreen(
     report: PerformanceReport,
+    // CPD-OFF: Report screens intentionally expose the same filter and navigation callbacks.
     domain: String,
     domains: List<String>,
     period: Period,
@@ -57,6 +58,7 @@ fun PerformanceReportScreen(
     onPeriod: (Period) -> Unit,
     onTab: (String) -> Unit,
     onRefresh: () -> Unit,
+    // CPD-ON
     onManageUrls: () -> Unit,
     modifier: Modifier = Modifier,
 ) {

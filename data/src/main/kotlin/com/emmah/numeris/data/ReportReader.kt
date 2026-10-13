@@ -37,7 +37,7 @@ internal class ReportReader(
 
     suspend fun domains(): List<String> {
         val configured =
-            dao.readConnections().filter { it.source != "google_analytics" }.flatMap { connection ->
+            dao.readConnections().flatMap { connection ->
                 val metadata =
                     runCatching {
                         Json
@@ -193,8 +193,7 @@ internal class ReportReader(
         val pages = portfolioPages(report.traffic, report.google, report.bing, report.health)
         val connections =
             dao.readConnections().filter {
-                it.source != "google_analytics" &&
-                    it.status != "disconnected" &&
+                it.status != "disconnected" &&
                     (domain == "all" || domain in connectionSites(it))
             }
         val metrics = portfolioMetrics(domain, report, sourceFreshness(connections, clock))

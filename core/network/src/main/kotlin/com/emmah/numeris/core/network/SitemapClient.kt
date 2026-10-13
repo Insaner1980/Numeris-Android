@@ -27,6 +27,8 @@ class SitemapClient(
         return urls.sorted()
     }
 
+    // These fixed XML feature identifiers disable external entities; they are not fetched URLs.
+    @Suppress("kotlin:S5332")
     internal fun parseLocations(xml: String): List<String> {
         val factory =
             DocumentBuilderFactory.newInstance().apply {

@@ -244,7 +244,6 @@ internal fun SourcesDestination(
     SourcesScreen(
         context.container.connectionRepository,
         context.container.importRepository,
-        context.requireBiometric,
         context.authorizeGoogle,
         reports = context.container.reportRepository,
         discovery = context.container.sourceDiscovery,
@@ -268,9 +267,6 @@ internal fun MoreDestination(context: ShellContext) {
                     hours,
                 )
             }
-        },
-        { enabled ->
-            context.scope.launch { context.container.preferences.setBiometricLock(enabled) }
         },
         { context.backStack.add(HealthRoute) },
         { context.backStack.add(SourcesRoute()) },

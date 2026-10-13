@@ -70,7 +70,7 @@ class DefaultSyncOrchestratorTest {
             assertEquals(1, calls)
         }
 
-    @Test fun syncSkipsUnconfiguredAndRetiredProvidersAndRetainsPartialFailure() =
+    @Test fun syncSkipsUnconfiguredProvidersAndRetainsPartialFailure() =
         runBlocking {
             val calls = mutableListOf<SourceId>()
 
@@ -92,9 +92,9 @@ class DefaultSyncOrchestratorTest {
                     listOf(
                         service(SourceId.CloudflareZone),
                         service(SourceId.Bing, true),
-                        service(SourceId.GoogleAnalytics),
+                        service(SourceId.Uptime),
                     ),
-                    configuredSources = { setOf(SourceId.CloudflareZone, SourceId.Bing, SourceId.GoogleAnalytics) },
+                    configuredSources = { setOf(SourceId.CloudflareZone, SourceId.Bing) },
                 )
             val state = orchestrator.syncAll(SyncRequest(Period.Last7Days)).state
             assertEquals(listOf(SourceId.CloudflareZone, SourceId.Bing), calls)

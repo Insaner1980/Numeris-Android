@@ -4,7 +4,6 @@ import android.database.sqlite.SQLiteDatabase
 import androidx.test.platform.app.InstrumentationRegistry
 import com.emmah.numeris.core.database.CloudflareTrafficEntity
 import com.emmah.numeris.core.database.ConnectionEntity
-import com.emmah.numeris.core.database.GoogleAnalyticsDailyEntity
 import com.emmah.numeris.core.model.Period
 import com.emmah.numeris.core.security.ImportManifest
 import com.emmah.numeris.data.ReportRepository
@@ -29,11 +28,6 @@ class ImportContractTest {
             try {
                 val manifest = schema11Fixture(file)
                 database.connectionDao().upsert(listOf(ConnectionEntity("android:kept", "crux", "configured")))
-                database.googleAnalyticsDao().upsertGoogleAnalytics(
-                    listOf(
-                        GoogleAnalyticsDailyEntity("retired.com", "old", "2026-10-11", 1, 2, 3, 1, 4, 0.5, "fixture"),
-                    ),
-                )
                 val importer = WindowsDatabaseImporter(database)
                 assertEquals(listOf("fixture.com"), importer.validateAndPreview(file, manifest).domains.distinct())
                 importer.replaceFromSnapshot(file, manifest)
@@ -67,14 +61,6 @@ class ImportContractTest {
                         .url,
                 )
                 assertNotNull(database.connectionDao().find("android:kept"))
-                assertEquals(
-                    1,
-                    database
-                        .googleAnalyticsDao()
-                        .observeGoogleAnalytics("retired.com", "2026-10-01", "2026-10-11")
-                        .first()
-                        .size,
-                )
             } finally {
                 database.close()
                 file.delete()
@@ -136,10 +122,8 @@ internal fun schema11Fixture(
     file: File,
     additionalSql: String = "",
 ): ImportManifest {
-    val instrumentation = InstrumentationRegistry.getInstrumentation()
     val sql =
-        instrumentation.context.assets
-            .open("schema11.sql")
+        testFixture("schema11.sql")
             .bufferedReader()
             .use { it.readText() }
     val counts =

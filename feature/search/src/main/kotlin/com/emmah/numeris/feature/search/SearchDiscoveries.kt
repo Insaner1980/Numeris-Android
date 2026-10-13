@@ -5,6 +5,7 @@ package com.emmah.numeris.feature.search
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import com.emmah.numeris.core.designsystem.ExpandableRow
 import com.emmah.numeris.core.designsystem.NumerisColors
 import com.emmah.numeris.core.designsystem.ReportSection
@@ -56,28 +57,37 @@ internal fun LazyListScope.searchDiscoveries(
             if (tab == "Queries") "New queries" else "Declining pages",
             supporting = "Compared with the previous period",
         ) {
-            Column {
-                if (!report.comparisonReady) {
-                    Text("A complete current and previous period is required.", color = NumerisColors.TertiaryText)
-                } else {
-                    val discoveries =
-                        report.rows(kind).filter { row ->
-                            if (tab == "Queries") {
-                                row.previousClicks == 0L && (row.clicks ?: 0) > 0
-                            } else {
-                                (row.previousClicks ?: 0) > (row.clicks ?: 0)
-                            }
-                        }
-                    if (discoveries.isEmpty()) {
-                        Text(
-                            "No ${if (tab == "Queries") "new queries" else "declining pages"} in the stored comparison",
-                            color = NumerisColors.TertiaryText,
-                        )
-                    }
-                    discoveries.take(DISCOVERY_LIMIT).forEach { SearchDataRow(it) }
-                }
+            DiscoveryRows(report, tab, kind)
+        }
+    }
+}
+
+@Composable
+private fun DiscoveryRows(
+    report: SearchReport,
+    tab: String,
+    kind: String,
+) {
+    if (!report.comparisonReady) {
+        Text("A complete current and previous period is required.", color = NumerisColors.TertiaryText)
+        return
+    }
+    val discoveries =
+        report.rows(kind).filter { row ->
+            if (tab == "Queries") {
+                row.previousClicks == 0L && (row.clicks ?: 0) > 0
+            } else {
+                (row.previousClicks ?: 0) > (row.clicks ?: 0)
             }
         }
+    Column {
+        if (discoveries.isEmpty()) {
+            Text(
+                "No ${if (tab == "Queries") "new queries" else "declining pages"} in the stored comparison",
+                color = NumerisColors.TertiaryText,
+            )
+        }
+        discoveries.take(DISCOVERY_LIMIT).forEach { SearchDataRow(it) }
     }
 }
 

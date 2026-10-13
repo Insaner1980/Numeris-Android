@@ -42,7 +42,7 @@ internal fun ConnectionEntity.configuredSites(): List<String> =
         .filter(String::isNotBlank)
 
 internal fun Map<String, String>.webSites(): List<WebAnalyticsSiteEntity> =
-    get("siteMappings")
+    this["siteMappings"]
         .orEmpty()
         .lines()
         .filter(String::isNotBlank)

@@ -140,18 +140,18 @@ public fun com.emmah.numeris.core.designsystem.KpiGrid(metrics: kotlin.collectio
 
 @Composable
 private fun com.emmah.numeris.core.designsystem.KpiTile(metric: com.emmah.numeris.core.model.Metric, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - metric: UNSTABLE (has mutable properties or unstable members)
+    - metric: STABLE (stability configuration file type)
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
 public fun com.emmah.numeris.core.designsystem.LabScores(run: com.emmah.numeris.core.model.LabRun, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - run: UNSTABLE (has mutable properties or unstable members)
+    - run: STABLE (stability configuration file type)
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable

@@ -26,7 +26,7 @@ internal enum class SourceGroup(
 internal val SourceId.group: SourceGroup
     get() =
         when (this) {
-            SourceId.CloudflareZone, SourceId.CloudflareWebAnalytics, SourceId.GoogleAnalytics -> SourceGroup.Analytics
+            SourceId.CloudflareZone, SourceId.CloudflareWebAnalytics -> SourceGroup.Analytics
             SourceId.SearchConsole, SourceId.Bing -> SourceGroup.Search
             SourceId.Crux, SourceId.PageSpeed -> SourceGroup.Performance
             SourceId.Uptime, SourceId.Sitemap -> SourceGroup.Health
@@ -51,12 +51,12 @@ internal val connectionSetups =
             listOf("sites (comma separated)"),
             description = "Google clicks, impressions, and indexing",
         ),
-        ConnectionSetup(SourceId.Crux, emptyList(), "API key", "Real-user Core Web Vitals"),
-        ConnectionSetup(SourceId.PageSpeed, emptyList(), "API key", "Lighthouse lab scores"),
+        ConnectionSetup(SourceId.Crux, emptyList(), API_KEY_LABEL, "Real-user Core Web Vitals"),
+        ConnectionSetup(SourceId.PageSpeed, emptyList(), API_KEY_LABEL, "Lighthouse lab scores"),
         ConnectionSetup(
             SourceId.Bing,
             listOf("sites (comma separated)"),
-            "API key",
+            API_KEY_LABEL,
             "Bing clicks, impressions, and crawl reports",
         ),
         ConnectionSetup(SourceId.Uptime, emptyList(), description = "Response checks for your sites"),
@@ -70,3 +70,5 @@ internal class ConnectionActions(
     val onDelete: (Connection) -> Unit,
     val onEdit: (Connection) -> Unit,
 )
+
+private const val API_KEY_LABEL = "API key"

@@ -7,10 +7,10 @@ object RawJsonStoragePolicy {
     private val sensitiveJsonValue =
         Regex(
             pattern =
-                """(?i)(\"(?:access[_-]?token|refresh[_-]?token|api[_-]?key|""" +
+                """(?i)(\"(?:(?:access|refresh)[_-]?token|api[_-]?key|""" +
                     """client[_-]?secret|password|authorization)\"\s*:\s*)\"[^\"]*\"""",
         )
-    private val bearerValue = Regex("(?i)Bearer\\s+[A-Za-z0-9._~+/=-]+")
+    private val bearerValue = Regex("(?i)Bearer\\s+[a-z0-9._~+/=-]+")
     private val sensitiveQueryValue = Regex("(?i)([?&](?:key|token|api_key|access_token)=)[^&#\\s]+")
 
     fun redactAndLimit(

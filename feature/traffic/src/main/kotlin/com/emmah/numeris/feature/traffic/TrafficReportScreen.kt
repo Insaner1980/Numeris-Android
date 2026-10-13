@@ -41,6 +41,7 @@ val trafficViews = listOf("Traffic", "Web Analytics")
 @Composable
 fun TrafficReportScreen(
     report: TrafficReport,
+    // CPD-OFF: Report screens intentionally expose the same filter and navigation callbacks.
     domain: String,
     domains: List<String>,
     period: Period,
@@ -50,6 +51,7 @@ fun TrafficReportScreen(
     onPeriod: (Period) -> Unit,
     onTab: (String) -> Unit,
     onRefresh: () -> Unit,
+    // CPD-ON
     modifier: Modifier = Modifier,
 ) {
     val selected = tab.takeIf { it in trafficViews } ?: trafficViews.first()

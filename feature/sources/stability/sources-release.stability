@@ -70,10 +70,10 @@ private fun com.emmah.numeris.feature.sources.DiscoverTargets(selected: com.emma
 
 @Composable
 internal fun com.emmah.numeris.feature.sources.GoogleAuthorizationRow(feedback: com.emmah.numeris.data.GoogleAuthorizationFeedback?, authorizeGoogle: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - feedback: UNSTABLE (has mutable properties or unstable members)
+    - feedback: STABLE (stability configuration file type)
     - authorizeGoogle: STABLE (function type)
     - modifier: STABLE (marked @Stable or @Immutable)
 
@@ -107,10 +107,10 @@ internal fun com.emmah.numeris.feature.sources.ImportRow(enabled: kotlin.Boolean
 
 @Composable
 private fun com.emmah.numeris.feature.sources.MeasuredUrlRow(url: com.emmah.numeris.core.model.MeasuredUrl, onEnableChange: kotlin.Function1<kotlin.Boolean, kotlin.Unit>, onRemove: kotlin.Function0<kotlin.Unit>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - url: UNSTABLE (has mutable properties or unstable members)
+    - url: STABLE (stability configuration file type)
     - onEnableChange: STABLE (function type)
     - onRemove: STABLE (function type)
 
@@ -149,13 +149,12 @@ private fun com.emmah.numeris.feature.sources.SourcesHeader(connections: kotlin.
     - onAdd: STABLE (function type)
 
 @Composable
-public fun com.emmah.numeris.feature.sources.SourcesScreen(connections: com.emmah.numeris.core.model.ConnectionRepository, imports: com.emmah.numeris.data.AndroidImportRepository, requireBiometric: kotlin.Function1<kotlin.Function0<kotlin.Unit>, kotlin.Unit>, authorizeGoogle: kotlin.Function0<kotlin.Unit>, reports: com.emmah.numeris.data.ReportRepository, discovery: com.emmah.numeris.data.SourceDiscovery, onBack: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier, initialUrl: kotlin.String, viewModel: com.emmah.numeris.feature.sources.SourcesViewModel, googleAuthorizationFeedback: com.emmah.numeris.data.GoogleAuthorizationFeedback?): kotlin.Unit
+public fun com.emmah.numeris.feature.sources.SourcesScreen(connections: com.emmah.numeris.core.model.ConnectionRepository, imports: com.emmah.numeris.data.AndroidImportRepository, authorizeGoogle: kotlin.Function0<kotlin.Unit>, reports: com.emmah.numeris.data.ReportRepository, discovery: com.emmah.numeris.data.SourceDiscovery, onBack: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier, initialUrl: kotlin.String, viewModel: com.emmah.numeris.feature.sources.SourcesViewModel, googleAuthorizationFeedback: com.emmah.numeris.data.GoogleAuthorizationFeedback?): kotlin.Unit
   skippable: false
   restartable: true
   params:
     - connections: UNKNOWN (interface or non-final class; concrete implementation unknown)
     - imports: UNSTABLE (has mutable properties or unstable members)
-    - requireBiometric: STABLE (function type)
     - authorizeGoogle: STABLE (function type)
     - reports: UNSTABLE (has mutable properties or unstable members)
     - discovery: UNSTABLE (has mutable properties or unstable members)
@@ -163,5 +162,5 @@ public fun com.emmah.numeris.feature.sources.SourcesScreen(connections: com.emma
     - modifier: STABLE (marked @Stable or @Immutable)
     - initialUrl: STABLE (String is immutable)
     - viewModel: UNSTABLE (has mutable properties or unstable members)
-    - googleAuthorizationFeedback: UNSTABLE (has mutable properties or unstable members)
+    - googleAuthorizationFeedback: STABLE (stability configuration file type)
 

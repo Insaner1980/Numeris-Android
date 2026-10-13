@@ -46,12 +46,12 @@ class WindowsDatabaseImporter(
                 "Import manifest is incomplete"
             }
             insertStatements.forEach { sql ->
-                val table = sql.substringAfter(" FROM imported.").substringBefore(' ')
+                val table = sql.substringAfter(IMPORTED_FROM).substringBefore(' ')
                 val required =
                     sql
                         .substringAfter(
-                            " SELECT ",
-                        ).substringBefore(" FROM imported.")
+                            SELECT_SEPARATOR,
+                        ).substringBefore(IMPORTED_FROM)
                         .split(',')
                         .map(String::trim)
                         .filter {
@@ -99,23 +99,7 @@ class WindowsDatabaseImporter(
             database.useWriterConnection { connection ->
                 connection.immediateTransaction {
                     deleteStatements.forEach { executeSQL(it) }
-                    for (sql in insertStatements) {
-                        val table = sql.substringAfter(" FROM imported.")
-                        val selection = sql.substringAfter(" SELECT ").substringBefore(" FROM imported.")
-                        source.rawQuery("SELECT $selection FROM $table", null).use { rows ->
-                            val insert =
-                                sql.substringBefore(" SELECT ") +
-                                    " VALUES (${List(rows.columnCount) { "?" }.joinToString()})"
-                            usePrepared(insert) { statement ->
-                                while (rows.moveToNext()) {
-                                    coroutineContext.ensureActive()
-                                    statement.bindRow(rows)
-                                    statement.step()
-                                    statement.reset()
-                                }
-                            }
-                        }
-                    }
+                    copyReportRows(source)
                     executeSQL(
                         "INSERT OR REPLACE INTO main.meta (`key`, value) VALUES " +
                             "('android_import_source', 'windows'), ('android_import_format', '1')",
@@ -135,6 +119,26 @@ class WindowsDatabaseImporter(
                             statement.bindText(1, transferId)
                             statement.step()
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    private suspend fun androidx.room3.PooledConnection.copyReportRows(source: SQLiteDatabase) {
+        for (sql in insertStatements) {
+            val table = sql.substringAfter(IMPORTED_FROM)
+            val selection = sql.substringAfter(SELECT_SEPARATOR).substringBefore(IMPORTED_FROM)
+            source.rawQuery("SELECT $selection FROM $table", null).use { rows ->
+                val insert =
+                    sql.substringBefore(SELECT_SEPARATOR) +
+                        " VALUES (${List(rows.columnCount) { "?" }.joinToString()})"
+                usePrepared(insert) { statement ->
+                    while (rows.moveToNext()) {
+                        coroutineContext.ensureActive()
+                        statement.bindRow(rows)
+                        statement.step()
+                        statement.reset()
                     }
                 }
             }
@@ -291,11 +295,6 @@ class WindowsDatabaseImporter(
                 "play_ratings",
                 "play_revenue",
                 "play_crashes",
-                "google_analytics_daily",
-                "google_analytics_pages",
-                "google_analytics_sources",
-                "google_analytics_events",
-                "google_analytics_devices",
             )
         val importedTables =
             setOf(
@@ -355,3 +354,7 @@ class WindowsDatabaseImporter(
             )
     }
 }
+
+private const val IMPORTED_FROM = " FROM imported."
+
+private const val SELECT_SEPARATOR = " SELECT "

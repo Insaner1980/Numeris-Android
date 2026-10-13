@@ -8,23 +8,59 @@ import com.emmah.numeris.core.database.CloudflareTrafficEntity
 import com.emmah.numeris.core.database.ConnectionEntity
 import com.emmah.numeris.core.model.Period
 import com.emmah.numeris.core.model.SecretKey
+import com.emmah.numeris.core.model.SecretStore
 import com.emmah.numeris.data.AndroidImportRepository
 import com.emmah.numeris.data.AppPreferencesRepository
 import com.emmah.numeris.data.DefaultSyncOrchestrator
 import com.emmah.numeris.data.WindowsConfigurationTransfer
 import com.emmah.numeris.data.WindowsDatabaseImporter
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 import java.util.UUID
+import java.util.concurrent.Executors
 
 class WindowsConfigurationTest {
+    @Test fun interruptedTransferRecoveryUsesIoDispatcher() =
+        runBlocking {
+            val context = InstrumentationRegistry.getInstrumentation().targetContext
+            val database = testDatabase()
+            var ioThread: Thread? = null
+            Executors
+                .newSingleThreadExecutor { runnable -> Thread(runnable, "import-recovery-io").also { ioThread = it } }
+                .asCoroutineDispatcher()
+                .use { dispatcher ->
+                    var recoveryThread: Thread? = null
+                    val secrets =
+                        object : SecretStore by MemorySecrets() {
+                            override suspend fun get(key: SecretKey): CharArray? {
+                                recoveryThread = Thread.currentThread()
+                                return null
+                            }
+                        }
+                    try {
+                        AndroidImportRepository(
+                            context,
+                            WindowsDatabaseImporter(database),
+                            DefaultSyncOrchestrator(emptyList()),
+                            WindowsConfigurationTransfer(database, secrets, AppPreferencesRepository(context)),
+                            dispatcher,
+                        ).recoverInterruptedTransfer()
+                        assertSame(ioThread, recoveryThread)
+                    } finally {
+                        database.close()
+                    }
+                }
+        }
+
     @Test fun fullExportImportsConnectionsKeysAndPreferencesWithoutPlaintextSecretFiles() = checkTransfer("success")
 
     @Test fun failedReportCommitRestoresKeysPreferencesAndNonemptyCache() = checkTransfer("database-failure")
@@ -38,8 +74,7 @@ class WindowsConfigurationTest {
             val preferences = AppPreferencesRepository(context)
             val originalPreferences = preferences.preferences.first()
             val file = File(context.cacheDir, "windows-connections-${UUID.randomUUID()}.nmrx")
-            instrumentation.context.assets
-                .open("windows-connections.nmrx")
+            testFixture("windows-connections.nmrx")
                 .use { input -> file.outputStream().use(input::copyTo) }
             val database = testDatabase()
             var interruptKey: SecretKey? = null
@@ -58,7 +93,7 @@ class WindowsConfigurationTest {
                 preferences.selectDomain("all")
                 preferences.selectPeriod(Period.Last7Days)
                 preferences.selectPage("overview")
-                database.connectionDao().upsert(listOf(ConnectionEntity("android:kept", "google_analytics", "configured")))
+                database.connectionDao().upsert(listOf(ConnectionEntity("android:kept", "uptime", "configured")))
                 database.cloudflareDao().upsertTraffic(
                     listOf(CloudflareTrafficEntity("kept.com", "2026-10-10", uniqueVisitors = 999, fetchedAt = "2026-10-11T00:00:00Z")),
                 )
@@ -110,7 +145,6 @@ class WindowsConfigurationTest {
                 }
                 assertFalse(secrets.contains(journal))
                 assertNotNull(database.connectionDao().find("android:kept"))
-                assertEquals(originalPreferences.biometricLockEnabled, preferences.preferences.first().biometricLockEnabled)
                 assertEquals(originalPreferences.backgroundSyncEnabled, preferences.preferences.first().backgroundSyncEnabled)
                 assertTrue(file.isFile)
             } finally {

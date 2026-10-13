@@ -1,3 +1,5 @@
+> Current scope, 2026-10-13: GA4 is fully removed at the user's request, including its API client, sync service, source UI and stored history via Room migration 1 to 2. Any GA4 implementation requirements in this original specification are superseded.
+
 # Numeris Android – kattava toteutussuunnitelma
 
 ## 1. Tavoite ja lukitut ratkaisut
@@ -15,7 +17,7 @@ Lukitut rajaukset:
 - Windowsin nykyinen historia ja asetukset tuodaan Androidiin kerran salatulla vientipaketilla.
 - Kertatuonnin jälkeen Windows ja Android synkronoivat lähteet itsenäisesti.
 - Jatkuvaa laitteiden välistä synkronointia ei rakenneta.
-- Androidissa on biometrinen sovelluslukko.
+- Sovellus avautuu suoraan ilman sovelluslukkoa (käyttäjän päätös 13.10.2026).
 - Käyttöliittymä säilyy englanninkielisenä nykyisen Numeriksen mukaisesti.
 - Android tukee tummaa Numeris-teemaa; vaaleaa teemaa ei toteuteta ensimmäiseen versioon.
 - Puhelin on ensisijainen kohde, mutta layout mukautuu tabletille ja taittuvalle laitteelle.
@@ -38,7 +40,7 @@ Moduulit:
 - `:core:designsystem`: Material 3 -teema, tokenit, ikonit, yhteiset komponentit ja chart palette.
 - `:core:database`: Room-tietokanta, entityt, DAO:t ja migraatiot.
 - `:core:network`: HTTP-client, turvallinen virheenkäsittely, redaktointi ja provider-kohtaiset verkkomallit.
-- `:core:security`: SecretStore, Android Keystore, biometrinen lukko ja salatun tuontipaketin purku.
+- `:core:security`: SecretStore, Android Keystore ja salatun tuontipaketin purku.
 - `:core:testing`: fake-palvelut, fixturet ja testidatan rakentajat.
 - `:data`: repositoryt, API-clientit, synkronointipalvelut, mapperit ja yhteysasetusten hallinta.
 - `:feature:overview`
@@ -178,7 +180,7 @@ Toteutetaan:
 - Lokitus, crash dumpit ja exception-viestit eivät saa sisältää salaisuuksia.
 - Release-buildissä verkon body logging on kokonaan pois käytöstä.
 
-Biometrinen lukko suojaa käyttöliittymän avaamisen, mutta Keystore-avaimelle ei aseteta jokaisella käyttökerralla vaadittavaa biometriaa. Muuten WorkManager ei voisi suorittaa taustasynkronointia laitteen ollessa lukittuna.
+Sovelluslukkoa ei ole. Keystore-avaimelle ei aseteta jokaisella käyttökerralla vaadittavaa biometriaa. Muuten WorkManager ei voisi suorittaa taustasynkronointia laitteen ollessa lukittuna.
 
 ### Google-autorisointi
 
@@ -299,7 +301,7 @@ More avaa Health- ja Sources-kohteet.
 
 Sisältöjärjestys:
 
-1. Top app bar: Numeris, biometrisen lukon tila ja global refresh.
+1. Top app bar: Numeris ja global refresh.
 2. Domain filter chip.
 3. Period filter chip.
 4. Viimeisin onnistunut ja viimeisin yritetty synkronointi.
@@ -544,12 +546,12 @@ Valmis, kun molemmat alustat tuottavat samoista fixtureistä samat domainit, hom
   - viimeisin sivu
   - taustasynkin toggle
   - taustasynkin aikaväli
-  - biometrisen lukon toggle.
+
 - UI lukee aina Roomista ja näyttää cached datan myös syncin aikana.
 
 Valmis, kun fixture-data voidaan kirjoittaa Roomiin, lukea kaikilla raporttikyselyillä ja näyttää offline-tilassa prosessin uudelleenkäynnistyksen jälkeen.
 
-### Vaihe 3 – Keystore, biometria ja Windows-tuonti
+### Vaihe 3 – Keystore ja Windows-tuonti
 
 Windows-Numerikseen lisätään “Export for Numeris Android” -toiminto.
 
@@ -571,7 +573,7 @@ Android-tuonti:
 
 1. Käyttäjä valitsee tiedoston system file pickerillä.
 2. Käyttäjä syöttää passphrasen.
-3. Sovellus autentikoi biometrisesti.
+3. Tuonti jatkuu ilman biometristä tunnistuspyyntöä.
 4. Paketti puretaan sovelluksen cache-hakemistoon.
 5. Header, version, GCM-tag ja manifest validoidaan.
 6. SQLite avataan read-only-tilassa.
@@ -655,9 +657,7 @@ WorkManager on Androidin suositeltu ratkaisu prosessin ja uudelleenkäynnistykse
   - `SyncProgress`
   - `ConfirmDangerDialog`.
 - Toteuta Navigation 3 ja adaptive navigation.
-- Toteuta biometrinen cold-start- ja resume-lukko.
-- Automaattinen uudelleenlukitus tapahtuu viiden minuutin background-ajan jälkeen.
-- Configuration change ei laukaise uudelleenlukitusta.
+- Avaa sovellus ilman cold-start- tai resume-lukkoa.
 
 Valmis, kun shell toimii kompaktissa, medium- ja expanded-koossa ja kaikki komponentit näkyvät Compose Previewissä oikeilla tokeneilla.
 

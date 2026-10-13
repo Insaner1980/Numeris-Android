@@ -44,7 +44,6 @@ import com.emmah.numeris.data.SourceDiscovery
 fun SourcesScreen(
     connections: ConnectionRepository,
     imports: AndroidImportRepository,
-    requireBiometric: (() -> Unit) -> Unit,
     authorizeGoogle: () -> Unit,
     reports: ReportRepository,
     discovery: SourceDiscovery,
@@ -141,7 +140,7 @@ fun SourcesScreen(
         ImportPreviewDialog(
             preview,
             state.importing,
-            onConfirm = { requireBiometric { viewModel.replaceImport() } },
+            onConfirm = viewModel::replaceImport,
             onCancel = viewModel::cancelImport,
         )
     }
@@ -218,7 +217,7 @@ private fun SourcesHeader(
 ) {
     val attention =
         connections.count {
-            it.source != SourceId.GoogleAnalytics && connectionStatus(it).second != PillTone.Positive
+            connectionStatus(it).second != PillTone.Positive
         }
     Column {
         NumerisTopBar("Sources", onBack, actions = { AddSourceButton(onAdd) })

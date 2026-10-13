@@ -1,3 +1,5 @@
+> Current decision, 2026-10-13: The user explicitly authorized complete GA4 removal, including historical data. Room migration 1 to 2 replaces the preservation proposal in section 10 and J14 below. Earlier inspection notes remain historical.
+
 # Numeris Android: desktop parity and mobile redesign plan
 
 **Prepared:** 2026-10-11
@@ -382,11 +384,11 @@ Do not copy Windows OAuth client-secret or loopback login UI into Android. Retai
 
 Connection testing may contact the selected provider, but it must not silently populate report history or run a general sync. Saving configuration does not fetch reports. Preserve cached reports on disconnect unless the user separately requests data deletion. Require confirmation for destructive target/data replacement actions and explain their real effects.
 
-Use existing Keystore/SecretStore handling. Never display a saved secret again; an empty replacement field keeps the existing secret. Preserve the existing biometric protection where applicable. Provider-level success/failure and busy state must identify the affected source/target accurately.
+Use existing Keystore/SecretStore handling. Never display a saved secret again; an empty replacement field keeps the existing secret. App lock and import biometric prompts were removed at the user's request on 2026-10-13. Provider-level success/failure and busy state must identify the affected source/target accurately.
 
 ### 6.9 More / Android settings
 
-Retain useful Android-specific behavior: biometric app lock, background sync enablement and the existing 6/12/24-hour choices. These support mobile use and do not violate desktop reporting parity. Explain background execution as approximate. Health and Sources must be clearly labeled and reachable without searching through unrelated settings.
+Retain useful Android-specific behavior: background sync enablement and the existing 6/12/24-hour choices. These support mobile use and do not violate desktop reporting parity. Explain background execution as approximate. Health and Sources must be clearly labeled and reachable without searching through unrelated settings.
 
 ## 7. Calculation and data contracts
 
@@ -460,11 +462,11 @@ SecretStore: provider secrets
 | `:core:model` | Report models, dated samples, coverage, structured insight targets, identity/format calculation contracts |
 | `:core:database` | Required aggregate/detail queries and only necessary schema migrations/indexes |
 | `:core:network` | Retain shared redaction/HTTP policy; fix provider request/mapping gaps only when parity evidence requires it |
-| `:core:security` | Preserve SecretStore, biometric and encrypted package boundaries; bounded import compatibility changes |
+| `:core:security` | Preserve SecretStore and encrypted package boundaries; bounded import compatibility changes |
 | `:data` | Report aggregation/mapping, source/target operations, sync outcomes, importer and preferences |
 | `:core:designsystem` | Desktop-derived semantic tokens and mobile reusable presentation components |
 | Existing feature modules | Screen-specific ViewModels and Compose UI, depending only on allowed model/designsystem/data boundaries |
-| `:app` | Composition root, navigation, authorization/biometric integration, worker scheduling |
+| `:app` | Composition root, navigation, authorization integration, worker scheduling |
 
 Keep `ReportRepository` as the report read boundary. It may compose small internal query/mapping collaborators for materially different reports, but do not introduce a second competing report data source. Extend/refactor `OverviewRepository` into this arrangement rather than maintain duplicate calculations.
 
@@ -704,7 +706,7 @@ The sequence delivers testable vertical slices. Each phase ends with evidence fo
 **Primary files:** `feature:sources`, `RoomConnectionRepository.kt`, import repositories/readers, target models and required migrations.
 
 - Implement provider-specific forms, discovery and editable target lists.
-- Preserve Android authorization, source tests, cached-data-on-disconnect and biometric protection.
+- Preserve Android authorization, source tests, cached-data-on-disconnect and encrypted secret storage.
 - Implement approved GA4 retirement without silent data/credential loss.
 - Implement schema-aware import, preview and failure recovery; if desktop exporter work is needed, keep it a separately approved, narrowly scoped dependency.
 - Validate all import cases with sanitized files and isolated stores.
@@ -720,7 +722,7 @@ The sequence delivers testable vertical slices. Each phase ends with evidence fo
 - Unify configured/target scope, Indexing serialization and source-specific outcomes.
 - Verify repeated refresh, provider partial failures, concurrent background work, filter changes and process recreation.
 - Preserve correct success/error metadata and prior cache after cancellation/failure.
-- Verify biometric resume/cold start and authorization recovery with the final route model.
+- Verify unlocked resume/cold start and authorization recovery with the final route model.
 
 **Exit:** One coherent refresh pipeline, accurate target freshness, no overlapping writes/import race, and deterministic recovery to readable cache.
 
@@ -805,7 +807,7 @@ Include empty, sparse, full and partially failed data; long domains/queries/URLs
 | J12 | 401/403/429/5xx/offline with multiple configured targets | Correct safe per-target outcome; successful siblings and failed-target cache retained |
 | J13 | Manual refresh while periodic work is eligible | Serialized/coalesced work; no overlapping replacement or stale success status |
 | J14 | Upgrade schema-1 installation with GA4 history and stored settings | No silent data/credential loss; retired-source status and current reports usable |
-| J15 | Enable lock -> background/resume -> cold start | Existing lock behavior preserved; sensitive forms/credentials do not leak through restoration |
+| J15 | Background/resume -> cold start without authentication | App stays unlocked; sensitive forms/credentials do not leak through restoration |
 
 Run J01–J08 and relevant forms/details at M01–M04; use the same reusable screen cases rather than four unrelated partial smoke tests. Run lifecycle/import/network journeys on suitable representative configurations plus narrow/large-text error/confirmation screens.
 

@@ -26,8 +26,7 @@ class DesktopPortfolioTest {
             val context = instrumentation.targetContext
 
             fun asset(name: String) =
-                instrumentation.context.assets
-                    .open(name)
+                testFixture(name)
                     .bufferedReader()
                     .use { it.readText() }
             val database =

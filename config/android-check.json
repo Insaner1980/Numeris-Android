@@ -3,7 +3,7 @@
   "exceptionsFile": "config/check-exceptions.json",
   "projectId": "numeris-android",
   "modules": [
-    { "path": ":app", "relativePath": "app", "kind": "android-application", "required": true, "variants": ["debug", "release"], "sourceSets": ["main", "androidTest"] },
+    { "path": ":app", "relativePath": "app", "kind": "android-application", "required": true, "variants": ["debug", "release"], "sourceSets": ["main", "test", "androidTest"] },
     { "path": ":core:model", "relativePath": "core/model", "kind": "kotlin-library", "required": true, "variants": [], "sourceSets": ["main", "test"] },
     { "path": ":core:common", "relativePath": "core/common", "kind": "kotlin-library", "required": true, "variants": [], "sourceSets": ["main"] },
     { "path": ":core:designsystem", "relativePath": "core/designsystem", "kind": "android-library", "required": true, "variants": ["debug", "release"], "sourceSets": ["main"] },

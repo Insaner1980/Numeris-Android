@@ -26,11 +26,6 @@ data class SearchAnalyticsRowWire(
     val position: Double,
 )
 
-data class GoogleAnalyticsRowWire(
-    val dimensions: List<String>,
-    val metrics: List<String>,
-)
-
 class SearchConsoleApiClient(
     private val http: NumerisHttpClient,
 ) {
@@ -148,80 +143,6 @@ class SearchConsoleApiClient(
         const val INSPECTION_ENDPOINT = "https://searchconsole.googleapis.com/v1/urlInspection/index:inspect"
         const val PAGE_SIZE = 5_000
         const val MAX_ROWS = 500_000
-    }
-}
-
-class GoogleAnalyticsApiClient(
-    private val http: NumerisHttpClient,
-) {
-    suspend fun runReport(
-        accessToken: String,
-        propertyId: String,
-        startDate: String,
-        endDate: String,
-        dimensions: List<String>,
-        metrics: List<String>,
-        limit: Int = DEFAULT_LIMIT,
-    ): List<GoogleAnalyticsRowWire> {
-        val body =
-            buildJsonObject {
-                put(
-                    "dateRanges",
-                    buildJsonArray {
-                        add(
-                            buildJsonObject {
-                                put("startDate", startDate)
-                                put("endDate", endDate)
-                            },
-                        )
-                    },
-                )
-                put(
-                    "dimensions",
-                    buildJsonArray {
-                        dimensions.forEach { name ->
-                            add(buildJsonObject { put("name", name) })
-                        }
-                    },
-                )
-                put(
-                    "metrics",
-                    buildJsonArray {
-                        metrics.forEach { name ->
-                            add(buildJsonObject { put("name", name) })
-                        }
-                    },
-                )
-                put("limit", limit.toString())
-                put("returnPropertyQuota", true)
-            }.toString()
-        val raw =
-            http
-                .execute(
-                    "Google Analytics",
-                    authorizedRequest("$BASE_ENDPOINT/properties/${propertyId.trim()}:runReport", accessToken)
-                        .post(body.toRequestBody(JSON_MEDIA_TYPE))
-                        .build(),
-                ).body
-        return googleRows(raw).map { row ->
-            GoogleAnalyticsRowWire(
-                dimensions = row.values("dimensionValues"),
-                metrics = row.values("metricValues"),
-            )
-        }
-    }
-
-    private fun JsonObject.values(name: String): List<String> =
-        get(name)?.jsonArray.orEmpty().map {
-            it.jsonObject["value"]
-                ?.jsonPrimitive
-                ?.contentOrNull
-                .orEmpty()
-        }
-
-    private companion object {
-        const val BASE_ENDPOINT = "https://analyticsdata.googleapis.com/v1beta"
-        const val DEFAULT_LIMIT = 100_000
     }
 }
 
