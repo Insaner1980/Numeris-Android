@@ -86,6 +86,25 @@ class GoogleSyncHostTest {
         )
     }
 
+    @Test fun nextSyncRemovesOrphanedPagesBeforeFetchingAndPreservesOtherCacheEntries() =
+        runBlocking {
+            configure()
+            val orphan = staging.newFile("search-console-interrupted.jsonl").apply { writeText("partial page") }
+            val preserved =
+                listOf(
+                    staging.newFile("unrelated.jsonl"),
+                    staging.newFile("search-console-other.tmp"),
+                    staging.newFolder("search-console-directory.jsonl"),
+                )
+            responder = { call ->
+                assertFalse("Remove orphaned pages before starting a new fetch", orphan.exists())
+                200 to response(call)
+            }
+            assertEquals(SyncResult.Success(5), search.sync(request))
+            assertEquals(preserved.map { it.name }.toSet(), staging.root.list()!!.toSet())
+            preserved.forEach { assertTrue(it.delete()) }
+        }
+
     @Test fun searchRefreshPersistsEveryBreakdownAndFailureKeepsCachedRows() =
         runBlocking {
             configure()

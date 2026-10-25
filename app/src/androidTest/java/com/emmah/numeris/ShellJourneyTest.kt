@@ -115,13 +115,13 @@ open class ShellJourneyTest {
         compose.onNode(hasText("Filter queries")).performTextInput("needle")
         navigate("Traffic")
         navigate("Search")
-        waitForNode(hasText("Filter queries"))
-        compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(hasText("Filter queries"))
-        compose.onNode(hasText("needle")).assertIsDisplayed()
+        val restoredQuery = SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("needle"))
+        waitForNode(restoredQuery)
+        compose.onNode(restoredQuery).performScrollTo().assertIsDisplayed()
         compose.activityRule.scenario.recreate()
         compose.waitForIdle()
-        waitForNode(hasText("Filter queries"))
-        compose.onNode(hasText("needle")).performScrollTo().assertIsDisplayed()
+        waitForNode(restoredQuery)
+        compose.onNode(restoredQuery).performScrollTo().assertIsDisplayed()
         assertEquals(initialSyncState, runBlocking { container.syncOrchestrator.observeState().first() })
     }
 

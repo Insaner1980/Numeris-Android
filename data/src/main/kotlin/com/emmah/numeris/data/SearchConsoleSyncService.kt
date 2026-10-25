@@ -70,6 +70,7 @@ class SearchConsoleSyncService(
         val start = range.previous().start.toString()
         val end = range.end.toString()
         return runCatching {
+            deleteOrphanedStagingFiles()
             syncTargets(sites) { site ->
                 syncSite(token, site, start, end, range.end.minusDays(PAGE_QUERY_DAYS - 1).toString())
             }
@@ -81,6 +82,15 @@ class SearchConsoleSyncService(
             },
         )
     }
+
+    private suspend fun deleteOrphanedStagingFiles() =
+        withContext(Dispatchers.IO) {
+            // The orchestrator serializes sync runs, so earlier staging files are no longer in use.
+            cacheDirectory
+                .listFiles { file ->
+                    file.isFile && file.name.startsWith("search-console-") && file.name.endsWith(".jsonl")
+                }?.forEach { it.delete() }
+        }
 
     private suspend fun syncSite(
         token: String,
