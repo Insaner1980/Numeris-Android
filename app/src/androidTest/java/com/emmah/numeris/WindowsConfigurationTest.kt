@@ -51,8 +51,7 @@ class WindowsConfigurationTest {
                             context,
                             WindowsDatabaseImporter(database),
                             DefaultSyncOrchestrator(emptyList()),
-                            WindowsConfigurationTransfer(database, secrets, AppPreferencesRepository(context)),
-                            dispatcher,
+                            WindowsConfigurationTransfer(database, secrets, AppPreferencesRepository(context), dispatcher),
                         ).recoverInterruptedTransfer()
                         assertSame(ioThread, recoveryThread)
                     } finally {

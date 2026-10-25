@@ -1,6 +1,7 @@
 plugins {
     id("numeris.android.library")
     id("numeris.quality")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 android { namespace = "com.emmah.numeris.core.network" }
@@ -10,6 +11,7 @@ dependencies {
     implementation(project(":core:model"))
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
+    testImplementation(project(":core:testing"))
     testImplementation(libs.junit)
     testImplementation(libs.okhttp.mockwebserver)
 }

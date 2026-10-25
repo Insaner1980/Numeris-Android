@@ -14,17 +14,17 @@ private fun com.emmah.numeris.feature.overview.InsightNotice(insight: com.emmah.
 
 @Composable
 private fun com.emmah.numeris.feature.overview.InspectionSection(report: com.emmah.numeris.core.model.PageDetailReport): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - report: UNSTABLE (has mutable properties or unstable members)
+    - report: UNSTABLE (cross-module type without @Stable/@Immutable)
 
 @Composable
 public fun com.emmah.numeris.feature.overview.OverviewScreen(report: com.emmah.numeris.core.model.PortfolioReport, domain: kotlin.String, domains: kotlin.collections.List<kotlin.String>, period: com.emmah.numeris.core.model.Period, syncing: kotlin.Boolean, onSelectPeriod: kotlin.Function1<com.emmah.numeris.core.model.Period, kotlin.Unit>, onSelectDomain: kotlin.Function1<kotlin.String, kotlin.Unit>, onRefresh: kotlin.Function0<kotlin.Unit>, onOpenSources: kotlin.Function0<kotlin.Unit>, onPage: kotlin.Function1<com.emmah.numeris.core.model.PortfolioPage, kotlin.Unit>, onInsight: kotlin.Function1<com.emmah.numeris.core.model.InsightTarget, kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - report: UNSTABLE (has mutable properties or unstable members)
+    - report: UNSTABLE (cross-module type without @Stable/@Immutable)
     - domain: STABLE (String is immutable)
     - domains: RUNTIME (requires runtime check)
     - period: STABLE (class with no mutable properties)
@@ -39,17 +39,17 @@ public fun com.emmah.numeris.feature.overview.OverviewScreen(report: com.emmah.n
 
 @Composable
 public fun com.emmah.numeris.feature.overview.PageDetailScreen(report: com.emmah.numeris.core.model.PageDetailReport, onBack: kotlin.Function0<kotlin.Unit>, onManageUrl: kotlin.Function1<kotlin.String, kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - report: UNSTABLE (has mutable properties or unstable members)
+    - report: UNSTABLE (cross-module type without @Stable/@Immutable)
     - onBack: STABLE (function type)
     - onManageUrl: STABLE (function type)
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
 private fun com.emmah.numeris.feature.overview.SiteRow(site: com.emmah.numeris.core.model.SiteSummary, domains: kotlin.collections.List<kotlin.String>, selected: kotlin.Boolean, divider: kotlin.Boolean, onClick: kotlin.Function0<kotlin.Unit>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - site: STABLE (stability configuration file type)
@@ -60,17 +60,17 @@ private fun com.emmah.numeris.feature.overview.SiteRow(site: com.emmah.numeris.c
 
 @Composable
 private fun com.emmah.numeris.feature.overview.SummaryTiles(report: com.emmah.numeris.core.model.PortfolioReport): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - report: UNSTABLE (has mutable properties or unstable members)
+    - report: UNSTABLE (cross-module type without @Stable/@Immutable)
 
 @Composable
 private fun com.emmah.numeris.feature.overview.VisitorsHero(report: com.emmah.numeris.core.model.PortfolioReport, domains: kotlin.collections.List<kotlin.String>, period: com.emmah.numeris.core.model.Period): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - report: UNSTABLE (has mutable properties or unstable members)
+    - report: UNSTABLE (cross-module type without @Stable/@Immutable)
     - domains: RUNTIME (requires runtime check)
     - period: STABLE (class with no mutable properties)
 

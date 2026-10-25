@@ -2,6 +2,7 @@
 
 package com.emmah.numeris.core.network
 
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -18,6 +19,7 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 
+@Serializable
 data class SearchAnalyticsRowWire(
     val keys: List<String>,
     val clicks: Long,
@@ -45,8 +47,9 @@ class SearchConsoleApiClient(
     }
 
     /**
-     * Search Analytics -rivit sivuttain. Yksi 25 000 rivin vastaus voi pitkällä jaksolla ylittää HTTP-kerroksen
-     * kokorajan, joten rivit haetaan [PAGE_SIZE] kerrallaan `startRow`-siirtymällä, enintään [MAX_ROWS] riviin.
+     * Fetch every available page, including zero-click impressions at the end of the result.
+     * Keep pages small enough for the HTTP response size limit; a short page ends pagination.
+     * Consume each page before fetching the next so the caller can stage results with bounded memory.
      */
     suspend fun query(
         accessToken: String,
@@ -54,15 +57,14 @@ class SearchConsoleApiClient(
         startDate: String,
         endDate: String,
         dimensions: List<String>,
-    ): List<SearchAnalyticsRowWire> {
-        val rows = mutableListOf<SearchAnalyticsRowWire>()
+        onPage: suspend (List<SearchAnalyticsRowWire>) -> Unit,
+    ) {
         var startRow = 0
         do {
             val page = queryPage(accessToken, propertyUrl, startDate, endDate, dimensions, startRow)
-            rows += page
+            onPage(page)
             startRow += PAGE_SIZE
-        } while (page.size == PAGE_SIZE && rows.size < MAX_ROWS)
-        return rows
+        } while (page.size == PAGE_SIZE)
     }
 
     private suspend fun queryPage(
@@ -87,6 +89,7 @@ class SearchConsoleApiClient(
                 put("endDate", endDate)
                 put("rowLimit", PAGE_SIZE)
                 put("startRow", startRow)
+                put("type", "web")
                 put("dimensions", buildJsonArray { dimensions.forEach { add(JsonPrimitive(it)) } })
             }.toString()
         val raw =
@@ -142,7 +145,6 @@ class SearchConsoleApiClient(
         const val SITES_ENDPOINT = "https://www.googleapis.com/webmasters/v3/sites"
         const val INSPECTION_ENDPOINT = "https://searchconsole.googleapis.com/v1/urlInspection/index:inspect"
         const val PAGE_SIZE = 5_000
-        const val MAX_ROWS = 500_000
     }
 }
 

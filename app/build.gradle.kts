@@ -99,6 +99,7 @@ tasks.withType<org.owasp.dependencycheck.gradle.tasks.ConfiguredTask>().configur
 }
 
 dependencies {
+    testImplementation(project(":core:testing"))
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.junit)

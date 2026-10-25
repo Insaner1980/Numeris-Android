@@ -6,8 +6,10 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
+import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -49,10 +51,13 @@ class ProviderContractTest {
                 }
             server.enqueue(MockResponse().setBody(page(SEARCH_PAGE_SIZE)))
             server.enqueue(MockResponse().setBody(page(1)))
-            val rows =
-                SearchConsoleApiClient(http)
-                    .query("fixture", "sc-domain:example.com", "2024-10-01", "2026-10-10", listOf("date"))
-            assertEquals(SEARCH_PAGE_SIZE + 1, rows.size)
+            val pageSizes = mutableListOf<Int>()
+            SearchConsoleApiClient(http)
+                .query("fixture", "sc-domain:example.com", "2024-10-01", "2026-10-10", listOf("date")) { rows ->
+                    pageSizes += rows.size
+                    assertEquals("Consume each page before requesting another", pageSizes.size, server.requestCount)
+                }
+            assertEquals(listOf(SEARCH_PAGE_SIZE, 1), pageSizes)
             val starts =
                 List(2) {
                     Json
@@ -76,6 +81,53 @@ class ProviderContractTest {
             assertTrue(points.isEmpty())
         }
 
+    @Test fun searchPaginationPreservesZeroClickTailBeyondFormerRowCap() =
+        runBlocking {
+            val fullPage =
+                (1..SEARCH_PAGE_SIZE).joinToString(",", """{"rows":[""", "]}") {
+                    """{"keys":["q$it"],"clicks":1,"impressions":2}"""
+                }
+            val offsets = mutableListOf<Int>()
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val body = Json.parseToJsonElement(request.body.readUtf8()).jsonObject
+                        assertEquals("web", body.getValue("type").jsonPrimitive.content)
+                        val offset =
+                            body
+                                .getValue("startRow")
+                                .jsonPrimitive.content
+                                .toInt()
+                        offsets += offset
+                        return MockResponse().setBody(
+                            if (offset < 500_000) {
+                                fullPage
+                            } else {
+                                """{"rows":[{"keys":["zero-click tail"],"clicks":0,"impressions":17}]}"""
+                            },
+                        )
+                    }
+                }
+            var rowCount = 0
+            var lastRow: SearchAnalyticsRowWire? = null
+            SearchConsoleApiClient(http).query(
+                "fixture",
+                "sc-domain:example.com",
+                "2025-10-01",
+                "2026-10-10",
+                listOf("query"),
+            ) { page ->
+                assertTrue(page.size <= SEARCH_PAGE_SIZE)
+                rowCount += page.size
+                lastRow = page.lastOrNull() ?: lastRow
+            }
+            assertEquals(500_001, rowCount)
+            assertEquals((0..500_000 step SEARCH_PAGE_SIZE).toList(), offsets)
+            assertEquals(0L, lastRow!!.clicks)
+            assertEquals(17L, lastRow!!.impressions)
+            assertEquals(listOf("zero-click tail"), lastRow!!.keys)
+        }
+
     @Test fun searchQueriesPreserveDatesDimensionsAndPropertyPath() =
         runBlocking {
             server.enqueue(
@@ -84,14 +136,14 @@ class ProviderContractTest {
                 "clicks":7,"impressions":20,"ctr":0.35,"position":2.5}]}""",
                 ),
             )
-            val rows =
-                SearchConsoleApiClient(http).query(
-                    "fixture",
-                    "https://example.com/path/",
-                    "2026-10-01",
-                    "2026-10-10",
-                    listOf("date", "query"),
-                )
+            val rows = mutableListOf<SearchAnalyticsRowWire>()
+            SearchConsoleApiClient(http).query(
+                "fixture",
+                "https://example.com/path/",
+                "2026-10-01",
+                "2026-10-10",
+                listOf("date", "query"),
+            ) { rows += it }
             assertEquals(listOf("2026-10-10", "Long query"), rows.single().keys)
             assertEquals(7L, rows.single().clicks)
             val request = server.takeRequest()

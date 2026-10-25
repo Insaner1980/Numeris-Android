@@ -4,6 +4,8 @@ import androidx.room3.useReaderConnection
 import com.emmah.numeris.core.database.NumerisDatabase
 import com.emmah.numeris.core.model.SecretKey
 import com.emmah.numeris.core.model.SecretStore
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -21,6 +23,7 @@ class WindowsConfigurationTransfer(
     private val database: NumerisDatabase,
     private val secrets: SecretStore,
     private val preferences: AppPreferencesRepository,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) {
     @Suppress("TooGenericExceptionCaught")
     internal suspend fun replace(
@@ -46,26 +49,29 @@ class WindowsConfigurationTransfer(
         }
     }
 
-    suspend fun recover() {
-        val bytes = secrets.get(JOURNAL_KEY) ?: return
-        try {
-            val journal = Json.parseToJsonElement(String(bytes)).jsonObject
-            val id = journal.getValue("id").jsonPrimitive.content
-            val committed =
-                database.useReaderConnection { connection ->
-                    connection.usePrepared("SELECT value FROM meta WHERE `key`='android_transfer_id'") { statement ->
-                        statement.step() && statement.getText(0) == id
+    suspend fun recover() =
+        withContext(ioDispatcher) {
+            val bytes = secrets.get(JOURNAL_KEY) ?: return@withContext
+            try {
+                val journal = Json.parseToJsonElement(String(bytes)).jsonObject
+                val id = journal.getValue("id").jsonPrimitive.content
+                val committed =
+                    database.useReaderConnection { connection ->
+                        connection.usePrepared(
+                            "SELECT value FROM meta WHERE `key`='android_transfer_id'",
+                        ) { statement ->
+                            statement.step() && statement.getText(0) == id
+                        }
                     }
+                if (!committed) {
+                    restoreSecrets(journal.getValue("secrets").jsonObject)
+                    preferences.importWindowsSettings(journal.getValue("preferences").toString())
                 }
-            if (!committed) {
-                restoreSecrets(journal.getValue("secrets").jsonObject)
-                preferences.importWindowsSettings(journal.getValue("preferences").toString())
+                secrets.delete(JOURNAL_KEY)
+            } finally {
+                bytes.fill('\u0000')
             }
-            secrets.delete(JOURNAL_KEY)
-        } finally {
-            bytes.fill('\u0000')
         }
-    }
 
     private suspend fun createJournal(
         id: String,

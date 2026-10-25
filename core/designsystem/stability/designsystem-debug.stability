@@ -17,7 +17,7 @@ public fun com.emmah.numeris.core.designsystem.AttentionSummary(count: kotlin.In
 
 @Composable
 public fun com.emmah.numeris.core.designsystem.BreakdownRows(rows: kotlin.collections.List<com.emmah.numeris.core.model.Breakdown>, unit: kotlin.String, modifier: androidx.compose.ui.Modifier, visibleCount: kotlin.Int): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - rows: RUNTIME (requires runtime check)
@@ -37,21 +37,21 @@ public fun com.emmah.numeris.core.designsystem.ChangeText(change: kotlin.Double,
 
 @Composable
 internal fun com.emmah.numeris.core.designsystem.ChartDataTable(series: kotlin.collections.List<com.emmah.numeris.core.model.ReportSeries>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - series: RUNTIME (requires runtime check)
 
 @Composable
 internal fun com.emmah.numeris.core.designsystem.ChartLegend(series: kotlin.collections.List<com.emmah.numeris.core.model.ReportSeries>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - series: RUNTIME (requires runtime check)
 
 @Composable
 private fun com.emmah.numeris.core.designsystem.ChartPlot(series: kotlin.collections.List<com.emmah.numeris.core.model.ReportSeries>, segments: kotlin.collections.List<kotlin.Pair<kotlin.Int, kotlin.collections.List<com.emmah.numeris.core.model.DatedValue>>>, pointListener: com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarkerVisibilityListener): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - series: RUNTIME (requires runtime check)
@@ -60,7 +60,7 @@ private fun com.emmah.numeris.core.designsystem.ChartPlot(series: kotlin.collect
 
 @Composable
 public fun com.emmah.numeris.core.designsystem.CompactKpiRow(metrics: kotlin.collections.List<com.emmah.numeris.core.model.Metric>, modifier: androidx.compose.ui.Modifier, tones: kotlin.collections.List<kotlin.Pair<kotlin.String, com.emmah.numeris.core.designsystem.PillTone>?>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - metrics: RUNTIME (requires runtime check)
@@ -69,7 +69,7 @@ public fun com.emmah.numeris.core.designsystem.CompactKpiRow(metrics: kotlin.col
 
 @Composable
 public fun com.emmah.numeris.core.designsystem.DatedChart(title: kotlin.String, series: kotlin.collections.List<com.emmah.numeris.core.model.ReportSeries>, modifier: androidx.compose.ui.Modifier, supporting: kotlin.String?): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - title: STABLE (String is immutable)
@@ -79,7 +79,7 @@ public fun com.emmah.numeris.core.designsystem.DatedChart(title: kotlin.String, 
 
 @Composable
 public fun com.emmah.numeris.core.designsystem.DetailPairs(pairs: kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.String>>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - pairs: RUNTIME (requires runtime check)
@@ -87,7 +87,7 @@ public fun com.emmah.numeris.core.designsystem.DetailPairs(pairs: kotlin.collect
 
 @Composable
 public fun com.emmah.numeris.core.designsystem.ExpandableRow(title: kotlin.String, value: kotlin.String, details: kotlin.collections.List<kotlin.Pair<kotlin.String, kotlin.String>>, modifier: androidx.compose.ui.Modifier, supporting: kotlin.String?, valueCaption: kotlin.String?, tone: com.emmah.numeris.core.designsystem.PillTone?, body: kotlin.String?): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - title: STABLE (String is immutable)
@@ -110,7 +110,7 @@ public fun com.emmah.numeris.core.designsystem.FreshnessStatus(freshness: kotlin
 
 @Composable
 public fun com.emmah.numeris.core.designsystem.HeroMetric(label: kotlin.String, value: kotlin.String, modifier: androidx.compose.ui.Modifier, change: kotlin.Double?, current: kotlin.collections.List<kotlin.Double?>, previous: kotlin.collections.List<kotlin.Double?>, footer: @[Composable] androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>?): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - label: STABLE (String is immutable)
@@ -132,7 +132,7 @@ public fun com.emmah.numeris.core.designsystem.InlineTextButton(text: kotlin.Str
 
 @Composable
 public fun com.emmah.numeris.core.designsystem.KpiGrid(metrics: kotlin.collections.List<com.emmah.numeris.core.model.Metric>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - metrics: RUNTIME (requires runtime check)
@@ -198,7 +198,7 @@ public fun com.emmah.numeris.core.designsystem.NoticeCard(title: kotlin.String, 
 
 @Composable
 public fun com.emmah.numeris.core.designsystem.NumerisDropdownSelector(selected: kotlin.String, options: kotlin.collections.List<kotlin.String>, onSelect: kotlin.Function1<kotlin.String, kotlin.Unit>, label: kotlin.Function1<kotlin.String, kotlin.String>, modifier: androidx.compose.ui.Modifier, detail: kotlin.Function1<kotlin.String, kotlin.String>?): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - selected: STABLE (String is immutable)
@@ -230,7 +230,7 @@ public fun com.emmah.numeris.core.designsystem.NumerisSelectChip(label: kotlin.S
 
 @Composable
 internal fun com.emmah.numeris.core.designsystem.NumerisSiteSelector(selected: kotlin.String, domains: kotlin.collections.List<kotlin.String>, onSelect: kotlin.Function1<kotlin.String, kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - selected: STABLE (String is immutable)
@@ -240,7 +240,7 @@ internal fun com.emmah.numeris.core.designsystem.NumerisSiteSelector(selected: k
 
 @Composable
 public fun com.emmah.numeris.core.designsystem.NumerisTabs(options: kotlin.collections.List<kotlin.String>, selected: kotlin.String, onSelect: kotlin.Function1<kotlin.String, kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - options: RUNTIME (requires runtime check)
@@ -276,7 +276,7 @@ public fun com.emmah.numeris.core.designsystem.RefreshButton(syncing: kotlin.Boo
 
 @Composable
 public fun com.emmah.numeris.core.designsystem.ReportFilters(domain: kotlin.String, domains: kotlin.collections.List<kotlin.String>, period: com.emmah.numeris.core.model.Period, onDomain: kotlin.Function1<kotlin.String, kotlin.Unit>, onPeriod: kotlin.Function1<com.emmah.numeris.core.model.Period, kotlin.Unit>, modifier: androidx.compose.ui.Modifier, extra: @[Composable] androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - domain: STABLE (String is immutable)
@@ -298,11 +298,11 @@ public fun com.emmah.numeris.core.designsystem.ReportList(modifier: androidx.com
 
 @Composable
 private fun com.emmah.numeris.core.designsystem.ReportPlot(series: kotlin.collections.List<com.emmah.numeris.core.model.ReportSeries>, model: com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModel, layer: com.patrykandpatrick.vico.compose.cartesian.layer.CartesianLayer<*>, pointListener: com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarkerVisibilityListener): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - series: RUNTIME (requires runtime check)
-    - model: STABLE (class with no mutable properties)
+    - model: UNKNOWN (interface or non-final class; concrete implementation unknown)
     - layer: UNKNOWN (interface or non-final class; concrete implementation unknown)
     - pointListener: STABLE (marked @Stable or @Immutable)
 
@@ -338,7 +338,7 @@ public fun com.emmah.numeris.core.designsystem.SectionHeader(title: kotlin.Strin
 
 @Composable
 internal fun com.emmah.numeris.core.designsystem.SelectedSamples(series: kotlin.collections.List<com.emmah.numeris.core.model.ReportSeries>, day: kotlin.Long?): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - series: RUNTIME (requires runtime check)
@@ -346,7 +346,7 @@ internal fun com.emmah.numeris.core.designsystem.SelectedSamples(series: kotlin.
 
 @Composable
 public fun com.emmah.numeris.core.designsystem.ShareBar(segments: kotlin.collections.List<kotlin.Pair<androidx.compose.ui.graphics.Color, kotlin.Double>>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - segments: RUNTIME (requires runtime check)
@@ -354,7 +354,7 @@ public fun com.emmah.numeris.core.designsystem.ShareBar(segments: kotlin.collect
 
 @Composable
 public fun com.emmah.numeris.core.designsystem.ShareLegend(items: kotlin.collections.List<kotlin.Triple<androidx.compose.ui.graphics.Color, kotlin.String, kotlin.String>>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - items: RUNTIME (requires runtime check)
@@ -372,7 +372,7 @@ public fun com.emmah.numeris.core.designsystem.ShowMoreButton(expanded: kotlin.B
 
 @Composable
 public fun com.emmah.numeris.core.designsystem.SiteAvatar(domain: kotlin.String, domains: kotlin.collections.List<kotlin.String>, modifier: androidx.compose.ui.Modifier, size: androidx.compose.ui.unit.Dp): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - domain: STABLE (String is immutable)
@@ -382,7 +382,7 @@ public fun com.emmah.numeris.core.designsystem.SiteAvatar(domain: kotlin.String,
 
 @Composable
 private fun com.emmah.numeris.core.designsystem.SiteOption(value: kotlin.String, label: kotlin.String, selected: kotlin.String, domains: kotlin.collections.List<kotlin.String>, onClick: kotlin.Function0<kotlin.Unit>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - value: STABLE (String is immutable)
@@ -419,7 +419,7 @@ public fun com.emmah.numeris.core.designsystem.TrailingValue(value: kotlin.Strin
 
 @Composable
 public fun com.emmah.numeris.core.designsystem.TrendArea(current: kotlin.collections.List<kotlin.Double?>, previous: kotlin.collections.List<kotlin.Double?>, modifier: androidx.compose.ui.Modifier, color: androidx.compose.ui.graphics.Color): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - current: RUNTIME (requires runtime check)
@@ -429,7 +429,7 @@ public fun com.emmah.numeris.core.designsystem.TrendArea(current: kotlin.collect
 
 @Composable
 private fun com.emmah.numeris.core.designsystem.VolumePlot(series: kotlin.collections.List<com.emmah.numeris.core.model.ReportSeries>, pointListener: com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarkerVisibilityListener): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - series: RUNTIME (requires runtime check)

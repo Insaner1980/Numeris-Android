@@ -90,6 +90,8 @@ private fun probeDate(probe: Probe): LocalDate = LocalDate.parse(probe.time.take
 
 private fun Probe.isUp(): Boolean = status.equals("up", true)
 
+private fun Probe.isDown(): Boolean = status.equals("down", true)
+
 private fun LazyListScope.uptimeReport(
     report: HealthReport,
     probes: List<Probe>,
@@ -104,7 +106,7 @@ private fun LazyListScope.uptimeReport(
                 Metric("Success rate", ReportMath.uptime(report.probes), "percent", detail = "All stored history"),
                 Metric(
                     FAILED_CHECKS,
-                    probes.count { !it.isUp() }.toDouble(),
+                    probes.count { it.isDown() }.toDouble(),
                     detail = "In the selected period",
                     higherIsBetter = false,
                 ),
@@ -125,9 +127,9 @@ private fun LazyListScope.uptimeReport(
     }
     selectedSite?.let { site -> siteCharts(report, site, probes.filter { it.domain == site }) }
     item { SectionHeader("Incidents") }
-    val incidents = probes.filter { !it.isUp() }.sortedByDescending { it.time }
+    val incidents = probes.filter { it.isDown() }.sortedByDescending { it.time }
     if (incidents.isEmpty()) {
-        item { NoticeCard("No incidents", "Every recorded check in this period succeeded.", PillTone.Positive) }
+        item { NoticeCard("No incidents", "No failed checks were recorded in this period.", PillTone.Positive) }
     }
     items(incidents, key = { "${it.domain}:${it.time}" }) { probe ->
         ExpandableRow(
@@ -169,7 +171,11 @@ private fun SiteHealthRow(
                 verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Xxs),
             ) {
                 latest.responseMs?.let { TrailingValue(DisplayFormat.metric(it.toDouble(), "ms")) }
-                if (latest.isUp()) StatusPill("Up", PillTone.Positive) else StatusPill("Down", PillTone.Negative)
+                when {
+                    latest.isUp() -> StatusPill("Up", PillTone.Positive)
+                    latest.isDown() -> StatusPill("Down", PillTone.Negative)
+                    else -> StatusPill("Pending", PillTone.Neutral)
+                }
             }
         },
     )
@@ -198,8 +204,8 @@ private fun LazyListScope.siteCharts(
         )
     }
     item(key = "failed-$site") {
-        if (records.none { !it.isUp() }) {
-            NoticeCard("No failed checks", "$site responded to every check in this period.", PillTone.Positive)
+        if (records.none { it.isDown() }) {
+            NoticeCard("No failed checks", "$site has no recorded failures in this period.", PillTone.Positive)
         } else {
             DatedChart(
                 FAILED_CHECKS,
@@ -209,7 +215,7 @@ private fun LazyListScope.siteCharts(
                         "count",
                         records
                             .groupBy(::probeDate)
-                            .mapValues { (_, values) -> values.count { !it.isUp() }.toDouble() },
+                            .mapValues { (_, values) -> values.count { it.isDown() }.toDouble() },
                         report.range,
                     ),
                 ),

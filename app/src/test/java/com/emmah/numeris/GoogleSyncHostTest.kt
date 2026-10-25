@@ -32,7 +32,9 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.time.Clock
@@ -41,6 +43,7 @@ import java.time.ZoneOffset
 
 @RunWith(RobolectricTestRunner::class)
 class GoogleSyncHostTest {
+    @get:Rule val staging = TemporaryFolder()
     private lateinit var database: NumerisDatabase
     private lateinit var client: OkHttpClient
     private lateinit var search: SearchConsoleSyncService
@@ -70,14 +73,37 @@ class GoogleSyncHostTest {
                         .build()
                 }.build()
         val http = NumerisHttpClient(client)
-        search = SearchConsoleSyncService(database, { auth }, SearchConsoleApiClient(http), clock)
+        search = SearchConsoleSyncService(database, { auth }, SearchConsoleApiClient(http), staging.root, clock)
     }
 
     @After fun tearDown() {
         database.close()
         client.dispatcher.executorService.shutdown()
         client.connectionPool.evictAll()
+        assertTrue(
+            "Staged pages must be deleted after success, failure or cancellation",
+            staging.root.list()!!.isEmpty(),
+        )
     }
+
+    @Test fun nextSyncRemovesOrphanedPagesBeforeFetchingAndPreservesOtherCacheEntries() =
+        runBlocking {
+            configure()
+            val orphan = staging.newFile("search-console-interrupted.jsonl").apply { writeText("partial page") }
+            val preserved =
+                listOf(
+                    staging.newFile("unrelated.jsonl"),
+                    staging.newFile("search-console-other.tmp"),
+                    staging.newFolder("search-console-directory.jsonl"),
+                )
+            responder = { call ->
+                assertFalse("Remove orphaned pages before starting a new fetch", orphan.exists())
+                200 to response(call)
+            }
+            assertEquals(SyncResult.Success(5), search.sync(request))
+            assertEquals(preserved.map { it.name }.toSet(), staging.root.list()!!.toSet())
+            preserved.forEach { assertTrue(it.delete()) }
+        }
 
     @Test fun searchRefreshPersistsEveryBreakdownAndFailureKeepsCachedRows() =
         runBlocking {
@@ -126,6 +152,107 @@ class GoogleSyncHostTest {
             responder = { 200 to "{}" }
             assertTrue(search.testConnection(null) is ConnectionTestResult.Failure)
             assertEquals(SyncResult.Success(0), search.sync(request))
+        }
+
+    @Test fun laterPageFailureKeepsThePreviousCompleteSnapshot() =
+        runBlocking {
+            configure()
+            assertEquals(SyncResult.Success(5), search.sync(request))
+            val cached = database.reportSnapshotDao().readSearchConsole("example.com", "2026-10-01", "2026-10-11")
+            val fullPage =
+                (1..5_000).joinToString(",", """{"rows":[""", "]}") {
+                    """{"keys":["2026-10-10"],"clicks":999,"impressions":9999}"""
+                }
+            val offsets = mutableListOf<Int>()
+            responder = { call ->
+                val body = Json.parseToJsonElement(Buffer().also { call.body!!.writeTo(it) }.readUtf8()).jsonObject
+                val offset =
+                    body
+                        .getValue("startRow")
+                        .jsonPrimitive.content
+                        .toInt()
+                offsets += offset
+                if (offset == 0) 200 to fullPage else 503 to "{}"
+            }
+            assertTrue(search.sync(request) is SyncResult.Failure)
+            assertEquals(listOf(0, 5_000), offsets)
+            assertEquals(
+                cached,
+                database.reportSnapshotDao().readSearchConsole("example.com", "2026-10-01", "2026-10-11"),
+            )
+        }
+
+    @Test fun stagedPagesPersistAllRowsIncludingTheZeroClickTail() =
+        runBlocking {
+            configure()
+            assertEquals(SyncResult.Success(5), search.sync(request))
+            val cached = database.reportSnapshotDao().readSearchConsole("example.com", "2026-10-01", "2026-10-11")
+            responder = { call ->
+                val body = Json.parseToJsonElement(Buffer().also { call.body!!.writeTo(it) }.readUtf8()).jsonObject
+                val dimensions = body.getValue("dimensions").jsonArray.map { it.jsonPrimitive.content }
+                if (dimensions == listOf("date", "query")) {
+                    val offset =
+                        body
+                            .getValue("startRow")
+                            .jsonPrimitive.content
+                            .toInt()
+                    val rows =
+                        if (offset == 0) {
+                            (1..5_000).joinToString(",") {
+                                """{"keys":["2026-10-10","query $it"],"clicks":1,"impressions":2}"""
+                            }
+                        } else {
+                            """{"keys":["2026-10-10","tail\n\"query\""],"clicks":0,"impressions":17}"""
+                        }
+                    200 to """{"rows":[$rows]}"""
+                } else {
+                    if (dimensions == listOf("page", "query")) {
+                        assertEquals(1, staging.root.list()!!.size)
+                        assertEquals(
+                            cached,
+                            runBlocking {
+                                database
+                                    .reportSnapshotDao()
+                                    .readSearchConsole("example.com", "2026-10-01", "2026-10-11")
+                            },
+                        )
+                    }
+                    200 to response(call)
+                }
+            }
+            assertEquals(SyncResult.Success(5_005), search.sync(request))
+            val rows = database.reportSnapshotDao().readSearchConsole("example.com", "2026-10-01", "2026-10-11")
+            assertEquals(5_003, rows.size)
+            val tail = rows.single { it.query == "tail\n\"query\"" }
+            assertEquals(0L, tail.clicks)
+            assertEquals(17L, tail.impressions)
+        }
+
+    @Test fun invalidFinalBreakdownRollsBackEveryStagedWrite() =
+        runBlocking {
+            configure()
+            assertEquals(SyncResult.Success(5), search.sync(request))
+            val cached = database.reportSnapshotDao().readSearchConsole("example.com", "2026-10-01", "2026-10-11")
+            val devices = database.reportSnapshotDao().readSearchDevices("example.com", "2026-10-01", "2026-10-11")
+            responder = { call ->
+                val body = Json.parseToJsonElement(Buffer().also { call.body!!.writeTo(it) }.readUtf8()).jsonObject
+                val dimensions = body.getValue("dimensions").jsonArray.map { it.jsonPrimitive.content }
+                200 to
+                    if (dimensions == listOf("page", "query")) {
+                        """{"rows":[{"keys":[],"clicks":99,"impressions":100}]}"""
+                    } else {
+                        response(call).replace("\"clicks\":12", "\"clicks\":99")
+                    }
+            }
+            assertTrue(search.sync(request) is SyncResult.Failure)
+            assertEquals(
+                cached,
+                database.reportSnapshotDao().readSearchConsole("example.com", "2026-10-01", "2026-10-11"),
+            )
+            assertEquals(
+                devices,
+                database.reportSnapshotDao().readSearchDevices("example.com", "2026-10-01", "2026-10-11"),
+            )
         }
 
     @Test fun authorizationFailureAndResolutionPreventNetworkAccess() =

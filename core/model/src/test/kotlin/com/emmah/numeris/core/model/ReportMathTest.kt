@@ -27,6 +27,8 @@ class ReportMathTest {
         assertFalse(ReportMath.complete(rows.drop(1), range))
         assertFalse(ReportMath.complete(rows, range, setOf("example.com", "missing.com")))
         assertNull(ReportMath.change(ReportMath.window(rows.drop(1), range) { it.clicks }))
+        val complementarySites = rows.take(7) + observations("other.com").drop(7)
+        assertFalse(ReportMath.complete(complementarySites, range))
     }
 
     @Test fun missingZeroAndNewActivityAreDifferent() {

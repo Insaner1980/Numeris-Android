@@ -6,21 +6,21 @@
 
 @Composable
 private fun com.emmah.numeris.feature.performance.HeadlineVitals(field: kotlin.collections.List<com.emmah.numeris.core.model.FieldMetric>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - field: RUNTIME (requires runtime check)
 
 @Composable
 private fun com.emmah.numeris.feature.performance.LabSummaryRow(runs: kotlin.collections.List<com.emmah.numeris.core.model.LabRun>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - runs: RUNTIME (requires runtime check)
 
 @Composable
 private fun com.emmah.numeris.feature.performance.PerformanceFilters(tab: kotlin.String, selectedTarget: kotlin.String, targets: kotlin.collections.List<kotlin.String>, device: kotlin.String, metric: kotlin.String, report: com.emmah.numeris.core.model.PerformanceReport, onTarget: kotlin.Function1<kotlin.String, kotlin.Unit>, onDevice: kotlin.Function1<kotlin.String, kotlin.Unit>, onMetric: kotlin.Function1<kotlin.String, kotlin.Unit>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - tab: STABLE (String is immutable)
@@ -28,17 +28,17 @@ private fun com.emmah.numeris.feature.performance.PerformanceFilters(tab: kotlin
     - targets: RUNTIME (requires runtime check)
     - device: STABLE (String is immutable)
     - metric: STABLE (String is immutable)
-    - report: UNSTABLE (has mutable properties or unstable members)
+    - report: UNSTABLE (cross-module type without @Stable/@Immutable)
     - onTarget: STABLE (function type)
     - onDevice: STABLE (function type)
     - onMetric: STABLE (function type)
 
 @Composable
 public fun com.emmah.numeris.feature.performance.PerformanceReportScreen(report: com.emmah.numeris.core.model.PerformanceReport, domain: kotlin.String, domains: kotlin.collections.List<kotlin.String>, period: com.emmah.numeris.core.model.Period, tab: kotlin.String, syncing: kotlin.Boolean, onDomain: kotlin.Function1<kotlin.String, kotlin.Unit>, onPeriod: kotlin.Function1<com.emmah.numeris.core.model.Period, kotlin.Unit>, onTab: kotlin.Function1<kotlin.String, kotlin.Unit>, onRefresh: kotlin.Function0<kotlin.Unit>, onManageUrls: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - report: UNSTABLE (has mutable properties or unstable members)
+    - report: UNSTABLE (cross-module type without @Stable/@Immutable)
     - domain: STABLE (String is immutable)
     - domains: RUNTIME (requires runtime check)
     - period: STABLE (class with no mutable properties)
@@ -53,7 +53,7 @@ public fun com.emmah.numeris.feature.performance.PerformanceReportScreen(report:
 
 @Composable
 internal fun com.emmah.numeris.feature.performance.SiteVitalsCard(site: com.emmah.numeris.feature.performance.SiteVitals, domains: kotlin.collections.List<kotlin.String>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - site: RUNTIME (requires runtime check)
@@ -62,7 +62,7 @@ internal fun com.emmah.numeris.feature.performance.SiteVitalsCard(site: com.emma
 
 @Composable
 private fun com.emmah.numeris.feature.performance.VitalsDetails(site: com.emmah.numeris.feature.performance.SiteVitals): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - site: RUNTIME (requires runtime check)

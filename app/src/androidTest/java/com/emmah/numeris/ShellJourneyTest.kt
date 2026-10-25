@@ -110,15 +110,18 @@ open class ShellJourneyTest {
         assertEquals(Period.Last30Days, restoredPreferences.selectedPeriod)
         navigate("Search")
         compose.onNode(hasText("Queries") and tab).performScrollTo().performClick()
+        waitForNode(hasText("Filter queries"))
         compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(hasText("Filter queries"))
         compose.onNode(hasText("Filter queries")).performTextInput("needle")
         navigate("Traffic")
         navigate("Search")
-        compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(hasText("Filter queries"))
-        compose.onNode(hasText("needle")).assertIsDisplayed()
+        val restoredQuery = SemanticsMatcher.expectValue(SemanticsProperties.EditableText, AnnotatedString("needle"))
+        waitForNode(restoredQuery)
+        compose.onNode(restoredQuery).performScrollTo().assertIsDisplayed()
         compose.activityRule.scenario.recreate()
         compose.waitForIdle()
-        compose.onNode(hasText("needle")).performScrollTo().assertIsDisplayed()
+        waitForNode(restoredQuery)
+        compose.onNode(restoredQuery).performScrollTo().assertIsDisplayed()
         assertEquals(initialSyncState, runBlocking { container.syncOrchestrator.observeState().first() })
     }
 
@@ -130,6 +133,7 @@ open class ShellJourneyTest {
         compose.onNode(attention).performClick()
         compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(hasText("Open Google Search, Indexing"))
         compose.onNode(hasText("Open Google Search, Indexing")).performClick()
+        waitForNode(hasText("Indexing") and tab and isSelected())
         compose.onNode(hasText("Indexing") and tab and isSelected()).performScrollTo().assertIsDisplayed()
         compose.runOnUiThread { compose.activity.onBackPressedDispatcher.onBackPressed() }
         compose.waitForIdle()
@@ -140,14 +144,17 @@ open class ShellJourneyTest {
     @Test fun sourcesAndHealthReturnToMoreAndRetainFormMetadataAcrossRecreation() {
         navigate("More")
         compose.onNode(hasText("Health") and hasClickAction()).performClick()
+        waitForDisplayed(hasContentDescription("Back"))
         compose.onNode(hasContentDescription("Back")).performClick()
         compose.onNode(hasText("Sources") and hasClickAction()).performClick()
+        waitForNode(hasText("Add source") and hasClickAction())
         compose.onAllNodes(hasText("Add source") and hasClickAction()).onFirst().performClick()
         compose.onAllNodes(hasText("Cloudflare Zone Analytics") and hasClickAction()).onLast().performClick()
         compose.onNode(hasText("Site domain")).performTextInput("saved-form.com")
         compose.onNode(hasText("API token")).performScrollTo().performTextInput("fixture-secret")
         compose.activityRule.scenario.recreate()
         compose.waitForIdle()
+        waitForNode(hasText("saved-form.com"))
         compose.onNode(hasText("saved-form.com")).performScrollTo().assertIsDisplayed()
         assertEquals(
             AnnotatedString(""),
@@ -175,6 +182,9 @@ open class ShellJourneyTest {
                 .index
         nodes[bottom].performClick()
         compose.waitForIdle()
+        if (label in listOf("Overview", "Traffic", "Search")) {
+            waitForNode(hasScrollAction())
+        }
     }
 
     private fun waitForDisplayed(matcher: SemanticsMatcher) {
@@ -183,5 +193,12 @@ open class ShellJourneyTest {
                 compose.onNode(matcher).isDisplayed()
         }
         compose.onNode(matcher).assertIsDisplayed()
+    }
+
+    private fun waitForNode(matcher: SemanticsMatcher) {
+        // Room reloads asynchronously after navigation and activity recreation.
+        compose.waitUntil(10000) {
+            compose.onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
+        }
     }
 }

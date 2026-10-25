@@ -18,12 +18,15 @@ import com.emmah.numeris.core.model.previous
 import com.emmah.numeris.core.model.reportDomain
 import com.emmah.numeris.core.network.SearchAnalyticsRowWire
 import com.emmah.numeris.core.network.SearchConsoleApiClient
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.io.File
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -32,6 +35,7 @@ class SearchConsoleSyncService(
     private val database: NumerisDatabase,
     private val authorize: suspend () -> GoogleAuthorizationState,
     private val client: SearchConsoleApiClient,
+    private val cacheDirectory: File,
     private val clock: Clock = Clock.systemUTC(),
 ) : SourceSyncService {
     override val source = SourceId.SearchConsole
@@ -66,54 +70,9 @@ class SearchConsoleSyncService(
         val start = range.previous().start.toString()
         val end = range.end.toString()
         return runCatching {
+            deleteOrphanedStagingFiles()
             syncTargets(sites) { site ->
-                val daily =
-                    client.query(token, site, start, end, listOf("date")).map { row ->
-                        row.toEntity(site, "daily", row.keys[0])
-                    }
-                val queries =
-                    client.query(token, site, start, end, listOf("date", "query")).map { row ->
-                        row.toEntity(site, "query_daily", row.keys[0], query = row.keys[1])
-                    }
-                val pages =
-                    client.query(token, site, start, end, listOf("date", "page")).map { row ->
-                        row.toEntity(site, "page_daily", row.keys[0], page = row.keys[1])
-                    }
-                val devices =
-                    client.query(token, site, start, end, listOf("date", "device")).map { row ->
-                        SearchDeviceEntity(
-                            site,
-                            row.keys[0],
-                            row.keys[1],
-                            row.clicks,
-                            row.impressions,
-                            row.ctr,
-                            row.position,
-                        )
-                    }
-                val pageQueries =
-                    client.query(token, site, range.end.minusDays(27).toString(), end, listOf("page", "query")).map { row ->
-                        SearchPageQueryEntity(
-                            site,
-                            range.end.minusDays(27).toString(),
-                            end,
-                            row.keys[0],
-                            row.keys[1],
-                            row.clicks,
-                            row.impressions,
-                            row.ctr,
-                            row.position,
-                        )
-                    }
-                database.writeTransaction {
-                    searchDao().deleteSearchRows(site, "daily", start, end)
-                    searchDao().deleteSearchRows(site, "query_daily", start, end)
-                    searchDao().deleteSearchRows(site, "page_daily", start, end)
-                    searchDao().upsertSearchConsole(daily + queries + pages)
-                    searchDao().upsertSearchDevices(devices)
-                    searchDao().upsertSearchPageQueries(pageQueries)
-                }
-                daily.size + queries.size + pages.size + devices.size + pageQueries.size
+                syncSite(token, site, start, end, range.end.minusDays(PAGE_QUERY_DAYS - 1).toString())
             }
         }.fold(
             onSuccess = { SyncResult.Success(it) },
@@ -122,6 +81,107 @@ class SearchConsoleSyncService(
                 SyncResult.Failure(it.message ?: "Search Console sync failed.", true)
             },
         )
+    }
+
+    private suspend fun deleteOrphanedStagingFiles() =
+        withContext(Dispatchers.IO) {
+            // The orchestrator serializes sync runs, so earlier staging files are no longer in use.
+            cacheDirectory
+                .listFiles { file ->
+                    file.isFile && file.name.startsWith("search-console-") && file.name.endsWith(".jsonl")
+                }?.forEach { it.delete() }
+        }
+
+    private suspend fun syncSite(
+        token: String,
+        site: String,
+        start: String,
+        end: String,
+        pageQueryStart: String,
+    ): Int =
+        withContext(Dispatchers.IO) {
+            val staged = File.createTempFile("search-console-", ".jsonl", cacheDirectory)
+            try {
+                var count = 0
+                staged.bufferedWriter().use { writer ->
+                    val dimensions =
+                        listOf(
+                            "daily" to listOf("date"),
+                            "query_daily" to listOf("date", "query"),
+                            "page_daily" to listOf("date", "page"),
+                            "devices" to listOf("date", "device"),
+                            "page_queries" to listOf("page", "query"),
+                        )
+                    for ((kind, keys) in dimensions) {
+                        client.query(token, site, if (kind == "page_queries") pageQueryStart else start, end, keys) { rows ->
+                            writer.appendLine(kind)
+                            writer.appendLine(Json.encodeToString(rows))
+                            count += rows.size
+                        }
+                    }
+                }
+                // All requests must succeed before replacing any cached rows. Replay only one page at a time.
+                database.writeTransaction {
+                    searchDao().deleteSearchRows(site, "daily", start, end)
+                    searchDao().deleteSearchRows(site, "query_daily", start, end)
+                    searchDao().deleteSearchRows(site, "page_daily", start, end)
+                    staged.bufferedReader().use { reader ->
+                        while (true) {
+                            val kind = reader.readLine() ?: break
+                            val rows = Json.decodeFromString<List<SearchAnalyticsRowWire>>(checkNotNull(reader.readLine()))
+                            persistPage(site, kind, rows, pageQueryStart, end)
+                        }
+                    }
+                }
+                count
+            } finally {
+                staged.delete()
+            }
+        }
+
+    private suspend fun persistPage(
+        site: String,
+        kind: String,
+        rows: List<SearchAnalyticsRowWire>,
+        pageQueryStart: String,
+        end: String,
+    ) {
+        when (kind) {
+            "devices" ->
+                database.searchDao().upsertSearchDevices(
+                    rows.map { row ->
+                        SearchDeviceEntity(site, row.keys[0], row.keys[1], row.clicks, row.impressions, row.ctr, row.position)
+                    },
+                )
+            "page_queries" ->
+                database.searchDao().upsertSearchPageQueries(
+                    rows.map { row ->
+                        SearchPageQueryEntity(
+                            site,
+                            pageQueryStart,
+                            end,
+                            row.keys[0],
+                            row.keys[1],
+                            row.clicks,
+                            row.impressions,
+                            row.ctr,
+                            row.position,
+                        )
+                    },
+                )
+            else ->
+                database.searchDao().upsertSearchConsole(
+                    rows.map { row ->
+                        row.toEntity(
+                            site,
+                            kind,
+                            row.keys[0],
+                            query = if (kind == "query_daily") row.keys[1] else "",
+                            page = if (kind == "page_daily") row.keys[1] else null,
+                        )
+                    },
+                )
+        }
     }
 
     /**
@@ -264,6 +324,7 @@ class SearchConsoleSyncService(
 private fun JsonArray?.orEmpty(): JsonArray = this ?: JsonArray(emptyList())
 
 private const val INSPECTION_MAX_AGE_DAYS = 7L
+private const val PAGE_QUERY_DAYS = 28L
 private const val MAX_INSPECTIONS_PER_RUN = 200
 private const val INSPECTION_RETRY_DELAY_MILLIS = 2_000L
 
