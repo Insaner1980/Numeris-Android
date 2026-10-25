@@ -1,11 +1,9 @@
 package com.emmah.numeris.core.network
 
+import com.emmah.numeris.core.testing.fixtureResponseBuilder
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
-import okhttp3.Protocol
 import okhttp3.Request
-import okhttp3.Response
-import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
@@ -22,13 +20,7 @@ class SitemapClientTest {
             .addInterceptor { chain ->
                 paths += chain.request().url.encodedPath
                 val (code, body) = responder(chain.request())
-                Response
-                    .Builder()
-                    .request(chain.request())
-                    .protocol(Protocol.HTTP_1_1)
-                    .code(code)
-                    .message("Fixture")
-                    .body(body.toResponseBody())
+                fixtureResponseBuilder(chain.request(), code, body)
                     .apply {
                         location?.let { header("Location", it) }
                     }.build()

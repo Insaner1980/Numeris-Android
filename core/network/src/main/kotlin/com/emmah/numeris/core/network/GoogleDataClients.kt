@@ -45,8 +45,8 @@ class SearchConsoleApiClient(
     }
 
     /**
-     * Search Analytics -rivit sivuttain. Yksi 25 000 rivin vastaus voi pitkällä jaksolla ylittää HTTP-kerroksen
-     * kokorajan, joten rivit haetaan [PAGE_SIZE] kerrallaan `startRow`-siirtymällä, enintään [MAX_ROWS] riviin.
+     * Fetch every available page, including zero-click impressions at the end of the result.
+     * Keep pages small enough for the HTTP response size limit; a short page ends pagination.
      */
     suspend fun query(
         accessToken: String,
@@ -61,7 +61,7 @@ class SearchConsoleApiClient(
             val page = queryPage(accessToken, propertyUrl, startDate, endDate, dimensions, startRow)
             rows += page
             startRow += PAGE_SIZE
-        } while (page.size == PAGE_SIZE && rows.size < MAX_ROWS)
+        } while (page.size == PAGE_SIZE)
         return rows
     }
 
@@ -87,6 +87,7 @@ class SearchConsoleApiClient(
                 put("endDate", endDate)
                 put("rowLimit", PAGE_SIZE)
                 put("startRow", startRow)
+                put("type", "web")
                 put("dimensions", buildJsonArray { dimensions.forEach { add(JsonPrimitive(it)) } })
             }.toString()
         val raw =
@@ -142,7 +143,6 @@ class SearchConsoleApiClient(
         const val SITES_ENDPOINT = "https://www.googleapis.com/webmasters/v3/sites"
         const val INSPECTION_ENDPOINT = "https://searchconsole.googleapis.com/v1/urlInspection/index:inspect"
         const val PAGE_SIZE = 5_000
-        const val MAX_ROWS = 500_000
     }
 }
 

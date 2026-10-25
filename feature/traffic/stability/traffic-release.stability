@@ -6,32 +6,32 @@
 
 @Composable
 private fun com.emmah.numeris.feature.traffic.CacheAndSecurity(report: com.emmah.numeris.core.model.TrafficReport): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - report: UNSTABLE (has mutable properties or unstable members)
+    - report: UNSTABLE (cross-module type without @Stable/@Immutable)
 
 @Composable
 internal fun com.emmah.numeris.feature.traffic.ResponsesSection(report: com.emmah.numeris.core.model.TrafficReport): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - report: UNSTABLE (has mutable properties or unstable members)
+    - report: UNSTABLE (cross-module type without @Stable/@Immutable)
 
 @Composable
 private fun com.emmah.numeris.feature.traffic.TrafficHero(report: com.emmah.numeris.core.model.TrafficReport, days: kotlin.collections.List<com.emmah.numeris.core.model.TrafficDay>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - report: UNSTABLE (has mutable properties or unstable members)
+    - report: UNSTABLE (cross-module type without @Stable/@Immutable)
     - days: RUNTIME (requires runtime check)
 
 @Composable
 public fun com.emmah.numeris.feature.traffic.TrafficReportScreen(report: com.emmah.numeris.core.model.TrafficReport, domain: kotlin.String, domains: kotlin.collections.List<kotlin.String>, period: com.emmah.numeris.core.model.Period, tab: kotlin.String, syncing: kotlin.Boolean, onDomain: kotlin.Function1<kotlin.String, kotlin.Unit>, onPeriod: kotlin.Function1<com.emmah.numeris.core.model.Period, kotlin.Unit>, onTab: kotlin.Function1<kotlin.String, kotlin.Unit>, onRefresh: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - report: UNSTABLE (has mutable properties or unstable members)
+    - report: UNSTABLE (cross-module type without @Stable/@Immutable)
     - domain: STABLE (String is immutable)
     - domains: RUNTIME (requires runtime check)
     - period: STABLE (class with no mutable properties)

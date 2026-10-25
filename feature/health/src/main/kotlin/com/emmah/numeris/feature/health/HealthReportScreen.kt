@@ -169,7 +169,11 @@ private fun SiteHealthRow(
                 verticalArrangement = Arrangement.spacedBy(NumerisSpacing.Xxs),
             ) {
                 latest.responseMs?.let { TrailingValue(DisplayFormat.metric(it.toDouble(), "ms")) }
-                if (latest.isUp()) StatusPill("Up", PillTone.Positive) else StatusPill("Down", PillTone.Negative)
+                when {
+                    latest.isUp() -> StatusPill("Up", PillTone.Positive)
+                    latest.status.equals("down", true) -> StatusPill("Down", PillTone.Negative)
+                    else -> StatusPill("Pending", PillTone.Neutral)
+                }
             }
         },
     )

@@ -128,6 +128,34 @@ class GoogleSyncHostTest {
             assertEquals(SyncResult.Success(0), search.sync(request))
         }
 
+    @Test fun laterPageFailureKeepsThePreviousCompleteSnapshot() =
+        runBlocking {
+            configure()
+            assertEquals(SyncResult.Success(5), search.sync(request))
+            val cached = database.reportSnapshotDao().readSearchConsole("example.com", "2026-10-01", "2026-10-11")
+            val fullPage =
+                (1..5_000).joinToString(",", """{"rows":[""", "]}") {
+                    """{"keys":["2026-10-10"],"clicks":999,"impressions":9999}"""
+                }
+            val offsets = mutableListOf<Int>()
+            responder = { call ->
+                val body = Json.parseToJsonElement(Buffer().also { call.body!!.writeTo(it) }.readUtf8()).jsonObject
+                val offset =
+                    body
+                        .getValue("startRow")
+                        .jsonPrimitive.content
+                        .toInt()
+                offsets += offset
+                if (offset == 0) 200 to fullPage else 503 to "{}"
+            }
+            assertTrue(search.sync(request) is SyncResult.Failure)
+            assertEquals(listOf(0, 5_000), offsets)
+            assertEquals(
+                cached,
+                database.reportSnapshotDao().readSearchConsole("example.com", "2026-10-01", "2026-10-11"),
+            )
+        }
+
     @Test fun authorizationFailureAndResolutionPreventNetworkAccess() =
         runBlocking {
             configure()

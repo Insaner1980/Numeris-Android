@@ -10,15 +10,13 @@ import com.emmah.numeris.core.model.SyncResult
 import com.emmah.numeris.core.network.NumerisHttpClient
 import com.emmah.numeris.core.network.SitemapClient
 import com.emmah.numeris.core.network.UptimeClient
+import com.emmah.numeris.core.testing.fixtureResponseBuilder
 import com.emmah.numeris.data.SitemapSyncService
 import com.emmah.numeris.data.UptimeSyncService
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
-import okhttp3.Protocol
 import okhttp3.Request
-import okhttp3.Response
-import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -46,14 +44,7 @@ class HealthSyncHostTest {
                 .Builder()
                 .addInterceptor { chain ->
                     val (code, body) = responder(chain.request())
-                    Response
-                        .Builder()
-                        .request(chain.request())
-                        .protocol(Protocol.HTTP_1_1)
-                        .code(code)
-                        .message("Fixture")
-                        .body(body.toResponseBody())
-                        .build()
+                    fixtureResponseBuilder(chain.request(), code, body).build()
                 }.build()
         http = NumerisHttpClient(client)
     }

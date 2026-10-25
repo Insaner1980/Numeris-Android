@@ -13,7 +13,7 @@
     </suppress>
     <suppress until="2026-10-31Z">
         <notes>These advisories affect GitHub Enterprise Server. This artifact is the Android runtime library for Skydoves Compose Stability Analyzer; OWASP incorrectly maps its com.github group and repository URL to the GitHub server product. https://github.com/skydoves/compose-stability-analyzer https://docs.github.com/en/enterprise-server@2.21/admin/release-notes</notes>
-        <packageUrl>pkg:maven/com.github.skydoves/compose-stability-runtime-android@0.12.0</packageUrl>
+        <packageUrl>pkg:maven/com.github.skydoves/compose-stability-runtime-android@0.15.0</packageUrl>
         <cve>CVE-2020-10518</cve>
         <cve>CVE-2020-10519</cve>
         <cve>CVE-2012-2055</cve>

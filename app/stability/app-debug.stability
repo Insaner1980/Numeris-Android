@@ -6,7 +6,7 @@
 
 @Composable
 internal fun com.emmah.numeris.CachedReport(source: kotlinx.coroutines.flow.Flow<T of com.emmah.numeris.CachedReport>, content: @[Composable] androidx.compose.runtime.internal.ComposableFunction1<T of com.emmah.numeris.CachedReport, kotlin.Unit>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - source: UNKNOWN (interface or non-final class; concrete implementation unknown)
@@ -14,14 +14,14 @@ internal fun com.emmah.numeris.CachedReport(source: kotlinx.coroutines.flow.Flow
 
 @Composable
 internal fun com.emmah.numeris.HealthDestination(context: com.emmah.numeris.ShellContext): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - context: UNSTABLE (has mutable properties or unstable members)
 
 @Composable
 internal fun com.emmah.numeris.MoreDestination(context: com.emmah.numeris.ShellContext): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - context: UNSTABLE (has mutable properties or unstable members)
@@ -48,7 +48,7 @@ private fun com.emmah.numeris.NavigationRow(title: kotlin.String, detail: kotlin
 
 @Composable
 private fun com.emmah.numeris.NumerisContent(container: com.emmah.numeris.AppContainer, authorizeGoogle: kotlin.Function0<kotlin.Unit>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - container: UNSTABLE (has mutable properties or unstable members)
@@ -56,7 +56,7 @@ private fun com.emmah.numeris.NumerisContent(container: com.emmah.numeris.AppCon
 
 @Composable
 public fun com.emmah.numeris.NumerisShell(container: com.emmah.numeris.AppContainer, authorizeGoogle: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - container: UNSTABLE (has mutable properties or unstable members)
@@ -65,14 +65,14 @@ public fun com.emmah.numeris.NumerisShell(container: com.emmah.numeris.AppContai
 
 @Composable
 internal fun com.emmah.numeris.OverviewDestination(context: com.emmah.numeris.ShellContext): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - context: UNSTABLE (has mutable properties or unstable members)
 
 @Composable
 internal fun com.emmah.numeris.PageDestination(route: com.emmah.numeris.PageRoute, context: com.emmah.numeris.ShellContext): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - route: STABLE (class with no mutable properties)
@@ -80,14 +80,14 @@ internal fun com.emmah.numeris.PageDestination(route: com.emmah.numeris.PageRout
 
 @Composable
 internal fun com.emmah.numeris.PerformanceDestination(context: com.emmah.numeris.ShellContext): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - context: UNSTABLE (has mutable properties or unstable members)
 
 @Composable
 internal fun com.emmah.numeris.ReportDestination(route: androidx.navigation3.runtime.NavKey, context: com.emmah.numeris.ShellContext): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - route: UNKNOWN (interface or non-final class; concrete implementation unknown)
@@ -95,7 +95,7 @@ internal fun com.emmah.numeris.ReportDestination(route: androidx.navigation3.run
 
 @Composable
 internal fun com.emmah.numeris.SearchDestination(context: com.emmah.numeris.ShellContext): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - context: UNSTABLE (has mutable properties or unstable members)
@@ -113,16 +113,16 @@ private fun com.emmah.numeris.SettingSwitchRow(title: kotlin.String, detail: kot
 
 @Composable
 private fun com.emmah.numeris.ShellNavigation(context: com.emmah.numeris.ShellContext, syncState: com.emmah.numeris.core.model.SyncState, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - context: UNSTABLE (has mutable properties or unstable members)
-    - syncState: UNSTABLE (has mutable properties or unstable members)
+    - syncState: UNSTABLE (cross-module type without @Stable/@Immutable)
     - modifier: STABLE (marked @Stable or @Immutable)
 
 @Composable
 private fun com.emmah.numeris.ShellReports(context: com.emmah.numeris.ShellContext, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - context: UNSTABLE (has mutable properties or unstable members)
@@ -130,7 +130,7 @@ private fun com.emmah.numeris.ShellReports(context: com.emmah.numeris.ShellConte
 
 @Composable
 internal fun com.emmah.numeris.SourcesDestination(route: com.emmah.numeris.SourcesRoute, context: com.emmah.numeris.ShellContext): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - route: STABLE (class with no mutable properties)
@@ -146,15 +146,15 @@ private fun com.emmah.numeris.SyncCard(preferences: com.emmah.numeris.data.AppPr
 
 @Composable
 private fun com.emmah.numeris.SyncNotice(state: com.emmah.numeris.core.model.SyncState, onOpenSources: kotlin.Function0<kotlin.Unit>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - state: UNSTABLE (has mutable properties or unstable members)
+    - state: UNSTABLE (cross-module type without @Stable/@Immutable)
     - onOpenSources: STABLE (function type)
 
 @Composable
 internal fun com.emmah.numeris.TrafficDestination(context: com.emmah.numeris.ShellContext): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - context: UNSTABLE (has mutable properties or unstable members)

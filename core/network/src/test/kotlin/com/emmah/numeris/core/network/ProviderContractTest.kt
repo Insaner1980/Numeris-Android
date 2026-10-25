@@ -6,8 +6,10 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.OkHttpClient
+import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -74,6 +76,48 @@ class ProviderContractTest {
             val points =
                 CruxApiClient(http).queryHistory("fixture".toCharArray(), "origin", "https://small.example", null)
             assertTrue(points.isEmpty())
+        }
+
+    @Test fun searchPaginationPreservesZeroClickTailBeyondFormerRowCap() =
+        runBlocking {
+            val fullPage =
+                (1..SEARCH_PAGE_SIZE).joinToString(",", """{"rows":[""", "]}") {
+                    """{"keys":["q$it"],"clicks":1,"impressions":2}"""
+                }
+            val offsets = mutableListOf<Int>()
+            server.dispatcher =
+                object : Dispatcher() {
+                    override fun dispatch(request: RecordedRequest): MockResponse {
+                        val body = Json.parseToJsonElement(request.body.readUtf8()).jsonObject
+                        assertEquals("web", body.getValue("type").jsonPrimitive.content)
+                        val offset =
+                            body
+                                .getValue("startRow")
+                                .jsonPrimitive.content
+                                .toInt()
+                        offsets += offset
+                        return MockResponse().setBody(
+                            if (offset < 500_000) {
+                                fullPage
+                            } else {
+                                """{"rows":[{"keys":["zero-click tail"],"clicks":0,"impressions":17}]}"""
+                            },
+                        )
+                    }
+                }
+            val rows =
+                SearchConsoleApiClient(http).query(
+                    "fixture",
+                    "sc-domain:example.com",
+                    "2025-10-01",
+                    "2026-10-10",
+                    listOf("query"),
+                )
+            assertEquals(500_001, rows.size)
+            assertEquals((0..500_000 step SEARCH_PAGE_SIZE).toList(), offsets)
+            assertEquals(0L, rows.last().clicks)
+            assertEquals(17L, rows.last().impressions)
+            assertEquals(listOf("zero-click tail"), rows.last().keys)
         }
 
     @Test fun searchQueriesPreserveDatesDimensionsAndPropertyPath() =

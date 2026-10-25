@@ -7,8 +7,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
@@ -25,7 +23,6 @@ import com.emmah.numeris.core.model.Period
 import com.emmah.numeris.core.model.SearchObservation
 import com.emmah.numeris.core.model.SearchReport
 import com.emmah.numeris.feature.search.SearchReportScreen
-import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -110,24 +107,6 @@ class SearchCoverageHostTest {
         compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(hasText(text))
         compose.onAllNodes(hasText(text)).onFirst().assertIsDisplayed()
         val nodes = compose.onAllNodes(hasText(text), useUnmergedTree = true).fetchSemanticsNodes()
-        nodes.forEach { node ->
-            val layouts = mutableListOf<androidx.compose.ui.text.TextLayoutResult>()
-            node.config
-                .getOrNull(SemanticsActions.GetTextLayoutResult)
-                ?.action
-                ?.invoke(layouts)
-            layouts.forEach { layout ->
-                val widthExcess =
-                    (0 until layout.lineCount).maxOfOrNull { line ->
-                        maxOf(layout.getLineRight(line) - layout.size.width, -layout.getLineLeft(line))
-                    } ?: 0f
-                assertFalse(
-                    "Clipped text: $text",
-                    widthExcess > 1f ||
-                        layout.multiParagraph.height - layout.size.height > 1f ||
-                        layout.multiParagraph.didExceedMaxLines,
-                )
-            }
-        }
+        nodes.forEach { it.assertTextFits("Clipped text: $text") }
     }
 }

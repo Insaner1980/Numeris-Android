@@ -6,10 +6,10 @@
 
 @Composable
 public fun com.emmah.numeris.feature.health.HealthReportScreen(report: com.emmah.numeris.core.model.HealthReport, domain: kotlin.String, domains: kotlin.collections.List<kotlin.String>, period: com.emmah.numeris.core.model.Period, tab: kotlin.String, syncing: kotlin.Boolean, onDomain: kotlin.Function1<kotlin.String, kotlin.Unit>, onPeriod: kotlin.Function1<com.emmah.numeris.core.model.Period, kotlin.Unit>, onTab: kotlin.Function1<kotlin.String, kotlin.Unit>, onRefresh: kotlin.Function0<kotlin.Unit>, onBack: kotlin.Function0<kotlin.Unit>, modifier: androidx.compose.ui.Modifier): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
-    - report: UNSTABLE (has mutable properties or unstable members)
+    - report: UNSTABLE (cross-module type without @Stable/@Immutable)
     - domain: STABLE (String is immutable)
     - domains: RUNTIME (requires runtime check)
     - period: STABLE (class with no mutable properties)
@@ -24,7 +24,7 @@ public fun com.emmah.numeris.feature.health.HealthReportScreen(report: com.emmah
 
 @Composable
 private fun com.emmah.numeris.feature.health.SiteHealthRow(site: kotlin.String, rows: kotlin.collections.List<com.emmah.numeris.core.model.Probe>, domains: kotlin.collections.List<kotlin.String>, divider: kotlin.Boolean, onClick: kotlin.Function0<kotlin.Unit>): kotlin.Unit
-  skippable: false
+  skippable: true
   restartable: true
   params:
     - site: STABLE (String is immutable)

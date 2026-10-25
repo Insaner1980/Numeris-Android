@@ -10,6 +10,7 @@ dependencies {
     implementation(project(":core:model"))
     implementation(libs.okhttp)
     implementation(libs.kotlinx.serialization.json)
+    testImplementation(project(":core:testing"))
     testImplementation(libs.junit)
     testImplementation(libs.okhttp.mockwebserver)
 }
