@@ -1,6 +1,7 @@
 plugins {
     id("numeris.android.library")
     id("numeris.quality")
+    id("org.jetbrains.kotlin.plugin.serialization")
 }
 
 android { namespace = "com.emmah.numeris.core.network" }

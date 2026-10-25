@@ -51,10 +51,13 @@ class ProviderContractTest {
                 }
             server.enqueue(MockResponse().setBody(page(SEARCH_PAGE_SIZE)))
             server.enqueue(MockResponse().setBody(page(1)))
-            val rows =
-                SearchConsoleApiClient(http)
-                    .query("fixture", "sc-domain:example.com", "2024-10-01", "2026-10-10", listOf("date"))
-            assertEquals(SEARCH_PAGE_SIZE + 1, rows.size)
+            val pageSizes = mutableListOf<Int>()
+            SearchConsoleApiClient(http)
+                .query("fixture", "sc-domain:example.com", "2024-10-01", "2026-10-10", listOf("date")) { rows ->
+                    pageSizes += rows.size
+                    assertEquals("Consume each page before requesting another", pageSizes.size, server.requestCount)
+                }
+            assertEquals(listOf(SEARCH_PAGE_SIZE, 1), pageSizes)
             val starts =
                 List(2) {
                     Json
@@ -105,19 +108,24 @@ class ProviderContractTest {
                         )
                     }
                 }
-            val rows =
-                SearchConsoleApiClient(http).query(
-                    "fixture",
-                    "sc-domain:example.com",
-                    "2025-10-01",
-                    "2026-10-10",
-                    listOf("query"),
-                )
-            assertEquals(500_001, rows.size)
+            var rowCount = 0
+            var lastRow: SearchAnalyticsRowWire? = null
+            SearchConsoleApiClient(http).query(
+                "fixture",
+                "sc-domain:example.com",
+                "2025-10-01",
+                "2026-10-10",
+                listOf("query"),
+            ) { page ->
+                assertTrue(page.size <= SEARCH_PAGE_SIZE)
+                rowCount += page.size
+                lastRow = page.lastOrNull() ?: lastRow
+            }
+            assertEquals(500_001, rowCount)
             assertEquals((0..500_000 step SEARCH_PAGE_SIZE).toList(), offsets)
-            assertEquals(0L, rows.last().clicks)
-            assertEquals(17L, rows.last().impressions)
-            assertEquals(listOf("zero-click tail"), rows.last().keys)
+            assertEquals(0L, lastRow!!.clicks)
+            assertEquals(17L, lastRow!!.impressions)
+            assertEquals(listOf("zero-click tail"), lastRow!!.keys)
         }
 
     @Test fun searchQueriesPreserveDatesDimensionsAndPropertyPath() =
@@ -128,14 +136,14 @@ class ProviderContractTest {
                 "clicks":7,"impressions":20,"ctr":0.35,"position":2.5}]}""",
                 ),
             )
-            val rows =
-                SearchConsoleApiClient(http).query(
-                    "fixture",
-                    "https://example.com/path/",
-                    "2026-10-01",
-                    "2026-10-10",
-                    listOf("date", "query"),
-                )
+            val rows = mutableListOf<SearchAnalyticsRowWire>()
+            SearchConsoleApiClient(http).query(
+                "fixture",
+                "https://example.com/path/",
+                "2026-10-01",
+                "2026-10-10",
+                listOf("date", "query"),
+            ) { rows += it }
             assertEquals(listOf("2026-10-10", "Long query"), rows.single().keys)
             assertEquals(7L, rows.single().clicks)
             val request = server.takeRequest()

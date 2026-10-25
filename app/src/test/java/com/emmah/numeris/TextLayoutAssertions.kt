@@ -12,6 +12,7 @@ internal fun SemanticsNode.assertTextFits(message: String) {
         .getOrNull(SemanticsActions.GetTextLayoutResult)
         ?.action
         ?.invoke(layouts)
+    assertFalse("$message: no text layout was provided", layouts.isEmpty())
     layouts.forEach { layout ->
         // Compare painted line bounds; the paragraph can retain its wider layout constraints.
         val widthExcess =

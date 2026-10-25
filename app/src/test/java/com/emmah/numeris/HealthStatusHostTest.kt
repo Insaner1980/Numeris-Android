@@ -9,11 +9,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasScrollAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
@@ -76,6 +78,9 @@ class HealthStatusHostTest {
         listOf("pending" to "Pending", "UP" to "Up", "DOWN" to "Down", "unknown" to "Pending")
         ) {
             compose.runOnIdle { report.value = report.value.copy(probes = listOf(probe.copy(status = status))) }
+            val failureMetric = hasText(if (status == "DOWN") "1" else "0") and hasAnySibling(hasText("Failed checks"))
+            compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(failureMetric)
+            compose.onNode(failureMetric).assertIsDisplayed()
             val siteRow = hasText("example.com") and hasText("Success rate", substring = true)
             compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(siteRow)
             compose.onNode(siteRow).assertIsDisplayed().assert(hasText(label))
@@ -84,6 +89,19 @@ class HealthStatusHostTest {
                 .onFirst()
                 .fetchSemanticsNode()
                 .assertTextFits("Clipped status: $label")
+            compose.onNode(siteRow).performClick()
+            if (status != "DOWN") {
+                compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(hasText("No failed checks"))
+                compose.onNodeWithText("No failed checks").assertIsDisplayed()
+                compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(hasText("No incidents"))
+                compose.onNodeWithText("No incidents").assertIsDisplayed()
+            } else {
+                val incident = hasText("example.com") and hasText("Down") and !hasText("Success rate", substring = true)
+                compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(incident)
+                compose.onNode(incident).assertIsDisplayed()
+            }
+            compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(siteRow)
+            compose.onNode(siteRow).performClick()
         }
         compose.runOnIdle { report.value = report.value.copy(probes = emptyList()) }
         compose.onAllNodes(hasScrollAction()).onFirst().performScrollToNode(hasText("No cached checks"))
