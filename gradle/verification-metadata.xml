@@ -31,6 +31,10 @@
          <ignored-key id="F0D0AE433308B042" reason="Key couldn't be downloaded; artifact checksum verified against its publishing repository"/>
       </ignored-keys>
       <trusted-keys>
+         <trusted-key id="5DD80B0DDCCBE005F0A47FD66751E1A6E2001B8D">
+            <trusting group="com.squareup.okhttp3" version="5.5.1"/>
+            <trusting group="com.squareup.okio" version="3.18.1"/>
+         </trusted-key>
          <trusted-key id="A413F67D71BEEC23ADD0CE0ACB43338E060CF9FA" group="com.google.code.findbugs" name="jsr305" version="2.0.2"/>
          <trusted-key id="03C123038C20AAE9E286C857479D601F3A7B5C1A" group="com.github.ajalt.clikt"/>
          <trusted-key id="04543577D6A9CC626239C50C7ECBD740FF06AEB5">
@@ -10726,6 +10730,25 @@
          </artifact>
          <artifact name="snakeyaml-2.6.pom">
             <sha256 value="2773b0e948964d21e37b0e1dcf39025e627b873e0ce6aa2a47e23c374303e0c4" origin="Verified against the publishing repository"/>
+         </artifact>
+      </component>
+      <component group="org.apache.groovy" name="groovy" version="4.0.29">
+         <artifact name="groovy-4.0.29.jar">
+            <sha256 value="16b1259f5404bc43bf066556e043769b1f7570b2ca23fdaf169f12499677e936" origin="Verified against Maven Central"/>
+         </artifact>
+         <artifact name="groovy-4.0.29.module">
+            <sha256 value="e7af04464263212199236dd8f136a2ef56662654ff9125fe3573f1968b147738" origin="Verified against Maven Central"/>
+         </artifact>
+         <artifact name="groovy-4.0.29.pom">
+            <sha256 value="0b8acbf9063b27e6cc7cda1654311d42cba3b4cf034e7ae1487e1ad962f92eb8" origin="Verified against Maven Central"/>
+         </artifact>
+      </component>
+      <component group="org.apache.groovy" name="groovy-bom" version="4.0.29">
+         <artifact name="groovy-bom-4.0.29.module">
+            <sha256 value="2392853c20ff3b7474791d66f831909f25396cb397cf63bf15e1998a5c0b82fc" origin="Verified against Maven Central"/>
+         </artifact>
+         <artifact name="groovy-bom-4.0.29.pom">
+            <sha256 value="c24277dec93f146bcda25f5ae4391d6527e384e2132efa32184c1e852b42bca9" origin="Verified against Maven Central"/>
          </artifact>
       </component>
    </components>
